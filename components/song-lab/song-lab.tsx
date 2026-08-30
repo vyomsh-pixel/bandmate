@@ -68,6 +68,7 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
   const [rightWidth, setRightWidth] = useState(290)
   const [isDraggingLeft, setIsDraggingLeft] = useState(false)
   const [isDraggingRight, setIsDraggingRight] = useState(false)
+  const [mobileTab, setMobileTab] = useState<"progression" | "inspector" | "sections">("progression")
 
   const startResizeLeft = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
@@ -415,12 +416,57 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
 
   return (
     <div className="flex h-full flex-col bg-background overflow-hidden">
+      {/* Mobile Screen Segment Bar (< lg only) */}
+      <div className="flex lg:hidden items-center justify-between border-b border-border/80 bg-card/60 px-3 py-1.5 backdrop-blur-md shrink-0">
+        <div className="flex items-center gap-1 w-full bg-muted/50 p-0.5 rounded-xl border border-border/40">
+          <button
+            type="button"
+            onClick={() => setMobileTab("progression")}
+            className={cn(
+              "flex-1 py-1 text-center font-mono text-[11px] font-bold rounded-lg transition-all cursor-pointer",
+              mobileTab === "progression"
+                ? "bg-primary text-primary-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            🎼 Chords
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileTab("inspector")}
+            className={cn(
+              "flex-1 py-1 text-center font-mono text-[11px] font-bold rounded-lg transition-all cursor-pointer",
+              mobileTab === "inspector"
+                ? "bg-primary text-primary-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            🔍 Voice ({parsedSelected?.symbol ?? "—"})
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileTab("sections")}
+            className={cn(
+              "flex-1 py-1 text-center font-mono text-[11px] font-bold rounded-lg transition-all cursor-pointer",
+              mobileTab === "sections"
+                ? "bg-primary text-primary-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            📑 Sections ({song.sections.length})
+          </button>
+        </div>
+      </div>
+
       {/* Main Workspace Panels */}
       <div className={cn("flex flex-1 flex-col lg:flex-row overflow-hidden min-h-0", (isDraggingLeft || isDraggingRight) && "select-none")}>
         {/* Left Panel: Sections / Navigator */}
         <div
-          style={{ width: `${leftWidth}px` }}
-          className="hidden lg:flex flex-col justify-between border-r border-border/80 bg-card/30 p-3 shrink-0 overflow-y-auto"
+          className={cn(
+            "flex-col justify-between border-r border-border/80 bg-card/30 p-3 shrink-0 overflow-y-auto",
+            mobileTab === "sections" ? "flex flex-1 w-full" : "hidden lg:flex",
+          )}
+          style={{ width: typeof window !== "undefined" && window.innerWidth >= 1024 ? `${leftWidth}px` : undefined }}
         >
           <div>
             <div className="mb-2.5 flex items-center justify-between">
@@ -537,7 +583,7 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
         </div>
 
         {/* Center Panel: Transport + Timeline + Editor + Keyboard */}
-        <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+        <div className={cn("flex-col min-w-0 h-full overflow-hidden", mobileTab === "progression" ? "flex flex-1" : "hidden lg:flex lg:flex-1")}>
           {/* Transport Bar Header */}
           <div className="shrink-0 border-b border-border/80 bg-background/95 px-4 py-2 backdrop-blur-md shadow-xs z-10">
             <TransportBar
@@ -604,8 +650,11 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
 
         {/* Right Panel: Inspector */}
         <div
-          style={{ width: `${rightWidth}px` }}
-          className="w-full lg:w-auto border-l border-border/80 lg:border-t-0 border-t bg-card/30 p-3.5 shrink-0 overflow-y-auto"
+          className={cn(
+            "border-l border-border/80 lg:border-t-0 border-t bg-card/30 p-3.5 shrink-0 overflow-y-auto",
+            mobileTab === "inspector" ? "flex flex-col flex-1 w-full" : "hidden lg:block",
+          )}
+          style={{ width: typeof window !== "undefined" && window.innerWidth >= 1024 ? `${rightWidth}px` : undefined }}
         >
           <div className="mb-2.5 flex items-center justify-between">
             <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">

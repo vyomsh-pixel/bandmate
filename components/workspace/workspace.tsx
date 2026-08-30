@@ -46,7 +46,7 @@ export function Workspace() {
     <div className="flex h-dvh w-full overflow-hidden bg-background text-foreground">
       <Sidebar active={activeModule} onSelect={setActiveModule} />
 
-      <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      <main className="flex min-w-0 flex-1 flex-col overflow-hidden pb-13 md:pb-0">
         <SongLibraryBar
           songs={lib.songs}
           currentId={lib.currentId}

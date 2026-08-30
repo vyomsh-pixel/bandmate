@@ -52,7 +52,7 @@ export function SongLibraryBar({
   const tonics = currentSong?.keyMode === "minor" ? MINOR_TONICS : MAJOR_TONICS
 
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between border-b border-border/80 bg-card/70 px-4 backdrop-blur-md gap-3">
+    <header className="flex h-14 shrink-0 items-center justify-between border-b border-border/80 bg-card/70 px-2.5 sm:px-4 backdrop-blur-md gap-2 sm:gap-3 overflow-x-auto no-scrollbar">
       {/* Left: Project Selector & Inline Title Edit */}
       <div className="flex items-center gap-2 min-w-0">
         <Select value={currentId ?? ""} onValueChange={(v) => v && onSelect(v)}>
