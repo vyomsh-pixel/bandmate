@@ -141,10 +141,10 @@ export function PianoKeyboard({
       {/* Scrollable container for 88 keys */}
       <div
         ref={scrollRef}
-        className="overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent rounded-xl border border-border/80 bg-background/40 p-2 shadow-inner"
+        className="overflow-x-auto pb-1.5 scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent rounded-xl border border-border/80 bg-background/40 p-1.5 shadow-inner"
         style={{ width: "100%" }}
       >
-        <div className="relative h-[150px] select-none shrink-0" style={{ width: `${whiteKeys.length * 34}px` }}>
+        <div className="relative h-[110px] select-none shrink-0" style={{ width: `${whiteKeys.length * 30}px` }}>
           {/* White keys */}
           <div className="absolute inset-0 flex gap-0.5">
             {whiteKeys.map((key) => {

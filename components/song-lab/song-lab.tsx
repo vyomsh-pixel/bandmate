@@ -36,6 +36,7 @@ interface SongLabProps {
   redo: () => void
   canUndo: boolean
   canRedo: boolean
+  showPiano?: boolean
 }
 
 /** Pick the tonic spelling (from the mode's option list) for a pitch class. */
@@ -45,7 +46,7 @@ function tonicForPc(pc: number, mode: "major" | "minor"): string {
   return match ?? pcToName(pc, "sharp")
 }
 
-export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo }: SongLabProps) {
+export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPiano = true }: SongLabProps) {
   const allChords = useMemo(() => song.sections.flatMap((s) => s.chords), [song.sections])
 
   const [selectedId, setSelectedId] = useState<string | null>(allChords[0]?.id ?? null)
@@ -316,24 +317,11 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo }: SongLa
   )
 
   return (
-    <div className="flex h-full flex-col bg-background">
-      {/* Top Meta Bar */}
-      <div className="border-b border-border/80 bg-card/60 px-6 py-3.5 backdrop-blur-md">
-        <SongMetaBar
-          title={song.title}
-          keyTonic={song.keyTonic}
-          keyMode={song.keyMode}
-          onTitleChange={(title) => onUpdate(song.id, { title })}
-          onKeyChange={handleKeyChange}
-          onModeChange={(keyMode) => onUpdate(song.id, { keyMode })}
-          onTranspose={handleTranspose}
-        />
-      </div>
-
+    <div className="flex h-full flex-col bg-background overflow-hidden">
       {/* Main Workspace Panels */}
-      <div className="flex flex-1 flex-col lg:flex-row overflow-hidden">
+      <div className="flex flex-1 flex-col lg:flex-row overflow-hidden min-h-0">
         {/* Left Panel: Sections / Navigator */}
-        <div className="hidden lg:flex w-64 flex-col justify-between border-r border-border/80 bg-card/30 p-4 shrink-0 overflow-y-auto">
+        <div className="hidden lg:flex w-60 flex-col justify-between border-r border-border/80 bg-card/30 p-3.5 shrink-0 overflow-y-auto">
           <div>
             <div className="mb-3 flex items-center justify-between">
               <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -346,7 +334,7 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo }: SongLa
               {song.sections.map((sec) => (
                 <div
                   key={sec.id}
-                  className="flex items-center justify-between rounded-lg border border-border/60 bg-background/50 px-3 py-2 text-sm font-semibold shadow-xs transition-colors hover:border-border hover:bg-muted"
+                  className="flex items-center justify-between rounded-xl border border-border/60 bg-background/50 px-3 py-2 text-xs font-bold shadow-xs transition-colors hover:border-border hover:bg-muted"
                 >
                   <span className="truncate">{sec.name}</span>
                   <span className="font-mono text-[10px] text-muted-foreground">
@@ -363,7 +351,7 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo }: SongLa
                   key={name}
                   type="button"
                   onClick={() => handleAddSection(name)}
-                  className="rounded-md border border-dashed border-border px-2 py-1 font-mono text-[11px] text-muted-foreground transition-colors hover:border-primary/60 hover:text-primary"
+                  className="rounded-lg border border-dashed border-border px-2 py-1 font-mono text-[11px] font-semibold text-muted-foreground transition-colors hover:border-primary/60 hover:text-primary cursor-pointer"
                 >
                   + {name}
                 </button>
@@ -372,15 +360,15 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo }: SongLa
           </div>
 
           {/* Bottom Card: History & Shortcuts */}
-          <div className="pt-4 border-t border-border/60">
+          <div className="pt-3 border-t border-border/60">
             {/* Undo / Redo Row */}
-            <div className="mb-3 flex items-center justify-between gap-2">
+            <div className="mb-2.5 flex items-center justify-between gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={undo}
                 disabled={!canUndo}
-                className="h-7 flex-1 text-xs font-mono font-medium disabled:opacity-30"
+                className="h-7 flex-1 text-xs font-mono font-bold disabled:opacity-30 rounded-lg cursor-pointer"
               >
                 Undo
               </Button>
@@ -389,38 +377,38 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo }: SongLa
                 size="sm"
                 onClick={redo}
                 disabled={!canRedo}
-                className="h-7 flex-1 text-xs font-mono font-medium disabled:opacity-30"
+                className="h-7 flex-1 text-xs font-mono font-bold disabled:opacity-30 rounded-lg cursor-pointer"
               >
                 Redo
               </Button>
             </div>
 
-            <div className="rounded-lg border border-border/50 bg-background/40 p-2.5">
-              <div className="mb-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            <div className="rounded-xl border border-border/50 bg-background/40 p-2.5 shadow-xs">
+              <div className="mb-1 font-mono text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                 Shortcuts
               </div>
               <div className="space-y-1 text-[11px] text-muted-foreground">
                 <div className="flex items-center justify-between">
                   <span>Play / Pause</span>
-                  <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold text-foreground">
+                  <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-bold text-foreground">
                     Space
                   </kbd>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Loop On/Off</span>
-                  <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold text-foreground">
+                  <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-bold text-foreground">
                     L
                   </kbd>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Metronome</span>
-                  <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold text-foreground">
+                  <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-bold text-foreground">
                     M
                   </kbd>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Select Next</span>
-                  <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold text-foreground">
+                  <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-bold text-foreground">
                     ← →
                   </kbd>
                 </div>
@@ -430,8 +418,9 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo }: SongLa
         </div>
 
         {/* Center Panel: Transport + Timeline + Editor + Keyboard */}
-        <div className="flex-1 flex flex-col min-w-0 h-full">
-          <div className="sticky top-0 z-10 border-b border-border/80 bg-background/90 px-6 py-3.5 backdrop-blur-md shadow-xs">
+        <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+          {/* Transport Bar Header */}
+          <div className="shrink-0 border-b border-border/80 bg-background/95 px-5 py-3 backdrop-blur-md shadow-xs z-10">
             <TransportBar
               isPlaying={isPlaying}
               bpm={song.bpm}
@@ -449,7 +438,8 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo }: SongLa
             />
           </div>
 
-          <div className="flex-1 overflow-auto p-6">
+          {/* Hero Progression Editor (Spacious, Zero Clipping) */}
+          <div className="flex-1 overflow-y-auto p-5 sm:p-6 min-h-0">
             <ProgressionEditor
               sections={song.sections}
               keyTonic={song.keyTonic}
@@ -467,13 +457,16 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo }: SongLa
             />
           </div>
 
-          <div className="border-t border-border/80 bg-card/40 p-4">
-            <PianoKeyboard activeMidis={activeMidis} rootMidi={rootMidi} accidental={accidental} />
-          </div>
+          {/* Virtual Piano Dock (Collapsible) */}
+          {showPiano && (
+            <div className="shrink-0 border-t border-border/80 bg-card/40 px-4 py-3 backdrop-blur-md">
+              <PianoKeyboard activeMidis={activeMidis} rootMidi={rootMidi} accidental={accidental} />
+            </div>
+          )}
         </div>
 
         {/* Right Panel: Inspector */}
-        <div className="w-full lg:w-84 border-l border-border/80 lg:border-t-0 border-t bg-card/30 p-5 shrink-0 overflow-y-auto">
+        <div className="w-full lg:w-80 border-l border-border/80 lg:border-t-0 border-t bg-card/30 p-4.5 shrink-0 overflow-y-auto">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Inspector
