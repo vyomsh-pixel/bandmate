@@ -27,6 +27,8 @@ export interface PlayOptions {
   instrument?: InstrumentId
 }
 
+export type RhythmPattern = "pulse" | "sustain" | "pop" | "arpeggio"
+
 export interface TransportConfig {
   bpm: number
   beatsPerBar: number
@@ -34,6 +36,7 @@ export interface TransportConfig {
   chords: { midis: number[]; beats: number }[]
   loop: boolean
   metronome: boolean
+  rhythm?: RhythmPattern
 }
 
 export type BeatListener = (info: { beatInBar: number; accent: boolean; chordIndex: number | null }) => void
@@ -56,7 +59,7 @@ class AudioEngine {
   private nextBeatTime = 0
   private beatInLoop = 0
   private countInBeatsLeft = 0
-  private config: TransportConfig = { bpm: 120, beatsPerBar: 4, chords: [], loop: true, metronome: true }
+  private config: TransportConfig = { bpm: 120, beatsPerBar: 4, chords: [], loop: true, metronome: true, rhythm: "pulse" }
   private uiQueue: ScheduledUiEvent[] = []
   private beatListener: BeatListener | null = null
   private onStopped: (() => void) | null = null
@@ -109,21 +112,23 @@ class AudioEngine {
     }
   }
 
-  /** Play a set of MIDI notes as a chord with realistic acoustic samples. */
+  /** Play a set of MIDI notes as a chord with realistic acoustic samples or synth. */
   playChord(midis: number[], options: PlayOptions = {}) {
     if (!this.ctx || !this.master) return
-    const { when = this.ctx.currentTime, duration = 1.6, velocity = 0.85, wave = "triangle", instrument } = options
+    const currentInst = options.instrument ?? this.getInstrument()
+    const { when = this.ctx.currentTime, duration = 1.6, velocity = 0.85, wave = "triangle" } = options
     const peak = (1.0 / Math.max(1, Math.sqrt(midis.length))) * velocity
     for (const midi of midis) {
-      this.playVoice(midi, when, duration, peak, wave, instrument)
+      this.playVoice(midi, when, duration, peak, wave, currentInst)
     }
   }
 
   /** Play a single MIDI note. */
   playNote(midi: number, options: PlayOptions = {}) {
     if (!this.ctx || !this.master) return
-    const { when = this.ctx.currentTime, duration = 1.4, velocity = 0.85, wave = "triangle", instrument } = options
-    this.playVoice(midi, when, duration, velocity, wave, instrument)
+    const currentInst = options.instrument ?? this.getInstrument()
+    const { when = this.ctx.currentTime, duration = 1.4, velocity = 0.85, wave = "triangle" } = options
+    this.playVoice(midi, when, duration, velocity, wave, currentInst)
   }
 
   private playVoice(
@@ -135,6 +140,7 @@ class AudioEngine {
     instrument?: InstrumentId,
   ) {
     if (!this.ctx || !this.master) return
+    const targetInst = instrument ?? this.getInstrument()
 
     // Try playing real acoustic sampled soundfont
     const playedSample = getSoundfontEngine().playSample(
@@ -144,34 +150,35 @@ class AudioEngine {
       when,
       duration,
       peak,
-      instrument,
+      targetInst,
     )
     if (playedSample) return
 
-    // Fallback: warm polyphonic harmonic synthesis while samples are loading
+    // Fallback or Synthetic mode (synth_warm / synth_8bit)
     const ctx = this.ctx
     const osc = ctx.createOscillator()
     const sub = ctx.createOscillator()
     const gain = ctx.createGain()
     const filter = ctx.createBiquadFilter()
 
-    filter.type = "lowpass"
-    filter.frequency.value = 4200
+    const synthWave: OscillatorType = targetInst === "synth_8bit" ? "square" : targetInst === "synth_warm" ? "triangle" : wave
+    filter.type = targetInst === "synth_8bit" ? "allpass" : "lowpass"
+    filter.frequency.value = targetInst === "synth_8bit" ? 8000 : 4200
     filter.Q.value = 0.6
 
     const freq = midiToFreq(midi)
-    osc.type = wave
+    osc.type = synthWave
     osc.frequency.value = freq
-    sub.type = "sine"
+    sub.type = targetInst === "synth_8bit" ? "square" : "sine"
     sub.frequency.value = freq / 2
     const subGain = ctx.createGain()
-    subGain.gain.value = 0.35
+    subGain.gain.value = targetInst === "synth_8bit" ? 0.2 : 0.35
 
     // ADSR
-    const attack = 0.01
+    const attack = targetInst === "synth_8bit" ? 0.002 : 0.01
     const decay = 0.22
     const sustain = peak * 0.72
-    const release = 0.4
+    const release = targetInst === "synth_8bit" ? 0.15 : 0.4
     const end = when + duration
 
     gain.gain.setValueAtTime(0.0001, when)
@@ -216,16 +223,16 @@ class AudioEngine {
   }
 
   /** Which chord index a given beat-in-loop belongs to, and whether it's the chord's first beat. */
-  private chordAtBeat(beat: number): { index: number | null; isStart: boolean } {
+  private chordAtBeat(beat: number): { index: number | null; isStart: boolean; beatInChord: number } {
     let acc = 0
     for (let i = 0; i < this.config.chords.length; i++) {
       const beats = Math.max(1, this.config.chords[i].beats)
       if (beat >= acc && beat < acc + beats) {
-        return { index: i, isStart: beat === acc }
+        return { index: i, isStart: beat === acc, beatInChord: beat - acc }
       }
       acc += beats
     }
-    return { index: null, isStart: false }
+    return { index: null, isStart: false, beatInChord: 0 }
   }
 
   /** Update transport config live (e.g. bpm/metronome toggles while playing). */
@@ -276,6 +283,7 @@ class AudioEngine {
     if (!this.ctx || !this.running) return
     const secondsPerBeat = 60 / this.config.bpm
     const total = this.totalBeats()
+    const rhythm = this.config.rhythm ?? "pulse"
 
     while (this.nextBeatTime < this.ctx.currentTime + this.lookahead) {
       if (this.countInBeatsLeft > 0) {
@@ -295,15 +303,38 @@ class AudioEngine {
         const beat = this.beatInLoop % total
         const beatInBar = beat % this.config.beatsPerBar
         const accent = beatInBar === 0
-        const { index, isStart } = this.chordAtBeat(beat)
+        const { index, isStart, beatInChord } = this.chordAtBeat(beat)
 
         if (this.config.metronome) this.click(this.nextBeatTime, accent)
-        if (isStart && index !== null) {
+        
+        if (index !== null) {
           const chord = this.config.chords[index]
-          const dur = Math.max(1, chord.beats) * secondsPerBeat * 0.95
-          this.playChord(chord.midis, { when: this.nextBeatTime, duration: dur, velocity: 0.85 })
+          if (rhythm === "sustain") {
+            if (isStart) {
+              const dur = Math.max(1, chord.beats) * secondsPerBeat * 0.95
+              this.playChord(chord.midis, { when: this.nextBeatTime, duration: dur, velocity: 0.85 })
+            }
+          } else if (rhythm === "pulse") {
+            // OneMotion style - pulse on every beat of the chord
+            const vel = isStart ? 0.9 : 0.75
+            const dur = secondsPerBeat * 0.9
+            this.playChord(chord.midis, { when: this.nextBeatTime, duration: dur, velocity: vel })
+          } else if (rhythm === "pop") {
+            if (isStart) {
+              this.playChord(chord.midis, { when: this.nextBeatTime, duration: secondsPerBeat * 0.9, velocity: 0.9 })
+            } else {
+              const upperNotes = chord.midis.slice(1).length > 0 ? chord.midis.slice(1) : chord.midis
+              this.playChord(upperNotes, { when: this.nextBeatTime, duration: secondsPerBeat * 0.8, velocity: 0.72 })
+            }
+          } else if (rhythm === "arpeggio") {
+            if (chord.midis.length > 0) {
+              const noteIdx = beatInChord % chord.midis.length
+              this.playNote(chord.midis[noteIdx], { when: this.nextBeatTime, duration: secondsPerBeat * 1.2, velocity: 0.82 })
+            }
+          }
         }
-        this.uiQueue.push({ time: this.nextBeatTime, beatInBar, accent, chordIndex: isStart ? index : null })
+        
+        this.uiQueue.push({ time: this.nextBeatTime, beatInBar, accent, chordIndex: index })
 
         this.beatInLoop++
         // Handle end-of-progression when not looping.

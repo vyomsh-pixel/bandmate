@@ -13,11 +13,13 @@ export type InstrumentId =
   | "acoustic_guitar_nylon"
   | "string_ensemble_1"
   | "electric_bass_finger"
+  | "synth_warm"
+  | "synth_8bit"
 
 export interface InstrumentInfo {
   id: InstrumentId
   name: string
-  category: "Keyboards" | "Guitars" | "Strings" | "Bass"
+  category: "Keyboards" | "Guitars" | "Strings" | "Bass" | "Synths"
   icon: string
   description: string
 }
@@ -28,7 +30,7 @@ export const AVAILABLE_INSTRUMENTS: InstrumentInfo[] = [
     name: "Concert Grand Piano",
     category: "Keyboards",
     icon: "🎹",
-    description: "Authentic sampled acoustic grand piano",
+    description: "Authentic sampled acoustic grand piano (Real)",
   },
   {
     id: "electric_piano_1",
@@ -36,6 +38,20 @@ export const AVAILABLE_INSTRUMENTS: InstrumentInfo[] = [
     category: "Keyboards",
     icon: "🎹",
     description: "Warm classic vintage electric piano",
+  },
+  {
+    id: "synth_warm",
+    name: "Default Studio Synth",
+    category: "Synths",
+    icon: "🎛️",
+    description: "Original polyphonic analog synthesizer",
+  },
+  {
+    id: "synth_8bit",
+    name: "Chiptune 8-Bit Synth",
+    category: "Synths",
+    icon: "👾",
+    description: "Retro square-wave chiptune video game synth",
   },
   {
     id: "acoustic_guitar_steel",
@@ -126,6 +142,10 @@ class SoundfontEngine {
    * Load soundfont sample pack for the chosen instrument.
    */
   async loadInstrument(id: InstrumentId, ctx: AudioContext): Promise<boolean> {
+    if (id === "synth_warm" || id === "synth_8bit") {
+      return true
+    }
+
     const entry = this.cache.get(id)
     if (!entry) return false
     if (entry.loaded) return true
@@ -216,6 +236,10 @@ class SoundfontEngine {
     velocity = 0.8,
     instrumentId: InstrumentId = this.currentInstrument,
   ): boolean {
+    if (instrumentId === "synth_warm" || instrumentId === "synth_8bit") {
+      return false
+    }
+
     const entry = this.cache.get(instrumentId)
     if (!entry || !entry.loaded) {
       // Trigger lazy load in background if not already started

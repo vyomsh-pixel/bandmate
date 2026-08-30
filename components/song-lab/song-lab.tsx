@@ -23,7 +23,7 @@ import { voiceChord, invertVoicing, playableVoicing } from "@/lib/music/chords"
 import { keyAccidental, MAJOR_TONICS, MINOR_TONICS } from "@/lib/music/scales"
 import { transposeProgression, transposeSymbol, semitonesBetween } from "@/lib/music/transpose"
 import { midiToPc, noteNameToPc, pcToName } from "@/lib/music/notes"
-import { getAudioEngine, type TransportConfig } from "@/lib/audio/audio-engine"
+import { getAudioEngine, type TransportConfig, type RhythmPattern } from "@/lib/audio/audio-engine"
 import { AVAILABLE_INSTRUMENTS, type InstrumentId } from "@/lib/audio/soundfont-engine"
 import { createId } from "@/lib/storage/local-store"
 import type { ChordEntry, Section, Song } from "@/lib/music/types"
@@ -59,6 +59,7 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
   const [loop, setLoop] = useState(true)
   const [volume, setVolume] = useState(0.6)
   const [instrument, setInstrumentState] = useState<InstrumentId>("acoustic_grand_piano")
+  const [rhythm, setRhythm] = useState<RhythmPattern>("pulse")
   const [isRehearsing, setIsRehearsing] = useState(false)
 
   const accidental = useMemo(() => keyAccidental(song.keyTonic, song.keyMode), [song.keyTonic, song.keyMode])
@@ -94,13 +95,14 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
       beatsPerBar: song.beatsPerBar,
       loop,
       metronome,
+      rhythm,
       chords: allChords.map((entry) => {
         const parsed = parseChord(entry.symbol)
         const midis = parsed.valid ? playableVoicing(parsed, { octave: 4, accidental: acc }).map((n) => n.midi) : []
         return { midis, beats: Math.max(1, entry.beats) }
       }),
     }
-  }, [song.bpm, song.beatsPerBar, song.keyTonic, song.keyMode, allChords, loop, metronome])
+  }, [song.bpm, song.beatsPerBar, song.keyTonic, song.keyMode, allChords, loop, metronome, rhythm])
 
   const stopPlayback = useCallback(() => {
     getAudioEngine().stop()
@@ -273,6 +275,35 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
 
   const handleBpmChange = useCallback((bpm: number) => onUpdate(song.id, { bpm }), [onUpdate, song.id])
 
+  const handleDuplicateChord = useCallback(
+    (id: string) => {
+      let nextId: string | null = null
+      let sym = ""
+      updateSections((sections) => {
+        return sections.map((s) => {
+          const i = s.chords.findIndex((c) => c.id === id)
+          if (i < 0) return s
+          const orig = s.chords[i]
+          sym = orig.symbol
+          const clone: ChordEntry = {
+            id: createId(),
+            symbol: orig.symbol,
+            beats: orig.beats,
+          }
+          nextId = clone.id
+          const next = [...s.chords]
+          next.splice(i + 1, 0, clone)
+          return { ...s, chords: next }
+        })
+      })
+      if (nextId) {
+        setSelectedId(nextId)
+        toast.success(`Repeated chord ${sym}`)
+      }
+    },
+    [updateSections],
+  )
+
   // ---- Keyboard Shortcuts ----------------------------------------------------
   useKeyboardShortcuts({
     space: (e) => {
@@ -281,6 +312,12 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
     },
     l: () => setLoop((v) => !v),
     m: () => setMetronome((v) => !v),
+    d: () => {
+      if (selectedId) handleDuplicateChord(selectedId)
+    },
+    r: () => {
+      if (selectedId) handleDuplicateChord(selectedId)
+    },
     arrowleft: () => {
       const idx = allChords.findIndex((c) => c.id === selectedId)
       if (idx > 0) {
@@ -439,6 +476,7 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
               metronome={metronome}
               volume={volume}
               instrument={instrument}
+              rhythm={rhythm}
               onTogglePlay={togglePlay}
               onBpmChange={handleBpmChange}
               onToggleLoop={() => setLoop((v) => !v)}
@@ -446,6 +484,7 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
               onToggleRehearsal={() => setIsRehearsing(true)}
               onVolumeChange={setVolume}
               onInstrumentChange={handleInstrumentChange}
+              onRhythmChange={setRhythm}
             />
           </div>
 
@@ -465,6 +504,7 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
               onRemove={handleRemoveChord}
               onMove={handleMoveChord}
               onAdd={handleAddChord}
+              onDuplicate={handleDuplicateChord}
             />
           </div>
 
@@ -490,6 +530,7 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
             inversion={inversion}
             onInversionChange={setInversion}
             onPlay={playSelectedChord}
+            onDuplicate={selectedId ? () => handleDuplicateChord(selectedId) : undefined}
           />
         </div>
       </div>

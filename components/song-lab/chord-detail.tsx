@@ -8,7 +8,7 @@
  * engine + audio engine.
  */
 
-import { Play, Music2, Sparkles, Volume2 } from "lucide-react"
+import { Play, Music2, Sparkles, Volume2, Copy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { midiToName } from "@/lib/music/notes"
@@ -23,6 +23,7 @@ interface ChordDetailProps {
   inversion: number
   onInversionChange: (inversion: number) => void
   onPlay: () => void
+  onDuplicate?: () => void
 }
 
 function getIntervalName(pc: number, rootPc: number): string {
@@ -44,7 +45,7 @@ function getIntervalName(pc: number, rootPc: number): string {
   }
 }
 
-export function ChordDetail({ chord, accidental, inversion, onInversionChange, onPlay }: ChordDetailProps) {
+export function ChordDetail({ chord, accidental, inversion, onInversionChange, onPlay, onDuplicate }: ChordDetailProps) {
   if (!chord || !chord.valid) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 py-16 text-center text-muted-foreground">
@@ -66,23 +67,37 @@ export function ChordDetail({ chord, accidental, inversion, onInversionChange, o
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Header & Hear Button */}
-      <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/80 bg-card/70 p-4.5 shadow-sm backdrop-blur-md">
+      {/* Header & Action Buttons */}
+      <div className="flex items-center justify-between gap-3 rounded-2xl border border-border/80 bg-card/70 p-4 shadow-sm backdrop-blur-md">
         <div>
           <div className="font-mono text-3xl font-black tracking-tight text-foreground">{chord.symbol}</div>
           <div className="mt-1 font-mono text-xs font-semibold uppercase tracking-wider text-primary">
             {chord.qualityLabel}
           </div>
         </div>
-        <Button
-          size="sm"
-          onClick={onPlay}
-          className="h-10 gap-2 font-bold shadow-xs bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
-          aria-label={`Preview sound of ${chord.symbol}`}
-        >
-          <Volume2 className="size-4" aria-hidden="true" />
-          <span>Hear</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          {onDuplicate && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onDuplicate}
+              className="h-9 gap-1.5 font-bold shadow-xs cursor-pointer hover:border-primary/50"
+              title="Repeat / Duplicate chord (D)"
+            >
+              <Copy className="size-3.5" />
+              <span>Repeat</span>
+            </Button>
+          )}
+          <Button
+            size="sm"
+            onClick={onPlay}
+            className="h-9 gap-1.5 font-bold shadow-xs bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"
+            aria-label={`Preview sound of ${chord.symbol}`}
+          >
+            <Volume2 className="size-4" aria-hidden="true" />
+            <span>Hear</span>
+          </Button>
+        </div>
       </div>
 
       {/* Notes of the current voicing */}

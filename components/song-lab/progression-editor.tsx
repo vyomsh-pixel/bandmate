@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useMemo, useRef } from "react"
-import { Plus, X, ChevronLeft, ChevronRight, Minus, Sparkles } from "lucide-react"
+import { Plus, X, ChevronLeft, ChevronRight, Minus, Sparkles, Copy } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { parseChord } from "@/lib/music/chord-parser"
 import { diatonicChords, makeKey } from "@/lib/music/scales"
@@ -27,6 +27,7 @@ interface ProgressionEditorProps {
   onRemove: (id: string) => void
   onMove: (id: string, dir: -1 | 1) => void
   onAdd: (symbol: string) => void
+  onDuplicate?: (id: string) => void
 }
 
 export function ProgressionEditor({
@@ -40,6 +41,7 @@ export function ProgressionEditor({
   onRemove,
   onMove,
   onAdd,
+  onDuplicate,
 }: ProgressionEditorProps) {
   const key = makeKey(keyTonic, keyMode)
   const diatonic = diatonicChords(key)
@@ -55,12 +57,19 @@ export function ProgressionEditor({
   // Extract unique valid chords used in the song for quick access
   const chordsInSong = useMemo(() => {
     const unique = new Set<string>()
-    sections.forEach(s => s.chords.forEach(c => {
-      const p = parseChord(c.symbol)
-      if (p.valid) unique.add(c.symbol)
-    }))
+    sections.forEach((s) =>
+      s.chords.forEach((c) => {
+        const p = parseChord(c.symbol)
+        if (p.valid) unique.add(c.symbol)
+      }),
+    )
     return Array.from(unique)
   }, [sections])
+
+  const selectedChord = useMemo(
+    () => sections.flatMap((s) => s.chords).find((c) => c.id === selectedId) ?? null,
+    [sections, selectedId],
+  )
 
   return (
     <div className="flex flex-col gap-6" ref={scrollRef}>
@@ -167,6 +176,18 @@ export function ProgressionEditor({
                           </button>
                           <button
                             type="button"
+                            aria-label={`Duplicate chord ${entry.symbol}`}
+                            title="Duplicate / Repeat chord"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onDuplicate?.(entry.id)
+                            }}
+                            className="rounded p-0.5 text-muted-foreground hover:bg-primary/20 hover:text-primary transition-colors"
+                          >
+                            <Copy className="size-3" />
+                          </button>
+                          <button
+                            type="button"
                             aria-label={`Delete chord ${globalIdx + 1}`}
                             title="Delete chord"
                             onClick={(e) => {
@@ -240,11 +261,28 @@ export function ProgressionEditor({
                   )
                 })}
 
+                {/* Duplicate Selected Shortcut Button */}
+                {selectedChord && (
+                  <button
+                    type="button"
+                    onClick={() => onDuplicate?.(selectedChord.id)}
+                    className="flex w-28 sm:w-32 shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-primary/40 bg-primary/5 text-primary transition-all hover:bg-primary/15 hover:border-primary hover:scale-[1.02] cursor-pointer p-2"
+                    aria-label={`Duplicate selected chord ${selectedChord.symbol}`}
+                    title="Repeat / Duplicate selected chord (D)"
+                  >
+                    <div className="flex size-6 items-center justify-center rounded-lg bg-primary/20">
+                      <Copy className="size-3" />
+                    </div>
+                    <span className="text-[11px] font-extrabold truncate max-w-[90%]">Repeat {selectedChord.symbol}</span>
+                    <span className="font-mono text-[9px] text-muted-foreground">Press D</span>
+                  </button>
+                )}
+
                 {/* Add Slot Button */}
                 <button
                   type="button"
                   onClick={() => onAdd(key.tonic)}
-                  className="flex w-28 sm:w-32 shrink-0 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border/80 bg-card/20 text-muted-foreground transition-all hover:border-primary/60 hover:bg-primary/5 hover:text-primary hover:scale-[1.02] cursor-pointer"
+                  className="flex w-28 sm:w-32 shrink-0 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border/80 bg-card/20 text-muted-foreground transition-all hover:border-primary/60 hover:bg-primary/5 hover:text-primary hover:scale-[1.02] cursor-pointer p-2"
                   aria-label="Add chord to section"
                 >
                   <div className="flex size-8 items-center justify-center rounded-xl bg-muted/60">

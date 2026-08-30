@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useState } from "react"
-import { Play, Square, Repeat, Volume2, Volume1, VolumeX, Timer, Presentation, Plus, Minus, Sparkles } from "lucide-react"
+import { Play, Square, Repeat, Volume2, Volume1, VolumeX, Timer, Presentation, Plus, Minus, Sparkles, Activity } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import {
@@ -18,7 +18,15 @@ import {
   SelectTrigger,
 } from "@/components/ui/select"
 import { AVAILABLE_INSTRUMENTS, type InstrumentId } from "@/lib/audio/soundfont-engine"
+import type { RhythmPattern } from "@/lib/audio/audio-engine"
 import { cn } from "@/lib/utils"
+
+export const RHYTHM_PATTERNS = [
+  { id: "pulse" as const, name: "Pulse (OneMotion)", icon: "⚡", description: "Rhythmic pulse on every beat" },
+  { id: "sustain" as const, name: "Sustain (Hold)", icon: "〰️", description: "Single sustained chord per bar" },
+  { id: "pop" as const, name: "Bass & Strum", icon: "🎸", description: "Bass on beat 1, chords on offbeats" },
+  { id: "arpeggio" as const, name: "Arpeggiator", icon: "✨", description: "Rolling chord notes in sequence" },
+]
 
 interface TransportBarProps {
   isPlaying: boolean
@@ -29,6 +37,7 @@ interface TransportBarProps {
   metronome: boolean
   volume: number
   instrument?: InstrumentId
+  rhythm?: RhythmPattern
   onTogglePlay: () => void
   onBpmChange: (bpm: number) => void
   onToggleLoop: () => void
@@ -36,6 +45,7 @@ interface TransportBarProps {
   onToggleRehearsal: () => void
   onVolumeChange: (v: number) => void
   onInstrumentChange?: (id: InstrumentId) => void
+  onRhythmChange?: (rhythm: RhythmPattern) => void
 }
 
 function BpmInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
@@ -109,6 +119,7 @@ export function TransportBar({
   metronome,
   volume,
   instrument = "acoustic_grand_piano",
+  rhythm = "pulse",
   onTogglePlay,
   onBpmChange,
   onToggleLoop,
@@ -116,9 +127,11 @@ export function TransportBar({
   onToggleRehearsal,
   onVolumeChange,
   onInstrumentChange,
+  onRhythmChange,
 }: TransportBarProps) {
   const VolumeIcon = volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2
   const currentInst = AVAILABLE_INSTRUMENTS.find((i) => i.id === instrument) ?? AVAILABLE_INSTRUMENTS[0]
+  const currentRhythm = RHYTHM_PATTERNS.find((p) => p.id === rhythm) ?? RHYTHM_PATTERNS[0]
 
   return (
     <div className="flex items-center justify-between gap-2 w-full overflow-x-auto no-scrollbar">
@@ -201,18 +214,19 @@ export function TransportBar({
         <BpmInput value={bpm} onChange={onBpmChange} />
       </div>
 
-      {/* Island 3: Real Acoustic Instrument Selector */}
+      {/* Island 3: Real Acoustic Instrument & Rhythm Pattern */}
       <div className="flex items-center gap-1.5 rounded-xl border border-border/80 bg-card/70 p-1 shadow-xs backdrop-blur-md shrink-0">
+        {/* Instrument Dropdown */}
         <Select value={instrument} onValueChange={(val) => onInstrumentChange?.(val as InstrumentId)}>
           <SelectTrigger
             className="h-8.5 w-auto px-2.5 gap-1.5 font-bold text-xs bg-background/50 border-border/80 rounded-lg cursor-pointer hover:border-primary/50 transition-colors"
-            aria-label="Select real sampled acoustic instrument"
+            aria-label="Select instrument sound"
           >
             <span>{currentInst.icon}</span>
             <span className="hidden sm:inline">{currentInst.name}</span>
             <span className="sm:hidden">{currentInst.name.split(" ")[0]}</span>
           </SelectTrigger>
-          <SelectContent align="center" className="min-w-[230px]">
+          <SelectContent align="center" className="min-w-[240px]">
             {AVAILABLE_INSTRUMENTS.map((inst) => (
               <SelectItem key={inst.id} value={inst.id} className="cursor-pointer py-2">
                 <div className="flex items-center gap-2.5">
@@ -227,13 +241,30 @@ export function TransportBar({
           </SelectContent>
         </Select>
 
-        <div
-          className="hidden xl:flex items-center gap-1 px-1.5 py-1 rounded-md bg-amber-400/10 border border-amber-400/20 text-[9px] font-mono font-black text-amber-400 shadow-xs select-none"
-          title="Studio Acoustic Samples active via Soundfont Engine"
-        >
-          <Sparkles className="size-2.5 text-amber-400" />
-          <span>REAL SAMPLES</span>
-        </div>
+        {/* Rhythm Pattern Dropdown */}
+        <Select value={rhythm} onValueChange={(val) => onRhythmChange?.(val as RhythmPattern)}>
+          <SelectTrigger
+            className="h-8.5 w-auto px-2.5 gap-1.5 font-bold text-xs bg-background/50 border-border/80 rounded-lg cursor-pointer hover:border-primary/50 transition-colors"
+            aria-label="Select playback rhythm style"
+            title="Playback Rhythm Style (OneMotion Pulse, Sustain, etc.)"
+          >
+            <span>{currentRhythm.icon}</span>
+            <span className="hidden md:inline">{currentRhythm.name}</span>
+          </SelectTrigger>
+          <SelectContent align="center" className="min-w-[210px]">
+            {RHYTHM_PATTERNS.map((p) => (
+              <SelectItem key={p.id} value={p.id} className="cursor-pointer py-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">{p.icon}</span>
+                  <div className="flex flex-col text-left">
+                    <span className="text-xs font-bold text-foreground">{p.name}</span>
+                    <span className="text-[10px] text-muted-foreground">{p.description}</span>
+                  </div>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Island 4: Utilities (Metronome, Rehearsal, Volume) */}
