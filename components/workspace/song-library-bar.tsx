@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useEffect } from "react"
 import type { Song } from "@/lib/music/types"
 import { Button } from "@/components/ui/button"

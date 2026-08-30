@@ -1,3 +1,5 @@
+"use client"
+
 import { useState, useCallback } from "react"
 import { Sidebar } from "./sidebar"
 import { MODULES } from "./modules"
