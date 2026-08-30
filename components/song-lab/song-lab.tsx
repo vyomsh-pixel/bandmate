@@ -24,6 +24,7 @@ import { keyAccidental, MAJOR_TONICS, MINOR_TONICS } from "@/lib/music/scales"
 import { transposeProgression, transposeSymbol, semitonesBetween } from "@/lib/music/transpose"
 import { midiToPc, noteNameToPc, pcToName } from "@/lib/music/notes"
 import { getAudioEngine, type TransportConfig } from "@/lib/audio/audio-engine"
+import { AVAILABLE_INSTRUMENTS, type InstrumentId } from "@/lib/audio/soundfont-engine"
 import { createId } from "@/lib/storage/local-store"
 import type { ChordEntry, Section, Song } from "@/lib/music/types"
 import { Button } from "@/components/ui/button"
@@ -57,6 +58,7 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
   const [metronome, setMetronome] = useState(true)
   const [loop, setLoop] = useState(true)
   const [volume, setVolume] = useState(0.6)
+  const [instrument, setInstrumentState] = useState<InstrumentId>("acoustic_grand_piano")
   const [isRehearsing, setIsRehearsing] = useState(false)
 
   const accidental = useMemo(() => keyAccidental(song.keyTonic, song.keyMode), [song.keyTonic, song.keyMode])
@@ -134,6 +136,13 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
   useEffect(() => {
     if (isPlaying) getAudioEngine().updateConfig(buildConfig())
   }, [isPlaying, buildConfig])
+
+  const handleInstrumentChange = useCallback(async (id: InstrumentId) => {
+    setInstrumentState(id)
+    await getAudioEngine().setInstrument(id)
+    const name = AVAILABLE_INSTRUMENTS.find((i) => i.id === id)?.name ?? "Instrument"
+    toast.success(`Sound: ${name}`)
+  }, [])
 
   // Master volume follows the slider.
   useEffect(() => {
@@ -429,12 +438,14 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
               loop={loop}
               metronome={metronome}
               volume={volume}
+              instrument={instrument}
               onTogglePlay={togglePlay}
               onBpmChange={handleBpmChange}
               onToggleLoop={() => setLoop((v) => !v)}
               onToggleMetronome={() => setMetronome((v) => !v)}
               onToggleRehearsal={() => setIsRehearsing(true)}
               onVolumeChange={setVolume}
+              onInstrumentChange={handleInstrumentChange}
             />
           </div>
 

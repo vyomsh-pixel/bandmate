@@ -12,6 +12,7 @@
  */
 
 import { midiToFreq } from "../music/notes"
+import { getSoundfontEngine, type InstrumentId, AVAILABLE_INSTRUMENTS } from "./soundfont-engine"
 
 export interface PlayOptions {
   /** Absolute AudioContext time to start (defaults to now). */
@@ -20,8 +21,10 @@ export interface PlayOptions {
   duration?: number
   /** 0-1 velocity. */
   velocity?: number
-  /** Oscillator waveform. */
+  /** Oscillator waveform for fallback synth. */
   wave?: OscillatorType
+  /** Instrument ID to play. */
+  instrument?: InstrumentId
 }
 
 export interface TransportConfig {
@@ -73,11 +76,31 @@ class AudioEngine {
       compressor.connect(this.ctx.destination)
     }
     if (this.ctx.state === "suspended") await this.ctx.resume()
+
+    // Preload acoustic grand piano samples in background
+    const sf = getSoundfontEngine()
+    sf.loadInstrument(sf.getCurrentInstrument(), this.ctx).catch(() => {})
+
     return this.ctx
   }
 
   get currentTime(): number {
     return this.ctx?.currentTime ?? 0
+  }
+
+  getInstrument(): InstrumentId {
+    return getSoundfontEngine().getCurrentInstrument()
+  }
+
+  async setInstrument(id: InstrumentId) {
+    getSoundfontEngine().setInstrument(id)
+    if (this.ctx) {
+      await getSoundfontEngine().loadInstrument(id, this.ctx)
+    }
+  }
+
+  isInstrumentLoaded(id?: InstrumentId): boolean {
+    return getSoundfontEngine().isInstrumentLoaded(id ?? getSoundfontEngine().getCurrentInstrument())
   }
 
   setMasterVolume(value: number) {
@@ -86,25 +109,46 @@ class AudioEngine {
     }
   }
 
-  /** Play a set of MIDI notes as a chord with a soft ADSR envelope. */
+  /** Play a set of MIDI notes as a chord with realistic acoustic samples. */
   playChord(midis: number[], options: PlayOptions = {}) {
     if (!this.ctx || !this.master) return
-    const { when = this.ctx.currentTime, duration = 1.2, velocity = 0.8, wave = "triangle" } = options
-    const peak = (0.9 / Math.max(1, midis.length)) * velocity
+    const { when = this.ctx.currentTime, duration = 1.6, velocity = 0.85, wave = "triangle", instrument } = options
+    const peak = (1.0 / Math.max(1, Math.sqrt(midis.length))) * velocity
     for (const midi of midis) {
-      this.playVoice(midi, when, duration, peak, wave)
+      this.playVoice(midi, when, duration, peak, wave, instrument)
     }
   }
 
   /** Play a single MIDI note. */
   playNote(midi: number, options: PlayOptions = {}) {
     if (!this.ctx || !this.master) return
-    const { when = this.ctx.currentTime, duration = 0.9, velocity = 0.8, wave = "triangle" } = options
-    this.playVoice(midi, when, duration, 0.6 * velocity, wave)
+    const { when = this.ctx.currentTime, duration = 1.4, velocity = 0.85, wave = "triangle", instrument } = options
+    this.playVoice(midi, when, duration, velocity, wave, instrument)
   }
 
-  private playVoice(midi: number, when: number, duration: number, peak: number, wave: OscillatorType) {
+  private playVoice(
+    midi: number,
+    when: number,
+    duration: number,
+    peak: number,
+    wave: OscillatorType,
+    instrument?: InstrumentId,
+  ) {
     if (!this.ctx || !this.master) return
+
+    // Try playing real acoustic sampled soundfont
+    const playedSample = getSoundfontEngine().playSample(
+      this.ctx,
+      this.master,
+      midi,
+      when,
+      duration,
+      peak,
+      instrument,
+    )
+    if (playedSample) return
+
+    // Fallback: warm polyphonic harmonic synthesis while samples are loading
     const ctx = this.ctx
     const osc = ctx.createOscillator()
     const sub = ctx.createOscillator()
@@ -125,9 +169,9 @@ class AudioEngine {
 
     // ADSR
     const attack = 0.01
-    const decay = 0.18
+    const decay = 0.22
     const sustain = peak * 0.72
-    const release = 0.35
+    const release = 0.4
     const end = when + duration
 
     gain.gain.setValueAtTime(0.0001, when)

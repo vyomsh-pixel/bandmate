@@ -8,9 +8,16 @@
  */
 
 import { useEffect, useState } from "react"
-import { Play, Square, Repeat, Volume2, Volume1, VolumeX, Timer, Presentation, Plus, Minus } from "lucide-react"
+import { Play, Square, Repeat, Volume2, Volume1, VolumeX, Timer, Presentation, Plus, Minus, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select"
+import { AVAILABLE_INSTRUMENTS, type InstrumentId } from "@/lib/audio/soundfont-engine"
 import { cn } from "@/lib/utils"
 
 interface TransportBarProps {
@@ -21,12 +28,14 @@ interface TransportBarProps {
   loop: boolean
   metronome: boolean
   volume: number
+  instrument?: InstrumentId
   onTogglePlay: () => void
   onBpmChange: (bpm: number) => void
   onToggleLoop: () => void
   onToggleMetronome: () => void
   onToggleRehearsal: () => void
   onVolumeChange: (v: number) => void
+  onInstrumentChange?: (id: InstrumentId) => void
 }
 
 function BpmInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
@@ -99,14 +108,17 @@ export function TransportBar({
   loop,
   metronome,
   volume,
+  instrument = "acoustic_grand_piano",
   onTogglePlay,
   onBpmChange,
   onToggleLoop,
   onToggleMetronome,
   onToggleRehearsal,
   onVolumeChange,
+  onInstrumentChange,
 }: TransportBarProps) {
   const VolumeIcon = volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2
+  const currentInst = AVAILABLE_INSTRUMENTS.find((i) => i.id === instrument) ?? AVAILABLE_INSTRUMENTS[0]
 
   return (
     <div className="flex items-center justify-between gap-2 w-full overflow-x-auto no-scrollbar">
@@ -189,7 +201,42 @@ export function TransportBar({
         <BpmInput value={bpm} onChange={onBpmChange} />
       </div>
 
-      {/* Island 3: Utilities (Metronome, Rehearsal, Volume) */}
+      {/* Island 3: Real Acoustic Instrument Selector */}
+      <div className="flex items-center gap-1.5 rounded-xl border border-border/80 bg-card/70 p-1 shadow-xs backdrop-blur-md shrink-0">
+        <Select value={instrument} onValueChange={(val) => onInstrumentChange?.(val as InstrumentId)}>
+          <SelectTrigger
+            className="h-8.5 w-auto px-2.5 gap-1.5 font-bold text-xs bg-background/50 border-border/80 rounded-lg cursor-pointer hover:border-primary/50 transition-colors"
+            aria-label="Select real sampled acoustic instrument"
+          >
+            <span>{currentInst.icon}</span>
+            <span className="hidden sm:inline">{currentInst.name}</span>
+            <span className="sm:hidden">{currentInst.name.split(" ")[0]}</span>
+          </SelectTrigger>
+          <SelectContent align="center" className="min-w-[230px]">
+            {AVAILABLE_INSTRUMENTS.map((inst) => (
+              <SelectItem key={inst.id} value={inst.id} className="cursor-pointer py-2">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-base">{inst.icon}</span>
+                  <div className="flex flex-col text-left">
+                    <span className="text-xs font-bold text-foreground">{inst.name}</span>
+                    <span className="text-[10px] text-muted-foreground">{inst.description}</span>
+                  </div>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <div
+          className="hidden xl:flex items-center gap-1 px-1.5 py-1 rounded-md bg-amber-400/10 border border-amber-400/20 text-[9px] font-mono font-black text-amber-400 shadow-xs select-none"
+          title="Studio Acoustic Samples active via Soundfont Engine"
+        >
+          <Sparkles className="size-2.5 text-amber-400" />
+          <span>REAL SAMPLES</span>
+        </div>
+      </div>
+
+      {/* Island 4: Utilities (Metronome, Rehearsal, Volume) */}
       <div className="flex items-center gap-1.5 rounded-xl border border-border/80 bg-card/70 p-1 shadow-xs backdrop-blur-md shrink-0">
         {/* Metronome Click */}
         <Button
