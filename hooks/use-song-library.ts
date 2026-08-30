@@ -1,0 +1,226 @@
+"use client"
+
+/**
+ * BandMate — Song library hook.
+ *
+ * Owns the collection of saved songs + the currently-open song, persisting
+ * every change to localStorage. This is the single source of truth the Song
+ * Lab UI reads and writes.
+ */
+
+import { useCallback, useEffect, useState, useRef } from "react"
+import {
+  createId,
+  loadCurrentSongId,
+  loadSongs,
+  saveCurrentSongId,
+  saveSongs,
+} from "@/lib/storage/local-store"
+import type { ChordEntry, Section, Song } from "@/lib/music/types"
+
+function makeDefaultSong(): Song {
+  const now = Date.now()
+  return {
+    id: createId(),
+    title: "Untitled Song",
+    keyTonic: "C",
+    keyMode: "major",
+    bpm: 100,
+    beatsPerBar: 4,
+    sections: [
+      {
+        id: createId(),
+        name: "Verse 1",
+        chords: [
+          { id: createId(), symbol: "C", beats: 4 },
+          { id: createId(), symbol: "G", beats: 4 },
+          { id: createId(), symbol: "Am", beats: 4 },
+          { id: createId(), symbol: "F", beats: 4 },
+        ],
+      }
+    ],
+    createdAt: now,
+    updatedAt: now,
+  }
+}
+
+export function useSongLibrary() {
+  const [songs, setSongs] = useState<Song[]>([])
+  const [currentId, setCurrentId] = useState<string | null>(null)
+  const [loaded, setLoaded] = useState(false)
+  const [undoCount, setUndoCount] = useState(0)
+  const [redoCount, setRedoCount] = useState(0)
+
+  // Undo/redo stacks for the currently active song
+  const undoStack = useRef<Song[]>([])
+  const redoStack = useRef<Song[]>([])
+  const currentSongRef = useRef<Song | null>(null)
+
+  // Hydrate from localStorage on mount.
+  useEffect(() => {
+    const stored = loadSongs()
+    
+    // Migrate old songs that had 'chords' instead of 'sections'
+    const migrated = stored.map(s => {
+      const anySong = s as any
+      if (anySong.chords && !anySong.sections) {
+        return {
+          ...s,
+          sections: [{ id: createId(), name: "Verse 1", chords: anySong.chords }]
+        }
+      }
+      return s
+    }) as Song[]
+
+    if (migrated.length === 0) {
+      const seed = makeDefaultSong()
+      setSongs([seed])
+      setCurrentId(seed.id)
+      saveSongs([seed])
+      saveCurrentSongId(seed.id)
+    } else {
+      setSongs(migrated)
+      const savedId = loadCurrentSongId()
+      const validId = savedId && migrated.some((s) => s.id === savedId) ? savedId : migrated[0].id
+      setCurrentId(validId)
+      saveCurrentSongId(validId)
+    }
+    setLoaded(true)
+  }, [])
+
+  const persist = useCallback((next: Song[]) => {
+    setSongs(next)
+    saveSongs(next)
+  }, [])
+
+  const currentSong = songs.find((s) => s.id === currentId) ?? null
+  
+  // Keep ref in sync for undo/redo
+  useEffect(() => {
+    currentSongRef.current = currentSong
+  }, [currentSong])
+
+  const selectSong = useCallback((id: string) => {
+    setCurrentId(id)
+    saveCurrentSongId(id)
+    undoStack.current = []
+    redoStack.current = []
+    setUndoCount(0)
+    setRedoCount(0)
+  }, [])
+
+  const createSong = useCallback(
+    (partial?: Partial<Song>) => {
+      const base = makeDefaultSong()
+      const song: Song = { ...base, ...partial, id: base.id, createdAt: base.createdAt, updatedAt: base.createdAt }
+      setSongs((prev) => {
+        const next = [song, ...prev]
+        saveSongs(next)
+        return next
+      })
+      setCurrentId(song.id)
+      saveCurrentSongId(song.id)
+      undoStack.current = []
+      redoStack.current = []
+      setUndoCount(0)
+      setRedoCount(0)
+      return song
+    },
+    [],
+  )
+
+  const updateSong = useCallback(
+    (id: string, patch: Partial<Song> | ((song: Song) => Partial<Song>)) => {
+      setSongs((prev) => {
+        const next = prev.map((s) => {
+          if (s.id !== id) return s
+          
+          if (s.id === currentSongRef.current?.id) {
+             undoStack.current = [...undoStack.current, s].slice(-50)
+             redoStack.current = []
+             setUndoCount(undoStack.current.length)
+             setRedoCount(0)
+          }
+
+          const changes = typeof patch === "function" ? patch(s) : patch
+          return { ...s, ...changes, id: s.id, updatedAt: Date.now() }
+        })
+        saveSongs(next)
+        return next
+      })
+    },
+    [],
+  )
+
+  const undo = useCallback(() => {
+    if (undoStack.current.length === 0 || !currentSongRef.current) return
+    const prev = undoStack.current.pop()!
+    redoStack.current.push(currentSongRef.current)
+    setUndoCount(undoStack.current.length)
+    setRedoCount(redoStack.current.length)
+    
+    setSongs((songs) => {
+      const next = songs.map(s => s.id === prev.id ? prev : s)
+      saveSongs(next)
+      return next
+    })
+  }, [])
+
+  const redo = useCallback(() => {
+    if (redoStack.current.length === 0 || !currentSongRef.current) return
+    const nextState = redoStack.current.pop()!
+    undoStack.current.push(currentSongRef.current)
+    setUndoCount(undoStack.current.length)
+    setRedoCount(redoStack.current.length)
+    
+    setSongs((songs) => {
+      const next = songs.map(s => s.id === nextState.id ? nextState : s)
+      saveSongs(next)
+      return next
+    })
+  }, [])
+
+  const deleteSong = useCallback(
+    (id: string) => {
+      setSongs((prev) => {
+        const next = prev.filter((s) => s.id !== id)
+        const finalList = next.length === 0 ? [makeDefaultSong()] : next
+        saveSongs(finalList)
+        setCurrentId((curr) => {
+          if (curr !== id) return curr
+          const newId = finalList[0].id
+          saveCurrentSongId(newId)
+          return newId
+        })
+        undoStack.current = []
+        redoStack.current = []
+        setUndoCount(0)
+        setRedoCount(0)
+        return finalList
+      })
+    },
+    [],
+  )
+
+  // Convenience helpers for sections editing.
+  const setSections = useCallback(
+    (id: string, sections: Section[]) => updateSong(id, { sections }),
+    [updateSong],
+  )
+
+  return {
+    loaded,
+    songs,
+    currentSong,
+    currentId,
+    selectSong,
+    createSong,
+    updateSong,
+    deleteSong,
+    setSections,
+    undo,
+    redo,
+    canUndo: undoCount > 0,
+    canRedo: redoCount > 0,
+  }
+}
