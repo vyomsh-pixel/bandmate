@@ -54,13 +54,16 @@ export function SongLibraryBar({
   return (
     <header className="flex h-14 shrink-0 items-center justify-between border-b border-border/80 bg-card/70 px-4 backdrop-blur-md gap-3">
       {/* Left: Project Selector & Inline Title Edit */}
-      <div className="flex items-center gap-2.5 min-w-0">
+      <div className="flex items-center gap-2 min-w-0">
         <Select value={currentId ?? ""} onValueChange={(v) => v && onSelect(v)}>
           <SelectTrigger
-            className="h-8.5 w-44 sm:w-52 border-border/80 bg-background/60 font-semibold text-xs text-foreground hover:border-border transition-colors rounded-xl"
+            className="h-8.5 w-auto px-3 border-border/80 bg-background/60 font-semibold text-xs text-foreground hover:border-border transition-colors rounded-xl gap-2 cursor-pointer"
             aria-label="Select active song"
           >
-            <span className="truncate text-left">{currentSong?.title || "Untitled Song"}</span>
+            <Music className="size-3.5 text-primary shrink-0" aria-hidden="true" />
+            <span className="font-mono text-[11px] text-muted-foreground">
+              Tracks <span className="text-foreground font-bold">({songs.length})</span>
+            </span>
           </SelectTrigger>
           <SelectContent align="start" className="min-w-[240px]">
             {songs.map((s) => (
@@ -80,8 +83,8 @@ export function SongLibraryBar({
           <Input
             value={currentSong.title}
             onChange={(e) => onTitleChange(e.target.value)}
-            className="h-8.5 w-36 sm:w-48 border-border/60 bg-background/40 px-2.5 text-xs font-bold text-foreground focus-visible:ring-1 focus-visible:ring-primary rounded-xl"
-            placeholder="Rename track..."
+            className="h-8.5 w-40 sm:w-56 border-border/60 bg-background/50 px-3 text-xs font-black text-foreground focus-visible:ring-1 focus-visible:ring-primary rounded-xl"
+            placeholder="Track title..."
             aria-label="Rename song track"
           />
         )}

@@ -84,8 +84,8 @@ export function ProgressionEditor({
                 <div className="h-px flex-1 bg-border/60" />
               </div>
 
-              {/* Grid of Chord Cards */}
-              <div className="flex flex-wrap gap-3.5">
+              {/* Grid / Timeline of Chord Cards */}
+              <div className="flex items-stretch gap-3 overflow-x-auto pb-2.5 pt-1 no-scrollbar scrollbar-thin">
                 {section.chords.map((entry, idxWithinSection) => {
                   const globalIdx = startIndex + idxWithinSection
                   const parsed = parseChord(entry.symbol)
@@ -100,7 +100,7 @@ export function ProgressionEditor({
                       data-index={globalIdx}
                       onClick={() => onSelect(entry.id)}
                       className={cn(
-                        "group relative flex w-36 flex-col justify-between rounded-2xl border p-3.5 transition-all duration-150 cursor-pointer select-none",
+                        "group relative flex w-32 sm:w-34 shrink-0 flex-col justify-between rounded-2xl border p-3 transition-all duration-150 cursor-pointer select-none",
                         "bg-card/80 backdrop-blur-md shadow-sm",
                         selected
                           ? "border-primary bg-primary/10 ring-2 ring-primary/40 shadow-md shadow-primary/10 -translate-y-0.5"
@@ -113,7 +113,7 @@ export function ProgressionEditor({
                         <div className="flex items-center gap-1.5">
                           <span
                             className={cn(
-                              "flex size-5 items-center justify-center rounded-full font-mono text-[10px] font-bold",
+                              "flex size-4.5 items-center justify-center rounded-full font-mono text-[9px] font-bold",
                               active
                                 ? "bg-amber-400 text-black font-extrabold"
                                 : selected
@@ -128,7 +128,7 @@ export function ProgressionEditor({
                           {harm.roman && (
                             <span
                               className={cn(
-                                "rounded-md border px-1.5 py-0.5 font-mono text-[10px] font-bold tracking-tight",
+                                "rounded-md border px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-tight",
                                 harm.badgeColor,
                               )}
                             >
@@ -147,7 +147,7 @@ export function ProgressionEditor({
                               e.stopPropagation()
                               onMove(entry.id, -1)
                             }}
-                            className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-20"
+                            className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-20"
                             disabled={idxWithinSection === 0}
                           >
                             <ChevronLeft className="size-3" />
@@ -160,7 +160,7 @@ export function ProgressionEditor({
                               e.stopPropagation()
                               onMove(entry.id, 1)
                             }}
-                            className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-20"
+                            className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-20"
                             disabled={idxWithinSection === section.chords.length - 1}
                           >
                             <ChevronRight className="size-3" />
@@ -173,7 +173,7 @@ export function ProgressionEditor({
                               e.stopPropagation()
                               onRemove(entry.id)
                             }}
-                            className="rounded p-1 text-muted-foreground hover:bg-destructive/20 hover:text-destructive"
+                            className="rounded p-0.5 text-muted-foreground hover:bg-destructive/20 hover:text-destructive"
                           >
                             <X className="size-3" />
                           </button>
@@ -181,7 +181,7 @@ export function ProgressionEditor({
                       </div>
 
                       {/* Large Hero Chord Symbol */}
-                      <div className="my-2.5">
+                      <div className="my-2">
                         <input
                           value={entry.symbol}
                           onChange={(e) => onUpdate(entry.id, { symbol: e.target.value })}
@@ -189,7 +189,7 @@ export function ProgressionEditor({
                           aria-label={`Chord ${globalIdx + 1} symbol`}
                           spellCheck={false}
                           className={cn(
-                            "w-full bg-transparent font-mono text-3xl font-black tracking-tight outline-hidden transition-colors",
+                            "w-full bg-transparent font-mono text-2xl sm:text-3xl font-black tracking-tight outline-hidden transition-colors",
                             invalid
                               ? "text-destructive"
                               : active
@@ -197,15 +197,15 @@ export function ProgressionEditor({
                                 : "text-foreground",
                           )}
                         />
-                        <div className="flex items-center justify-between text-[11px] font-semibold text-muted-foreground mt-0.5">
+                        <div className="flex items-center justify-between text-[10px] font-semibold text-muted-foreground mt-0.5">
                           <span className="truncate">{parsed.valid ? parsed.qualityLabel : invalid ? "Unknown" : "Triad"}</span>
-                          <span className="text-[10px] font-mono opacity-80">{harm.label}</span>
+                          <span className="font-mono opacity-80">{harm.label}</span>
                         </div>
                       </div>
 
                       {/* Beats Stepper */}
                       <div className="flex items-center justify-between rounded-xl bg-background/60 px-2 py-1 border border-border/50 shadow-inner">
-                        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
                           Beats
                         </span>
                         <div className="flex items-center gap-1">
@@ -216,11 +216,11 @@ export function ProgressionEditor({
                               e.stopPropagation()
                               onUpdate(entry.id, { beats: Math.max(1, entry.beats - 1) })
                             }}
-                            className="flex size-4.5 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
+                            className="flex size-4 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
                           >
-                            <Minus className="size-3" />
+                            <Minus className="size-2.5" />
                           </button>
-                          <span className="w-4 text-center font-mono text-xs font-bold tabular-nums text-foreground">
+                          <span className="w-3.5 text-center font-mono text-xs font-bold tabular-nums text-foreground">
                             {entry.beats}
                           </span>
                           <button
@@ -230,9 +230,9 @@ export function ProgressionEditor({
                               e.stopPropagation()
                               onUpdate(entry.id, { beats: Math.min(16, entry.beats + 1) })
                             }}
-                            className="flex size-4.5 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
+                            className="flex size-4 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
                           >
-                            <Plus className="size-3" />
+                            <Plus className="size-2.5" />
                           </button>
                         </div>
                       </div>
@@ -244,11 +244,11 @@ export function ProgressionEditor({
                 <button
                   type="button"
                   onClick={() => onAdd(key.tonic)}
-                  className="flex h-38 w-36 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border/80 bg-card/20 text-muted-foreground transition-all hover:border-primary/60 hover:bg-primary/5 hover:text-primary hover:scale-[1.02] cursor-pointer"
+                  className="flex w-28 sm:w-32 shrink-0 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border/80 bg-card/20 text-muted-foreground transition-all hover:border-primary/60 hover:bg-primary/5 hover:text-primary hover:scale-[1.02] cursor-pointer"
                   aria-label="Add chord to section"
                 >
-                  <div className="flex size-9 items-center justify-center rounded-xl bg-muted/60">
-                    <Plus className="size-4.5" />
+                  <div className="flex size-8 items-center justify-center rounded-xl bg-muted/60">
+                    <Plus className="size-4" />
                   </div>
                   <span className="text-xs font-bold">Add Chord</span>
                 </button>

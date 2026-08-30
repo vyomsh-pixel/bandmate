@@ -109,14 +109,14 @@ export function TransportBar({
   const VolumeIcon = volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="flex items-center justify-between gap-2 w-full overflow-x-auto no-scrollbar">
       {/* Island 1: Transport Core (Play/Stop, Beat Lights, Loop) */}
-      <div className="flex items-center gap-2 rounded-2xl border border-border/80 bg-card/70 p-1.5 shadow-xs backdrop-blur-md">
+      <div className="flex items-center gap-1.5 rounded-xl border border-border/80 bg-card/70 p-1 shadow-xs backdrop-blur-md shrink-0">
         <Button
           onClick={onTogglePlay}
-          size="lg"
+          size="sm"
           className={cn(
-            "size-11 rounded-xl p-0 shadow-md transition-all duration-150 cursor-pointer",
+            "size-8.5 rounded-lg p-0 shadow-md transition-all duration-150 cursor-pointer",
             isPlaying
               ? "bg-rose-600 text-white hover:bg-rose-500 shadow-rose-950/40 animate-pulse"
               : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/20",
@@ -125,15 +125,15 @@ export function TransportBar({
           title={isPlaying ? "Stop (Space)" : "Play (Space)"}
         >
           {isPlaying ? (
-            <Square className="size-4 fill-current" />
+            <Square className="size-3.5 fill-current" />
           ) : (
-            <Play className="size-4 fill-current ml-0.5" />
+            <Play className="size-3.5 fill-current ml-0.5" />
           )}
         </Button>
 
         {/* LED Beat Bars */}
         <div
-          className="flex h-11 w-32 items-center gap-1.5 rounded-xl border border-border/60 bg-background/50 p-2 shadow-inner"
+          className="flex h-8.5 w-24 items-center gap-1 rounded-lg border border-border/60 bg-background/50 p-1.5 shadow-inner"
           role="status"
           aria-label={isPlaying ? `Beat ${(currentBeat ?? 0) + 1} of ${beatsPerBar}` : "Playback stopped"}
         >
@@ -147,7 +147,7 @@ export function TransportBar({
               <div
                 key={i}
                 className={cn(
-                  "h-full flex-1 rounded-sm transition-all duration-75 relative overflow-hidden",
+                  "h-full flex-1 rounded-xs transition-all duration-75 relative overflow-hidden",
                   isActive
                     ? isCountIn
                       ? "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]"
@@ -173,38 +173,38 @@ export function TransportBar({
           size="sm"
           onClick={onToggleLoop}
           className={cn(
-            "h-11 rounded-xl px-3 font-semibold text-xs transition-all",
+            "h-8.5 rounded-lg px-2.5 font-bold text-xs transition-all cursor-pointer",
             !loop && "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
           )}
           aria-pressed={loop}
           title="Toggle Loop Playback (L)"
         >
           <Repeat className="size-3.5" />
-          <span className="hidden md:inline">Loop</span>
+          <span className="hidden xl:inline text-[11px]">Loop</span>
         </Button>
       </div>
 
       {/* Island 2: Tempo Section */}
-      <div className="flex items-center rounded-2xl border border-border/80 bg-card/70 p-1.5 shadow-xs backdrop-blur-md">
+      <div className="flex items-center rounded-xl border border-border/80 bg-card/70 p-1 shadow-xs backdrop-blur-md shrink-0">
         <BpmInput value={bpm} onChange={onBpmChange} />
       </div>
 
       {/* Island 3: Utilities (Metronome, Rehearsal, Volume) */}
-      <div className="flex items-center gap-2 rounded-2xl border border-border/80 bg-card/70 p-1.5 shadow-xs backdrop-blur-md">
+      <div className="flex items-center gap-1.5 rounded-xl border border-border/80 bg-card/70 p-1 shadow-xs backdrop-blur-md shrink-0">
         {/* Metronome Click */}
         <Button
           variant={metronome ? "default" : "ghost"}
           size="sm"
           onClick={onToggleMetronome}
           className={cn(
-            "h-10 rounded-xl px-3 text-xs font-semibold shadow-xs transition-all",
+            "h-8.5 rounded-lg px-2.5 text-xs font-bold shadow-xs transition-all cursor-pointer",
             !metronome && "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
           )}
           aria-pressed={metronome}
           title="Toggle Metronome Click (M)"
         >
           <Timer className="size-3.5" />
-          <span className="hidden sm:inline">Click</span>
+          <span className="hidden md:inline text-[11px]">Click</span>
         </Button>
 
         {/* Fullscreen Rehearsal Mode */}
@@ -212,25 +212,25 @@ export function TransportBar({
           variant="ghost"
           size="sm"
           onClick={onToggleRehearsal}
-          className="h-10 rounded-xl px-3 text-xs font-semibold text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+          className="h-8.5 rounded-lg px-2.5 text-xs font-bold text-muted-foreground hover:bg-muted/60 hover:text-foreground cursor-pointer"
           title="Open Fullscreen Rehearsal Mode"
         >
           <Presentation className="size-3.5" />
-          <span className="hidden sm:inline">Rehearse</span>
+          <span className="hidden md:inline text-[11px]">Rehearse</span>
         </Button>
 
-        <div className="h-6 w-px bg-border/80" />
+        <div className="h-5 w-px bg-border/80" />
 
         {/* Master Volume Slider */}
-        <div className="flex items-center gap-2 px-2">
-          <VolumeIcon className="size-4 text-muted-foreground shrink-0" aria-hidden="true" />
+        <div className="flex items-center gap-1.5 px-1.5">
+          <VolumeIcon className="size-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
           <Slider
             value={[volume]}
             min={0}
             max={1}
             step={0.01}
             onValueChange={(v) => onVolumeChange(Array.isArray(v) ? v[0] : v)}
-            className="w-16 sm:w-20"
+            className="w-14 sm:w-16"
             aria-label={`Master volume ${(volume * 100).toFixed(0)}%`}
           />
         </div>
