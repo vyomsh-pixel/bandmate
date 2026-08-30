@@ -73,8 +73,13 @@ class AudioEngine {
       const Ctor = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
       this.ctx = new Ctor()
       this.master = this.ctx.createGain()
-      this.master.gain.value = 0.6
+      this.master.gain.value = 1.0
       const compressor = this.ctx.createDynamicsCompressor()
+      compressor.threshold.value = -16
+      compressor.knee.value = 12
+      compressor.ratio.value = 4
+      compressor.attack.value = 0.003
+      compressor.release.value = 0.15
       this.master.connect(compressor)
       compressor.connect(this.ctx.destination)
     }
@@ -116,8 +121,8 @@ class AudioEngine {
   playChord(midis: number[], options: PlayOptions = {}) {
     if (!this.ctx || !this.master) return
     const currentInst = options.instrument ?? this.getInstrument()
-    const { when = this.ctx.currentTime, duration = 1.6, velocity = 0.85, wave = "triangle" } = options
-    const peak = (1.0 / Math.max(1, Math.sqrt(midis.length))) * velocity
+    const { when = this.ctx.currentTime, duration = 1.6, velocity = 0.95, wave = "triangle" } = options
+    const peak = (1.35 / Math.pow(Math.max(1, midis.length), 0.35)) * velocity
     for (const midi of midis) {
       this.playVoice(midi, when, duration, peak, wave, currentInst)
     }
@@ -127,8 +132,8 @@ class AudioEngine {
   playNote(midi: number, options: PlayOptions = {}) {
     if (!this.ctx || !this.master) return
     const currentInst = options.instrument ?? this.getInstrument()
-    const { when = this.ctx.currentTime, duration = 1.4, velocity = 0.85, wave = "triangle" } = options
-    this.playVoice(midi, when, duration, velocity, wave, currentInst)
+    const { when = this.ctx.currentTime, duration = 1.4, velocity = 0.95, wave = "triangle" } = options
+    this.playVoice(midi, when, duration, velocity * 1.3, wave, currentInst)
   }
 
   private playVoice(
@@ -172,19 +177,19 @@ class AudioEngine {
     sub.type = targetInst === "synth_8bit" ? "square" : "sine"
     sub.frequency.value = freq / 2
     const subGain = ctx.createGain()
-    subGain.gain.value = targetInst === "synth_8bit" ? 0.2 : 0.35
+    subGain.gain.value = targetInst === "synth_8bit" ? 0.3 : 0.45
 
     // ADSR
     const attack = targetInst === "synth_8bit" ? 0.002 : 0.01
     const decay = 0.22
-    const sustain = peak * 0.72
+    const sustain = peak * 0.85
     const release = targetInst === "synth_8bit" ? 0.15 : 0.4
     const end = when + duration
 
     gain.gain.setValueAtTime(0.0001, when)
-    gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, peak), when + attack)
-    gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, sustain), when + attack + decay)
-    gain.gain.setValueAtTime(Math.max(0.0001, sustain), Math.max(when + attack + decay, end - release))
+    gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, peak * 1.35), when + attack)
+    gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, sustain * 1.35), when + attack + decay)
+    gain.gain.setValueAtTime(Math.max(0.0001, sustain * 1.35), Math.max(when + attack + decay, end - release))
     gain.gain.exponentialRampToValueAtTime(0.0001, end + release)
 
     osc.connect(gain)
@@ -207,7 +212,7 @@ class AudioEngine {
     const gain = ctx.createGain()
     osc.type = "square"
     osc.frequency.value = accent ? 2000 : 1200
-    const peak = accent ? 0.28 : 0.16
+    const peak = accent ? 0.38 : 0.22
     gain.gain.setValueAtTime(0.0001, when)
     gain.gain.exponentialRampToValueAtTime(peak, when + 0.001)
     gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.05)

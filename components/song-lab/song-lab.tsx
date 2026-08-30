@@ -29,6 +29,7 @@ import { createId } from "@/lib/storage/local-store"
 import type { ChordEntry, Section, Song } from "@/lib/music/types"
 import { Button } from "@/components/ui/button"
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts"
+import { cn } from "@/lib/utils"
 
 interface SongLabProps {
   song: Song
@@ -57,10 +58,60 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
   const [currentBeat, setCurrentBeat] = useState<number | null>(null)
   const [metronome, setMetronome] = useState(true)
   const [loop, setLoop] = useState(true)
-  const [volume, setVolume] = useState(0.6)
+  const [volume, setVolume] = useState(0.85)
   const [instrument, setInstrumentState] = useState<InstrumentId>("acoustic_grand_piano")
   const [rhythm, setRhythm] = useState<RhythmPattern>("pulse")
   const [isRehearsing, setIsRehearsing] = useState(false)
+
+  // Resizable panel dimensions
+  const [leftWidth, setLeftWidth] = useState(210)
+  const [rightWidth, setRightWidth] = useState(290)
+  const [isDraggingLeft, setIsDraggingLeft] = useState(false)
+  const [isDraggingRight, setIsDraggingRight] = useState(false)
+
+  const startResizeLeft = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    setIsDraggingLeft(true)
+    const startX = e.clientX
+    const startW = leftWidth
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      const delta = moveEvent.clientX - startX
+      const nextW = Math.max(140, Math.min(420, startW + delta))
+      setLeftWidth(nextW)
+    }
+
+    const onMouseUp = () => {
+      setIsDraggingLeft(false)
+      window.removeEventListener("mousemove", onMouseMove)
+      window.removeEventListener("mouseup", onMouseUp)
+    }
+
+    window.addEventListener("mousemove", onMouseMove)
+    window.addEventListener("mouseup", onMouseUp)
+  }, [leftWidth])
+
+  const startResizeRight = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    setIsDraggingRight(true)
+    const startX = e.clientX
+    const startW = rightWidth
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      const delta = startX - moveEvent.clientX
+      const nextW = Math.max(200, Math.min(500, startW + delta))
+      setRightWidth(nextW)
+    }
+
+    const onMouseUp = () => {
+      setIsDraggingRight(false)
+      window.removeEventListener("mousemove", onMouseMove)
+      window.removeEventListener("mouseup", onMouseUp)
+    }
+
+    window.addEventListener("mousemove", onMouseMove)
+    window.addEventListener("mouseup", onMouseUp)
+  }, [rightWidth])
 
   const accidental = useMemo(() => keyAccidental(song.keyTonic, song.keyMode), [song.keyTonic, song.keyMode])
 
@@ -365,9 +416,12 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
   return (
     <div className="flex h-full flex-col bg-background overflow-hidden">
       {/* Main Workspace Panels */}
-      <div className="flex flex-1 flex-col lg:flex-row overflow-hidden min-h-0">
+      <div className={cn("flex flex-1 flex-col lg:flex-row overflow-hidden min-h-0", (isDraggingLeft || isDraggingRight) && "select-none")}>
         {/* Left Panel: Sections / Navigator */}
-        <div className="hidden lg:flex w-52 flex-col justify-between border-r border-border/80 bg-card/30 p-3 shrink-0 overflow-y-auto">
+        <div
+          style={{ width: `${leftWidth}px` }}
+          className="hidden lg:flex flex-col justify-between border-r border-border/80 bg-card/30 p-3 shrink-0 overflow-y-auto"
+        >
           <div>
             <div className="mb-2.5 flex items-center justify-between">
               <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -453,6 +507,12 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
                   </kbd>
                 </div>
                 <div className="flex items-center justify-between">
+                  <span>Repeat Chord</span>
+                  <kbd className="rounded bg-muted px-1 py-0.5 font-mono text-[9px] font-bold text-foreground">
+                    D / R
+                  </kbd>
+                </div>
+                <div className="flex items-center justify-between">
                   <span>Select Next</span>
                   <kbd className="rounded bg-muted px-1 py-0.5 font-mono text-[9px] font-bold text-foreground">
                     ← →
@@ -461,6 +521,19 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Left Draggable Resizer */}
+        <div
+          onMouseDown={startResizeLeft}
+          className={cn(
+            "hidden lg:flex w-1.5 shrink-0 cursor-col-resize items-center justify-center relative z-20 group transition-colors select-none",
+            "hover:bg-primary/40 active:bg-primary/70",
+            isDraggingLeft && "bg-primary/70",
+          )}
+          title="Drag left/right to resize Sections panel"
+        >
+          <div className="h-8 w-0.5 rounded-full bg-border/80 group-hover:bg-primary group-hover:h-12 group-hover:w-1 transition-all" />
         </div>
 
         {/* Center Panel: Transport + Timeline + Editor + Keyboard */}
@@ -516,8 +589,24 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
           )}
         </div>
 
+        {/* Right Draggable Resizer */}
+        <div
+          onMouseDown={startResizeRight}
+          className={cn(
+            "hidden lg:flex w-1.5 shrink-0 cursor-col-resize items-center justify-center relative z-20 group transition-colors select-none",
+            "hover:bg-primary/40 active:bg-primary/70",
+            isDraggingRight && "bg-primary/70",
+          )}
+          title="Drag left/right to resize Inspector panel"
+        >
+          <div className="h-8 w-0.5 rounded-full bg-border/80 group-hover:bg-primary group-hover:h-12 group-hover:w-1 transition-all" />
+        </div>
+
         {/* Right Panel: Inspector */}
-        <div className="w-full lg:w-72 border-l border-border/80 lg:border-t-0 border-t bg-card/30 p-3.5 shrink-0 overflow-y-auto">
+        <div
+          style={{ width: `${rightWidth}px` }}
+          className="w-full lg:w-auto border-l border-border/80 lg:border-t-0 border-t bg-card/30 p-3.5 shrink-0 overflow-y-auto"
+        >
           <div className="mb-2.5 flex items-center justify-between">
             <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Inspector

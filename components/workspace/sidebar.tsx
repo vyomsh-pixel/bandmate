@@ -1,6 +1,7 @@
 import { MODULES } from "./modules"
 import { cn } from "@/lib/utils"
-import { Music2, Sparkles, Layers } from "lucide-react"
+import { Sparkles, Layers } from "lucide-react"
+import { TrebleClefIcon } from "@/components/ui/treble-clef-icon"
 
 interface SidebarProps {
   active: string
@@ -17,7 +18,7 @@ export function Sidebar({ active, onSelect }: SidebarProps) {
         {/* Brand Header */}
         <div className="mb-6 flex items-center gap-3 px-1 md:px-2">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-black shadow-md shadow-amber-500/20">
-            <Music2 className="size-5 fill-current" aria-hidden="true" />
+            <TrebleClefIcon className="size-5.5 fill-current" />
           </div>
           <div className="hidden flex-col leading-tight md:flex">
             <span className="font-mono text-sm font-bold tracking-tight text-foreground">BandMate</span>
