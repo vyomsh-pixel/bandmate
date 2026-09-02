@@ -15,11 +15,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Plus, MoreVertical, Trash2, Music, ChevronDown, ChevronUp, Piano } from "lucide-react"
+import { Plus, MoreVertical, Trash2, Music, ChevronDown, ChevronUp, Piano, Sparkles } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { MAJOR_TONICS, MINOR_TONICS } from "@/lib/music/scales"
 import { cn } from "@/lib/utils"
+import { TrebleClefIcon } from "@/components/ui/treble-clef-icon"
+import { MODULES } from "./modules"
 
 interface SongLibraryBarProps {
   songs: Song[]
@@ -33,6 +35,8 @@ interface SongLibraryBarProps {
   onTranspose?: (semitones: number) => void
   showPiano?: boolean
   onTogglePiano?: () => void
+  activeModule?: string
+  onSelectModule?: (id: string) => void
 }
 
 export function SongLibraryBar({
@@ -47,14 +51,118 @@ export function SongLibraryBar({
   onTranspose,
   showPiano,
   onTogglePiano,
+  activeModule = "song-lab",
+  onSelectModule,
 }: SongLibraryBarProps) {
   const currentSong = songs.find((s) => s.id === currentId) ?? songs[0]
   const tonics = currentSong?.keyMode === "minor" ? MINOR_TONICS : MAJOR_TONICS
+  const currentModule = MODULES.find((m) => m.id === activeModule) ?? MODULES[0]
+  const activeModules = MODULES.filter((m) => m.available)
+  const upcomingModules = MODULES.filter((m) => !m.available)
 
   return (
     <header className="flex h-14 shrink-0 items-center justify-between border-b border-border/80 bg-card/70 px-2.5 sm:px-4 backdrop-blur-md gap-2 sm:gap-3 overflow-x-auto no-scrollbar">
-      {/* Left: Project Selector & Inline Title Edit */}
+      {/* Left: Studio Module Menu + Project Selector + Title Edit */}
       <div className="flex items-center gap-2 min-w-0">
+        {/* Studio Brand & Module Switcher Menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="flex items-center gap-2 rounded-xl border border-border/80 bg-background/70 px-2.5 py-1 text-xs font-bold shadow-xs hover:border-primary/50 hover:bg-muted/80 transition-all cursor-pointer shrink-0 group focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-primary"
+              aria-label="Open Workspace Modules Menu"
+              title="Switch Studio Module or View Roadmap"
+            >
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 text-black shadow-xs group-hover:scale-105 transition-transform">
+                <TrebleClefIcon className="size-4.5 fill-current" />
+              </div>
+              <div className="flex flex-col text-left leading-tight">
+                <span className="font-mono text-xs font-black tracking-tight text-foreground flex items-center gap-1">
+                  BandMate
+                </span>
+                <span className="text-[10px] font-semibold text-primary font-mono uppercase">
+                  {currentModule.name}
+                </span>
+              </div>
+              <ChevronDown className="size-3.5 text-muted-foreground group-hover:text-foreground transition-colors ml-0.5" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-64 p-2 z-50">
+            <div className="px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
+              Studio Modules
+            </div>
+            {activeModules.map((mod) => {
+              const Icon = mod.icon
+              const isActive = mod.id === activeModule
+              return (
+                <DropdownMenuItem
+                  key={mod.id}
+                  onClick={() => onSelectModule?.(mod.id)}
+                  className={cn(
+                    "flex items-start gap-2.5 p-2 rounded-xl cursor-pointer transition-colors mb-1",
+                    isActive ? "bg-primary/15 text-primary" : "hover:bg-muted",
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "p-1.5 rounded-lg shrink-0 mt-0.5",
+                      isActive ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground",
+                    )}
+                  >
+                    <Icon className="size-4" />
+                  </div>
+                  <div className="flex flex-col flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-foreground">{mod.name}</span>
+                      {isActive && (
+                        <Badge variant="default" className="text-[9px] font-mono px-1.5 py-0 h-4 bg-primary text-primary-foreground">
+                          Active
+                        </Badge>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-muted-foreground line-clamp-1">{mod.description}</span>
+                  </div>
+                </DropdownMenuItem>
+              )
+            })}
+
+            <div className="my-1.5 h-px bg-border/60" />
+
+            <div className="flex items-center justify-between px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <Sparkles className="size-3 text-primary" />
+                Roadmap
+              </span>
+              <span className="text-[9px] opacity-70">Coming Soon</span>
+            </div>
+
+            {upcomingModules.map((mod) => {
+              const Icon = mod.icon
+              return (
+                <div
+                  key={mod.id}
+                  className="flex items-start gap-2.5 p-2 rounded-xl opacity-60 hover:opacity-80 transition-opacity"
+                >
+                  <div className="p-1.5 rounded-lg bg-muted text-muted-foreground shrink-0 mt-0.5">
+                    <Icon className="size-4" />
+                  </div>
+                  <div className="flex flex-col flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-foreground">{mod.name}</span>
+                      <span className="text-[9px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded-xs">
+                        Phase {mod.phase}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground line-clamp-1">{mod.description}</span>
+                  </div>
+                </div>
+              )
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <div className="h-6 w-px bg-border/60 shrink-0" />
+
         <Select value={currentId ?? ""} onValueChange={(v) => v && onSelect(v)}>
           <SelectTrigger
             className="h-8.5 w-auto px-3 border-border/80 bg-background/60 font-semibold text-xs text-foreground hover:border-border transition-colors rounded-xl gap-2 cursor-pointer"
