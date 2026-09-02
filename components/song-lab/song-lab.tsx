@@ -40,6 +40,8 @@ interface SongLabProps {
   canUndo: boolean
   canRedo: boolean
   showPiano?: boolean
+  showInspector?: boolean
+  onToggleInspector?: () => void
 }
 
 /** Pick the tonic spelling (from the mode's option list) for a pitch class. */
@@ -49,7 +51,17 @@ function tonicForPc(pc: number, mode: "major" | "minor"): string {
   return match ?? pcToName(pc, "sharp")
 }
 
-export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPiano = true }: SongLabProps) {
+export function SongLab({
+  song,
+  onUpdate,
+  undo,
+  redo,
+  canUndo,
+  canRedo,
+  showPiano = true,
+  showInspector = true,
+  onToggleInspector,
+}: SongLabProps) {
   const allChords = useMemo(() => song.sections.flatMap((s) => s.chords), [song.sections])
 
   const [selectedId, setSelectedId] = useState<string | null>(allChords[0]?.id ?? null)
@@ -398,6 +410,9 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
       if (e.metaKey || e.ctrlKey) {
         redo()
       }
+    },
+    i: () => {
+      onToggleInspector?.()
     }
   })
 
@@ -611,6 +626,12 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
                   </kbd>
                 </div>
                 <div className="flex items-center justify-between">
+                  <span>Inspector</span>
+                  <kbd className="rounded bg-muted px-1 py-0.5 font-mono text-[9px] font-bold text-foreground">
+                    I
+                  </kbd>
+                </div>
+                <div className="flex items-center justify-between">
                   <span>Select Next</span>
                   <kbd className="rounded bg-muted px-1 py-0.5 font-mono text-[9px] font-bold text-foreground">
                     ← →
@@ -690,31 +711,50 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
         </div>
 
         {/* Right Draggable Resizer */}
-        <div
-          onMouseDown={startResizeRight}
-          className={cn(
-            "hidden lg:flex w-1.5 shrink-0 cursor-col-resize items-center justify-center relative z-20 group transition-colors select-none",
-            "hover:bg-primary/40 active:bg-primary/70",
-            isDraggingRight && "bg-primary/70",
-          )}
-          title="Drag left/right to resize Inspector panel"
-        >
-          <div className="h-8 w-0.5 rounded-full bg-border/80 group-hover:bg-primary group-hover:h-12 group-hover:w-1 transition-all" />
-        </div>
+        {showInspector && (
+          <div
+            onMouseDown={startResizeRight}
+            className={cn(
+              "hidden lg:flex w-1.5 shrink-0 cursor-col-resize items-center justify-center relative z-20 group transition-colors select-none",
+              "hover:bg-primary/40 active:bg-primary/70",
+              isDraggingRight && "bg-primary/70",
+            )}
+            title="Drag left/right to resize Inspector panel"
+          >
+            <div className="h-8 w-0.5 rounded-full bg-border/80 group-hover:bg-primary group-hover:h-12 group-hover:w-1 transition-all" />
+          </div>
+        )}
 
         {/* Right Panel: Inspector */}
         <div
           className={cn(
             "border-l border-border/80 lg:border-t-0 border-t bg-card/30 p-3.5 shrink-0 overflow-y-auto",
-            mobileTab === "inspector" ? "flex flex-col flex-1 w-full" : "hidden lg:block",
+            mobileTab === "inspector"
+              ? "flex flex-col flex-1 w-full"
+              : showInspector
+                ? "hidden lg:block"
+                : "hidden",
           )}
-          style={{ width: typeof window !== "undefined" && window.innerWidth >= 1024 ? `${rightWidth}px` : undefined }}
+          style={{ width: typeof window !== "undefined" && window.innerWidth >= 1024 && showInspector ? `${rightWidth}px` : undefined }}
         >
           <div className="mb-2.5 flex items-center justify-between">
-            <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Inspector
-            </h3>
-            <span className="font-mono text-[10px] text-muted-foreground/80">Chord Voice</span>
+            <div className="flex items-center gap-1.5">
+              <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Inspector
+              </h3>
+              <span className="font-mono text-[10px] text-muted-foreground/80">Chord Voice</span>
+            </div>
+            {onToggleInspector && (
+              <button
+                type="button"
+                onClick={onToggleInspector}
+                className="hidden lg:flex rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer transition-colors"
+                title="Close Inspector (I)"
+                aria-label="Close Inspector"
+              >
+                <X className="size-3.5" />
+              </button>
+            )}
           </div>
           <ChordDetail
             chord={parsedSelected}

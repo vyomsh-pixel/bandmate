@@ -13,12 +13,14 @@ import { keyAccidental } from "@/lib/music/scales"
 export function Workspace() {
   const [activeModule, setActiveModule] = useState("song-lab")
   const [showPiano, setShowPiano] = useState(false)
+  const [showInspector, setShowInspector] = useState(true)
   const lib = useSongLibrary()
 
   // On desktop screens (>= 1024px), show piano by default; on mobile, keep collapsed for maximum space
   useEffect(() => {
     if (typeof window !== "undefined" && window.innerWidth >= 1024) {
       setShowPiano(true)
+      setShowInspector(true)
     }
   }, [])
 
@@ -63,6 +65,8 @@ export function Workspace() {
           onTranspose={handleTranspose}
           showPiano={showPiano}
           onTogglePiano={() => setShowPiano((v) => !v)}
+          showInspector={showInspector}
+          onToggleInspector={() => setShowInspector((v) => !v)}
           activeModule={activeModule}
           onSelectModule={setActiveModule}
         />
@@ -78,6 +82,8 @@ export function Workspace() {
                 canUndo={lib.canUndo}
                 canRedo={lib.canRedo}
                 showPiano={showPiano}
+                showInspector={showInspector}
+                onToggleInspector={() => setShowInspector((v) => !v)}
               />
             ) : activeModule === "instrument-lab" ? (
               <InstrumentLab song={lib.currentSong} onUpdate={lib.updateSong} />

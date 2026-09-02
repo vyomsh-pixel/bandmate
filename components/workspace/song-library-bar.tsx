@@ -15,7 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Plus, MoreVertical, Trash2, Music, ChevronDown, ChevronUp, Piano, Sparkles } from "lucide-react"
+import { Plus, MoreVertical, Trash2, Music, ChevronDown, ChevronUp, Piano, Sparkles, PanelRight } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { MAJOR_TONICS, MINOR_TONICS } from "@/lib/music/scales"
@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils"
 import { TrebleClefIcon } from "@/components/ui/treble-clef-icon"
 import { MODULES } from "./modules"
 
-interface SongLibraryBarProps {
+export interface SongLibraryBarProps {
   songs: Song[]
   currentId: string | null
   onSelect: (id: string) => void
@@ -35,6 +35,8 @@ interface SongLibraryBarProps {
   onTranspose?: (semitones: number) => void
   showPiano?: boolean
   onTogglePiano?: () => void
+  showInspector?: boolean
+  onToggleInspector?: () => void
   activeModule?: string
   onSelectModule?: (id: string) => void
 }
@@ -51,6 +53,8 @@ export function SongLibraryBar({
   onTranspose,
   showPiano,
   onTogglePiano,
+  showInspector,
+  onToggleInspector,
   activeModule = "song-lab",
   onSelectModule,
 }: SongLibraryBarProps) {
@@ -406,6 +410,23 @@ export function SongLibraryBar({
           >
             <Piano className="size-3.5" aria-hidden="true" />
             <span className="hidden sm:inline">Piano</span>
+          </Button>
+        )}
+
+        {onToggleInspector && (
+          <Button
+            variant={showInspector ? "default" : "outline"}
+            size="sm"
+            onClick={onToggleInspector}
+            className={cn(
+              "h-8.5 gap-1.5 rounded-xl px-2.5 text-xs font-semibold shadow-xs cursor-pointer transition-all",
+              !showInspector && "border-border/80 bg-background/50 text-muted-foreground hover:bg-muted hover:text-foreground",
+            )}
+            title="Toggle Chord Inspector Panel (I)"
+            aria-label="Toggle Chord Inspector Panel"
+          >
+            <PanelRight className="size-3.5" aria-hidden="true" />
+            <span className="hidden sm:inline">Inspector</span>
           </Button>
         )}
 
