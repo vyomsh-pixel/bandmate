@@ -118,7 +118,7 @@ export function ProgressionEditor({
               </div>
 
               {/* Grid / Timeline of Chord Cards */}
-              <div className="flex items-stretch gap-3 overflow-x-auto pb-2.5 pt-1 no-scrollbar scrollbar-thin">
+              <div className="flex items-stretch gap-2 sm:gap-3 overflow-x-auto pb-2 pt-1 no-scrollbar scrollbar-thin">
                 {section.chords.map((entry, idxWithinSection) => {
                   const globalIdx = startIndex + idxWithinSection
                   const parsed = parseChord(entry.symbol)
@@ -133,7 +133,7 @@ export function ProgressionEditor({
                       data-index={globalIdx}
                       onClick={() => onSelect(entry.id)}
                       className={cn(
-                        "group relative flex w-36 sm:w-40 shrink-0 flex-col justify-between rounded-2xl border p-3 transition-all duration-150 cursor-pointer select-none",
+                        "group relative flex w-28 sm:w-36 md:w-40 shrink-0 flex-col justify-between rounded-xl sm:rounded-2xl border p-2 sm:p-3 transition-all duration-150 cursor-pointer select-none",
                         "bg-card/80 backdrop-blur-md shadow-sm",
                         selected
                           ? "border-primary bg-primary/10 ring-2 ring-primary/40 shadow-md shadow-primary/10 -translate-y-0.5"
@@ -231,7 +231,7 @@ export function ProgressionEditor({
                       </div>
 
                       {/* Large Hero Chord Symbol */}
-                      <div className="my-2">
+                      <div className="my-1.5 sm:my-2">
                         <input
                           value={entry.symbol}
                           onChange={(e) => onUpdate(entry.id, { symbol: e.target.value })}
@@ -239,7 +239,7 @@ export function ProgressionEditor({
                           aria-label={`Chord ${globalIdx + 1} symbol`}
                           spellCheck={false}
                           className={cn(
-                            "w-full bg-transparent font-mono text-2xl sm:text-3xl font-black tracking-tight outline-hidden transition-colors",
+                            "w-full bg-transparent font-mono text-xl sm:text-2xl md:text-3xl font-black tracking-tight outline-hidden transition-colors",
                             invalid
                               ? "text-destructive"
                               : active
@@ -247,18 +247,18 @@ export function ProgressionEditor({
                                 : "text-foreground",
                           )}
                         />
-                        <div className="flex items-center justify-between gap-1 text-[10px] font-semibold text-muted-foreground mt-0.5">
+                        <div className="flex items-center justify-between gap-1 text-[9px] sm:text-[10px] font-semibold text-muted-foreground mt-0.5">
                           <span className="truncate flex-1 min-w-0">{parsed.valid ? parsed.qualityLabel : invalid ? "Unknown" : "Triad"}</span>
                           <span className="font-mono opacity-80 shrink-0">{harm.label}</span>
                         </div>
                       </div>
 
                       {/* Beats Stepper */}
-                      <div className="flex items-center justify-between rounded-xl bg-background/60 px-2 py-1 border border-border/50 shadow-inner">
-                        <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      <div className="flex items-center justify-between rounded-lg sm:rounded-xl bg-background/60 px-1.5 sm:px-2 py-0.5 sm:py-1 border border-border/50 shadow-inner">
+                        <span className="text-[8px] sm:text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
                           Beats
                         </span>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-0.5 sm:gap-1">
                           <button
                             type="button"
                             aria-label="Decrease beats"
@@ -266,11 +266,11 @@ export function ProgressionEditor({
                               e.stopPropagation()
                               onUpdate(entry.id, { beats: Math.max(1, entry.beats - 1) })
                             }}
-                            className="flex size-6 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground touch-manipulation cursor-pointer"
+                            className="flex size-5 sm:size-6 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground touch-manipulation cursor-pointer"
                           >
-                            <Minus className="size-3" />
+                            <Minus className="size-2.5 sm:size-3" />
                           </button>
-                          <span className="w-4 text-center font-mono text-xs font-bold tabular-nums text-foreground">
+                          <span className="w-3.5 sm:w-4 text-center font-mono text-xs font-bold tabular-nums text-foreground">
                             {entry.beats}
                           </span>
                           <button
@@ -280,9 +280,9 @@ export function ProgressionEditor({
                               e.stopPropagation()
                               onUpdate(entry.id, { beats: Math.min(16, entry.beats + 1) })
                             }}
-                            className="flex size-6 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground touch-manipulation cursor-pointer"
+                            className="flex size-5 sm:size-6 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground touch-manipulation cursor-pointer"
                           >
-                            <Plus className="size-3" />
+                            <Plus className="size-2.5 sm:size-3" />
                           </button>
                         </div>
                       </div>
@@ -295,15 +295,15 @@ export function ProgressionEditor({
                   <button
                     type="button"
                     onClick={() => onDuplicate?.(selectedChord.id)}
-                    className="flex w-32 sm:w-36 shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-primary/40 bg-primary/5 text-primary transition-all hover:bg-primary/15 hover:border-primary hover:scale-[1.02] cursor-pointer p-2"
+                    className="flex w-24 sm:w-32 md:w-36 shrink-0 flex-col items-center justify-center gap-1 rounded-xl sm:rounded-2xl border border-dashed border-primary/40 bg-primary/5 text-primary transition-all hover:bg-primary/15 hover:border-primary hover:scale-[1.02] cursor-pointer p-2"
                     aria-label={`Duplicate selected chord ${selectedChord.symbol}`}
                     title="Repeat / Duplicate selected chord (D)"
                   >
-                    <div className="flex size-6 items-center justify-center rounded-lg bg-primary/20">
-                      <Copy className="size-3" />
+                    <div className="flex size-5 sm:size-6 items-center justify-center rounded-lg bg-primary/20">
+                      <Copy className="size-2.5 sm:size-3" />
                     </div>
-                    <span className="text-[11px] font-extrabold truncate max-w-[90%]">Repeat {selectedChord.symbol}</span>
-                    <span className="font-mono text-[9px] text-muted-foreground">Press D</span>
+                    <span className="text-[10px] sm:text-[11px] font-extrabold truncate max-w-[90%]">Repeat {selectedChord.symbol}</span>
+                    <span className="font-mono text-[8px] sm:text-[9px] text-muted-foreground">Press D</span>
                   </button>
                 )}
 
@@ -311,13 +311,13 @@ export function ProgressionEditor({
                 <button
                   type="button"
                   onClick={() => onAdd(key.tonic)}
-                  className="flex w-32 sm:w-36 shrink-0 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border/80 bg-card/20 text-muted-foreground transition-all hover:border-primary/60 hover:bg-primary/5 hover:text-primary hover:scale-[1.02] cursor-pointer p-2"
+                  className="flex w-24 sm:w-32 md:w-36 shrink-0 flex-col items-center justify-center gap-1.5 sm:gap-2 rounded-xl sm:rounded-2xl border-2 border-dashed border-border/80 bg-card/20 text-muted-foreground transition-all hover:border-primary/60 hover:bg-primary/5 hover:text-primary hover:scale-[1.02] cursor-pointer p-2"
                   aria-label="Add chord to section"
                 >
-                  <div className="flex size-8 items-center justify-center rounded-xl bg-muted/60">
-                    <Plus className="size-4" />
+                  <div className="flex size-6 sm:size-8 items-center justify-center rounded-xl bg-muted/60">
+                    <Plus className="size-3.5 sm:size-4" />
                   </div>
-                  <span className="text-xs font-bold">Add Chord</span>
+                  <span className="text-[11px] sm:text-xs font-bold">Add Chord</span>
                 </button>
               </div>
             </div>
@@ -326,16 +326,16 @@ export function ProgressionEditor({
       </div>
 
       {/* Palette Groupings */}
-      <div className="flex flex-col gap-4 rounded-2xl border border-border/80 bg-card/40 p-5 backdrop-blur-md shadow-xs">
+      <div className="flex flex-col gap-3 sm:gap-4 rounded-xl sm:rounded-2xl border border-border/80 bg-card/40 p-3 sm:p-5 backdrop-blur-md shadow-xs">
         {/* Diatonic quick-add */}
         <div>
-          <div className="mb-2.5 flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-foreground">
+          <div className="mb-1.5 sm:mb-2.5 flex items-center justify-between">
+            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-foreground">
               Diatonic Scale Chords in {key.label}
             </span>
-            <span className="font-mono text-[10px] text-muted-foreground">Click chord to append</span>
+            <span className="font-mono text-[9px] sm:text-[10px] text-muted-foreground">Click chord to append</span>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex sm:flex-wrap items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-0.5">
             {diatonic.map((d) => {
               const harm = getHarmonicFunction(d.symbol, key)
               return (
@@ -344,12 +344,12 @@ export function ProgressionEditor({
                   type="button"
                   onClick={() => onAdd(d.symbol)}
                   className={cn(
-                    "flex items-center gap-2 rounded-xl border bg-background/60 px-3.5 py-2 shadow-xs transition-all hover:scale-[1.03] active:scale-[0.98] cursor-pointer",
+                    "flex items-center gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl border bg-background/60 px-2.5 sm:px-3.5 py-1.5 sm:py-2 shadow-xs transition-all hover:scale-[1.03] active:scale-[0.98] cursor-pointer shrink-0",
                     harm.badgeColor,
                   )}
                 >
-                  <span className="font-mono text-xs font-extrabold">{d.roman}</span>
-                  <span className="font-mono text-sm font-black text-foreground">{d.symbol}</span>
+                  <span className="font-mono text-[11px] sm:text-xs font-extrabold">{d.roman}</span>
+                  <span className="font-mono text-xs sm:text-sm font-black text-foreground">{d.symbol}</span>
                 </button>
               )
             })}
@@ -358,17 +358,17 @@ export function ProgressionEditor({
 
         {/* Chords in Song (Recently Used) */}
         {chordsInSong.length > 0 && (
-          <div className="border-t border-border/50 pt-3">
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="border-t border-border/50 pt-2 sm:pt-3">
+            <div className="mb-1.5 sm:mb-2 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Progression Chords
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex sm:flex-wrap items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-0.5">
               {chordsInSong.map((symbol: string) => (
                 <button
                   key={symbol}
                   type="button"
                   onClick={() => onAdd(symbol)}
-                  className="flex items-center gap-1.5 rounded-lg border border-border/80 bg-background/60 px-3 py-1.5 font-mono text-xs font-bold shadow-xs transition-all hover:border-primary/60 hover:bg-muted cursor-pointer"
+                  className="flex items-center gap-1 rounded-lg border border-border/80 bg-background/60 px-2.5 py-1 font-mono text-xs font-bold shadow-xs transition-all hover:border-primary/60 hover:bg-muted cursor-pointer shrink-0"
                 >
                   <span>{symbol}</span>
                 </button>

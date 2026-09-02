@@ -637,7 +637,7 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
         {/* Center Panel: Transport + Timeline + Editor + Keyboard */}
         <div className={cn("flex-col min-w-0 h-full overflow-hidden", mobileTab === "progression" ? "flex flex-1" : "hidden lg:flex lg:flex-1")}>
           {/* Transport Bar Header */}
-          <div className="shrink-0 border-b border-border/80 bg-background/95 px-4 py-2 backdrop-blur-md shadow-xs z-10">
+          <div className="shrink-0 border-b border-border/80 bg-background/95 px-2 sm:px-4 py-1.5 sm:py-2 backdrop-blur-md shadow-xs z-10">
             <TransportBar
               isPlaying={isPlaying}
               bpm={song.bpm}
@@ -660,7 +660,7 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
           </div>
 
           {/* Hero Progression Editor (Spacious, Zero Clipping) */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-5 min-h-0">
+          <div className="flex-1 overflow-y-auto p-2 sm:p-4 md:p-5 min-h-0">
             <ProgressionEditor
               sections={song.sections}
               keyTonic={song.keyTonic}
@@ -683,7 +683,7 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
 
           {/* Virtual Piano Dock (Collapsible) */}
           {showPiano && (
-            <div className="shrink-0 border-t border-border/80 bg-card/40 px-3 py-2 backdrop-blur-md">
+            <div className="shrink-0 border-t border-border/80 bg-card/40 px-2 sm:px-3 py-1.5 sm:py-2 backdrop-blur-md">
               <PianoKeyboard activeMidis={activeMidis} rootMidi={rootMidi} accidental={accidental} />
             </div>
           )}

@@ -158,7 +158,7 @@ export function TransportBar({
 
         {/* LED Beat Bars */}
         <div
-          className="flex h-8.5 w-24 items-center gap-1 rounded-lg border border-border/60 bg-background/50 p-1.5 shadow-inner"
+          className="flex h-8.5 w-14 sm:w-24 items-center gap-0.5 sm:gap-1 rounded-lg border border-border/60 bg-background/50 p-1 sm:p-1.5 shadow-inner"
           role="status"
           aria-label={isPlaying ? `Beat ${(currentBeat ?? 0) + 1} of ${beatsPerBar}` : "Playback stopped"}
         >
@@ -198,7 +198,7 @@ export function TransportBar({
           size="sm"
           onClick={onToggleLoop}
           className={cn(
-            "h-8.5 rounded-lg px-2.5 font-bold text-xs transition-all cursor-pointer",
+            "h-8.5 rounded-lg px-2 sm:px-2.5 font-bold text-xs transition-all cursor-pointer",
             !loop && "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
           )}
           aria-pressed={loop}
@@ -219,12 +219,12 @@ export function TransportBar({
         {/* Instrument Dropdown */}
         <Select value={instrument} onValueChange={(val) => onInstrumentChange?.(val as InstrumentId)}>
           <SelectTrigger
-            className="h-8.5 w-auto px-2.5 gap-1.5 font-bold text-xs bg-background/50 border-border/80 rounded-lg cursor-pointer hover:border-primary/50 transition-colors"
+            className="h-8.5 w-auto max-w-[110px] sm:max-w-none px-2 sm:px-2.5 gap-1.5 font-bold text-xs bg-background/50 border-border/80 rounded-lg cursor-pointer hover:border-primary/50 transition-colors"
             aria-label="Select instrument sound"
           >
             <span>{currentInst.icon}</span>
             <span className="hidden sm:inline">{currentInst.name}</span>
-            <span className="sm:hidden">{currentInst.name.split(" ")[0]}</span>
+            <span className="sm:hidden text-[11px] truncate">{currentInst.name.split(" ")[0]}</span>
           </SelectTrigger>
           <SelectContent align="center" className="min-w-[240px]">
             {AVAILABLE_INSTRUMENTS.map((inst) => (

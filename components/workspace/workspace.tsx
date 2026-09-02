@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { MODULES } from "./modules"
 import { ModulePlaceholder } from "./module-placeholder"
 import { SongLab } from "@/components/song-lab/song-lab"
@@ -12,8 +12,15 @@ import { keyAccidental } from "@/lib/music/scales"
 
 export function Workspace() {
   const [activeModule, setActiveModule] = useState("song-lab")
-  const [showPiano, setShowPiano] = useState(true)
+  const [showPiano, setShowPiano] = useState(false)
   const lib = useSongLibrary()
+
+  // On desktop screens (>= 1024px), show piano by default; on mobile, keep collapsed for maximum space
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth >= 1024) {
+      setShowPiano(true)
+    }
+  }, [])
 
   const current = MODULES.find((m) => m.id === activeModule) ?? MODULES[0]
 

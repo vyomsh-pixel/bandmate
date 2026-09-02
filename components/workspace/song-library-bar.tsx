@@ -165,15 +165,16 @@ export function SongLibraryBar({
 
         <Select value={currentId ?? ""} onValueChange={(v) => v && onSelect(v)}>
           <SelectTrigger
-            className="h-8.5 w-auto px-3 border-border/80 bg-background/60 font-semibold text-xs text-foreground hover:border-border transition-colors rounded-xl gap-2 cursor-pointer"
+            className="h-8.5 w-auto px-2 sm:px-3 border-border/80 bg-background/60 font-semibold text-xs text-foreground hover:border-border transition-colors rounded-xl gap-1.5 sm:gap-2 cursor-pointer shrink-0"
             aria-label="Select active song"
           >
             <Music className="size-3.5 text-primary shrink-0" aria-hidden="true" />
             <span className="font-mono text-[11px] text-muted-foreground">
-              Tracks <span className="text-foreground font-bold">({songs.length})</span>
+              <span className="hidden sm:inline">Tracks </span>
+              <span className="text-foreground font-bold">({songs.length})</span>
             </span>
           </SelectTrigger>
-          <SelectContent align="start" className="min-w-[240px]">
+          <SelectContent align="start" className="min-w-[220px]">
             {songs.map((s) => (
               <SelectItem key={s.id} value={s.id} className="cursor-pointer py-2 font-medium">
                 <div className="flex items-center justify-between w-full gap-2">
@@ -191,7 +192,7 @@ export function SongLibraryBar({
           <Input
             value={currentSong.title}
             onChange={(e) => onTitleChange(e.target.value)}
-            className="h-8.5 w-28 sm:w-48 md:w-56 border-border/60 bg-background/50 px-2.5 sm:px-3 text-xs font-black text-foreground focus-visible:ring-1 focus-visible:ring-primary rounded-xl shrink-0"
+            className="h-8.5 w-24 sm:w-40 md:w-56 border-border/60 bg-background/50 px-2 sm:px-3 text-xs font-black text-foreground focus-visible:ring-1 focus-visible:ring-primary rounded-xl shrink-0"
             placeholder="Track title..."
             aria-label="Rename song track"
           />
@@ -201,87 +202,193 @@ export function SongLibraryBar({
           variant="outline"
           size="sm"
           onClick={onCreate}
-          className="h-8.5 gap-1.5 border-border/80 bg-background/50 text-xs font-semibold shadow-xs hover:border-primary/50 hover:bg-primary/5 rounded-xl px-2.5 cursor-pointer shrink-0"
+          className="h-8.5 w-8.5 sm:w-auto p-0 sm:px-2.5 sm:gap-1.5 border-border/80 bg-background/50 text-xs font-semibold shadow-xs hover:border-primary/50 hover:bg-primary/5 rounded-xl cursor-pointer shrink-0"
           aria-label="Create new song"
+          title="Create new song track"
         >
           <Plus className="size-3.5 text-primary" aria-hidden="true" />
           <span className="hidden md:inline">New</span>
         </Button>
       </div>
 
-      {/* Center: Key & Transpose Controls (Accessible on Mobile & Desktop) */}
+      {/* Center: Key & Transpose Controls */}
       {currentSong && onKeyChange && onModeChange && onTranspose && (
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {/* Key Tonic Selector */}
-          <div className="flex items-center gap-1 sm:gap-1.5 rounded-xl border border-border/80 bg-background/50 p-0.5 sm:p-1 shadow-xs">
-            <span className="hidden sm:inline px-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-              Key
-            </span>
-            <Select value={currentSong.keyTonic} onValueChange={(v) => v && onKeyChange(v)}>
-              <SelectTrigger className="h-7 w-12 sm:w-14 border-0 bg-muted/60 font-mono text-xs font-black hover:bg-muted rounded-lg px-1.5" aria-label="Key tonic">
-                <span>{currentSong.keyTonic}</span>
-              </SelectTrigger>
-              <SelectContent className="max-h-72 font-mono">
-                {tonics.map((t) => (
-                  <SelectItem key={t} value={t} className="font-mono text-xs">
-                    {t}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <>
+          {/* Mobile Single-Pill Key & Transpose Popover (< md) */}
+          <div className="md:hidden flex items-center shrink-0">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center gap-1.5 rounded-xl border border-border/80 bg-background/60 px-2.5 py-1.5 text-xs font-mono font-bold text-foreground hover:border-primary/50 transition-all cursor-pointer shrink-0 shadow-xs"
+                  aria-label="Change Key and Transpose"
+                  title="Key & Transposition Settings"
+                >
+                  <span className="text-primary font-black text-xs">{currentSong.keyTonic}</span>
+                  <span className="text-[10px] text-muted-foreground uppercase font-semibold">
+                    {currentSong.keyMode === "major" ? "maj" : "min"}
+                  </span>
+                  <ChevronDown className="size-3 text-muted-foreground" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center" className="w-64 p-3 space-y-3 z-50">
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
+                      Key Tonic
+                    </span>
+                    <span className="font-mono text-xs font-black text-primary">
+                      {currentSong.keyTonic} {currentSong.keyMode}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-1 font-mono text-xs">
+                    {tonics.map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => onKeyChange(t)}
+                        className={cn(
+                          "py-1.5 rounded-lg border text-center font-black transition-colors cursor-pointer",
+                          currentSong.keyTonic === t
+                            ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                            : "bg-muted/40 hover:bg-muted border-border/60 text-foreground",
+                        )}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-            {/* Mode Toggle (maj / min) */}
-            <div className="flex h-7 overflow-hidden rounded-lg bg-muted/40 p-0.5" role="radiogroup" aria-label="Key mode">
-              {(["major", "minor"] as const).map((m) => {
-                const active = currentSong.keyMode === m
-                return (
-                  <button
-                    key={m}
-                    type="button"
-                    role="radio"
-                    aria-checked={active}
-                    onClick={() => onModeChange(m)}
-                    className={cn(
-                      "rounded px-1.5 sm:px-2 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider transition-all cursor-pointer touch-manipulation",
-                      active
-                        ? "bg-primary text-primary-foreground shadow-xs"
-                        : "text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    {m === "major" ? "maj" : "min"}
-                  </button>
-                )
-              })}
+                <div className="flex items-center justify-between pt-2 border-t border-border/60">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
+                    Scale Mode
+                  </span>
+                  <div className="flex rounded-lg bg-muted/40 p-0.5">
+                    {(["major", "minor"] as const).map((m) => {
+                      const active = currentSong.keyMode === m
+                      return (
+                        <button
+                          key={m}
+                          type="button"
+                          onClick={() => onModeChange(m)}
+                          className={cn(
+                            "px-2.5 py-1 rounded text-xs font-bold uppercase transition-all cursor-pointer",
+                            active
+                              ? "bg-primary text-primary-foreground shadow-xs"
+                              : "text-muted-foreground hover:text-foreground",
+                          )}
+                        >
+                          {m === "major" ? "maj" : "min"}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-border/60">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
+                    Transpose
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 w-7 p-0 cursor-pointer"
+                      onClick={() => onTranspose(-1)}
+                      title="Down 1 semitone"
+                    >
+                      <ChevronDown className="size-3.5" />
+                    </Button>
+                    <span className="text-xs font-mono font-bold text-muted-foreground">1 semitone</span>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 w-7 p-0 cursor-pointer"
+                      onClick={() => onTranspose(1)}
+                      title="Up 1 semitone"
+                    >
+                      <ChevronUp className="size-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {/* Desktop Inline Controls (>= md) */}
+          <div className="hidden md:flex items-center gap-2 shrink-0">
+            {/* Key Tonic Selector */}
+            <div className="flex items-center gap-1.5 rounded-xl border border-border/80 bg-background/50 p-1 shadow-xs">
+              <span className="px-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                Key
+              </span>
+              <Select value={currentSong.keyTonic} onValueChange={(v) => v && onKeyChange(v)}>
+                <SelectTrigger className="h-7 w-14 border-0 bg-muted/60 font-mono text-xs font-black hover:bg-muted rounded-lg px-1.5" aria-label="Key tonic">
+                  <span>{currentSong.keyTonic}</span>
+                </SelectTrigger>
+                <SelectContent className="max-h-72 font-mono">
+                  {tonics.map((t) => (
+                    <SelectItem key={t} value={t} className="font-mono text-xs">
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Mode Toggle (maj / min) */}
+              <div className="flex h-7 overflow-hidden rounded-lg bg-muted/40 p-0.5" role="radiogroup" aria-label="Key mode">
+                {(["major", "minor"] as const).map((m) => {
+                  const active = currentSong.keyMode === m
+                  return (
+                    <button
+                      key={m}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      onClick={() => onModeChange(m)}
+                      className={cn(
+                        "rounded px-2 text-[11px] font-extrabold uppercase tracking-wider transition-all cursor-pointer touch-manipulation",
+                        active
+                          ? "bg-primary text-primary-foreground shadow-xs"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {m === "major" ? "maj" : "min"}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Quick Transpose Steppers */}
+            <div className="flex items-center gap-1 rounded-xl border border-border/80 bg-background/50 p-1 shadow-xs">
+              <span className="px-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                Transpose
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-7 rounded-lg hover:bg-muted cursor-pointer touch-manipulation"
+                onClick={() => onTranspose(-1)}
+                aria-label="Transpose down 1 semitone"
+                title="Transpose down 1 semitone"
+              >
+                <ChevronDown className="size-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-7 rounded-lg hover:bg-muted cursor-pointer touch-manipulation"
+                onClick={() => onTranspose(1)}
+                aria-label="Transpose up 1 semitone"
+                title="Transpose up 1 semitone"
+              >
+                <ChevronUp className="size-3.5" />
+              </Button>
             </div>
           </div>
-
-          {/* Quick Transpose Steppers */}
-          <div className="flex items-center gap-0.5 sm:gap-1 rounded-xl border border-border/80 bg-background/50 p-0.5 sm:p-1 shadow-xs">
-            <span className="hidden md:inline px-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-              Transpose
-            </span>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-7 rounded-lg hover:bg-muted cursor-pointer touch-manipulation"
-              onClick={() => onTranspose(-1)}
-              aria-label="Transpose down 1 semitone"
-              title="Transpose down 1 semitone"
-            >
-              <ChevronDown className="size-3.5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-7 rounded-lg hover:bg-muted cursor-pointer touch-manipulation"
-              onClick={() => onTranspose(1)}
-              aria-label="Transpose up 1 semitone"
-              title="Transpose up 1 semitone"
-            >
-              <ChevronUp className="size-3.5" />
-            </Button>
-          </div>
-        </div>
+        </>
       )}
 
       {/* Right: Piano Toggle + Autosave Pill + Options */}
