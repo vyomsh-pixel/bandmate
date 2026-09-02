@@ -67,16 +67,19 @@ export function PianoKeyboard({
   // Auto-scroll to the active notes if they are out of view, or middle C on mount
   useEffect(() => {
     if (scrollRef.current) {
-       // A simple approach: center the first active note or middle C (60)
        const targetMidi = activeMidis.length > 0 ? activeMidis[0] : 60
-       // Approximate the position: find its percentage in the white keys
-       const index = whiteKeys.findIndex(k => k.midi >= targetMidi)
+       const index = whiteKeys.findIndex((k) => k.midi >= targetMidi)
        if (index !== -1) {
           const ratio = index / whiteKeys.length
           const scrollWidth = scrollRef.current.scrollWidth
           const clientWidth = scrollRef.current.clientWidth
-          const targetScroll = (scrollWidth * ratio) - (clientWidth / 2)
-          scrollRef.current.scrollTo({ left: Math.max(0, targetScroll), behavior: 'smooth' })
+          const keyPos = scrollWidth * ratio
+          const currentScroll = scrollRef.current.scrollLeft
+          // Only scroll if out of view (with a 48px margin), avoiding jitter during playback
+          if (keyPos < currentScroll + 48 || keyPos > currentScroll + clientWidth - 48) {
+             const targetScroll = keyPos - (clientWidth / 2)
+             scrollRef.current.scrollTo({ left: Math.max(0, targetScroll), behavior: "smooth" })
+          }
        }
     }
   }, [activeMidis, whiteKeys])

@@ -140,16 +140,23 @@ export function SongLab({
   const selectedEntry = allChords.find((c) => c.id === selectedId) ?? null
   const parsedSelected = selectedEntry ? parseChord(selectedEntry.symbol) : null
 
-  // Notes shown on the keyboard = selected chord voicing at the chosen inversion.
+  // Currently playing chord entry (during playback) or selected chord entry (when stopped)
+  const playingEntry = isPlaying && activeIndex !== null ? allChords[activeIndex] ?? null : null
+  const displayedEntry = playingEntry ?? selectedEntry
+  const parsedDisplayed = displayedEntry ? parseChord(displayedEntry.symbol) : null
+
+  // Notes shown on the keyboard: follows the active running chord during playback, otherwise the selected chord
   const keyboardNotes = useMemo(() => {
-    if (!parsedSelected?.valid) return []
-    const root = voiceChord(parsedSelected, { octave: 4, accidental })
-    return invertVoicing(root, inversion, accidental)
-  }, [parsedSelected, inversion, accidental])
+    if (!parsedDisplayed?.valid) return []
+    const root = voiceChord(parsedDisplayed, { octave: 4, accidental })
+    // If we're displaying the user's selected chord, use their chosen inversion; during playback, use root voicing
+    const inv = displayedEntry?.id === selectedId ? inversion : 0
+    return invertVoicing(root, inv, accidental)
+  }, [parsedDisplayed, displayedEntry?.id, selectedId, inversion, accidental])
 
   const activeMidis = keyboardNotes.map((n) => n.midi)
-  const rootMidi = parsedSelected?.valid
-    ? activeMidis.find((m) => midiToPc(m) === parsedSelected.rootPc) ?? null
+  const rootMidi = parsedDisplayed?.valid
+    ? activeMidis.find((m) => midiToPc(m) === parsedDisplayed.rootPc) ?? null
     : null
 
   // ---- Audio helpers ---------------------------------------------------------
@@ -757,9 +764,9 @@ export function SongLab({
             )}
           </div>
           <ChordDetail
-            chord={parsedSelected}
+            chord={isPlaying && parsedDisplayed ? parsedDisplayed : parsedSelected}
             accidental={accidental}
-            inversion={inversion}
+            inversion={isPlaying && displayedEntry?.id !== selectedId ? 0 : inversion}
             onInversionChange={setInversion}
             onPlay={playSelectedChord}
             onDuplicate={selectedId ? () => handleDuplicateChord(selectedId) : undefined}
