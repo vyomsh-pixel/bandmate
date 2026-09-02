@@ -117,7 +117,7 @@ export function ChordDetail({ chord, accidental, inversion, onInversionChange, o
                     <span className={cn("font-mono text-sm font-black", isRoot ? "text-primary" : "text-foreground")}>
                       {midiToName(note.midi, accidental)}
                     </span>
-                    <span className="text-[10px] font-semibold text-muted-foreground truncate w-full mt-0.5">
+                    <span className="text-[10px] font-semibold text-muted-foreground text-center leading-tight w-full mt-0.5">
                       {intervalLabel}
                     </span>
                   </TooltipTrigger>

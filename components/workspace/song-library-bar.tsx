@@ -83,7 +83,7 @@ export function SongLibraryBar({
           <Input
             value={currentSong.title}
             onChange={(e) => onTitleChange(e.target.value)}
-            className="h-8.5 w-40 sm:w-56 border-border/60 bg-background/50 px-3 text-xs font-black text-foreground focus-visible:ring-1 focus-visible:ring-primary rounded-xl"
+            className="h-8.5 w-28 sm:w-48 md:w-56 border-border/60 bg-background/50 px-2.5 sm:px-3 text-xs font-black text-foreground focus-visible:ring-1 focus-visible:ring-primary rounded-xl shrink-0"
             placeholder="Track title..."
             aria-label="Rename song track"
           />
@@ -93,7 +93,7 @@ export function SongLibraryBar({
           variant="outline"
           size="sm"
           onClick={onCreate}
-          className="h-8.5 gap-1.5 border-border/80 bg-background/50 text-xs font-semibold shadow-xs hover:border-primary/50 hover:bg-primary/5 rounded-xl px-2.5 cursor-pointer"
+          className="h-8.5 gap-1.5 border-border/80 bg-background/50 text-xs font-semibold shadow-xs hover:border-primary/50 hover:bg-primary/5 rounded-xl px-2.5 cursor-pointer shrink-0"
           aria-label="Create new song"
         >
           <Plus className="size-3.5 text-primary" aria-hidden="true" />
@@ -101,16 +101,16 @@ export function SongLibraryBar({
         </Button>
       </div>
 
-      {/* Center: Key & Transpose Controls */}
+      {/* Center: Key & Transpose Controls (Accessible on Mobile & Desktop) */}
       {currentSong && onKeyChange && onModeChange && onTranspose && (
-        <div className="hidden lg:flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Key Tonic Selector */}
-          <div className="flex items-center gap-1.5 rounded-xl border border-border/80 bg-background/50 p-1 shadow-xs">
-            <span className="px-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          <div className="flex items-center gap-1 sm:gap-1.5 rounded-xl border border-border/80 bg-background/50 p-0.5 sm:p-1 shadow-xs">
+            <span className="hidden sm:inline px-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
               Key
             </span>
             <Select value={currentSong.keyTonic} onValueChange={(v) => v && onKeyChange(v)}>
-              <SelectTrigger className="h-7 w-14 border-0 bg-muted/60 font-mono text-xs font-black hover:bg-muted rounded-lg" aria-label="Key tonic">
+              <SelectTrigger className="h-7 w-12 sm:w-14 border-0 bg-muted/60 font-mono text-xs font-black hover:bg-muted rounded-lg px-1.5" aria-label="Key tonic">
                 <span>{currentSong.keyTonic}</span>
               </SelectTrigger>
               <SelectContent className="max-h-72 font-mono">
@@ -134,7 +134,7 @@ export function SongLibraryBar({
                     aria-checked={active}
                     onClick={() => onModeChange(m)}
                     className={cn(
-                      "rounded px-2 text-[11px] font-extrabold uppercase tracking-wider transition-all cursor-pointer",
+                      "rounded px-1.5 sm:px-2 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider transition-all cursor-pointer touch-manipulation",
                       active
                         ? "bg-primary text-primary-foreground shadow-xs"
                         : "text-muted-foreground hover:text-foreground",
@@ -148,14 +148,14 @@ export function SongLibraryBar({
           </div>
 
           {/* Quick Transpose Steppers */}
-          <div className="flex items-center gap-1 rounded-xl border border-border/80 bg-background/50 p-1 shadow-xs">
-            <span className="px-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          <div className="flex items-center gap-0.5 sm:gap-1 rounded-xl border border-border/80 bg-background/50 p-0.5 sm:p-1 shadow-xs">
+            <span className="hidden md:inline px-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
               Transpose
             </span>
             <Button
               variant="ghost"
               size="icon"
-              className="size-7 rounded-lg hover:bg-muted cursor-pointer"
+              className="size-7 rounded-lg hover:bg-muted cursor-pointer touch-manipulation"
               onClick={() => onTranspose(-1)}
               aria-label="Transpose down 1 semitone"
               title="Transpose down 1 semitone"
@@ -165,7 +165,7 @@ export function SongLibraryBar({
             <Button
               variant="ghost"
               size="icon"
-              className="size-7 rounded-lg hover:bg-muted cursor-pointer"
+              className="size-7 rounded-lg hover:bg-muted cursor-pointer touch-manipulation"
               onClick={() => onTranspose(1)}
               aria-label="Transpose up 1 semitone"
               title="Transpose up 1 semitone"

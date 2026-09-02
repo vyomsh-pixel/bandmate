@@ -28,6 +28,7 @@ import { AVAILABLE_INSTRUMENTS, type InstrumentId } from "@/lib/audio/soundfont-
 import { createId } from "@/lib/storage/local-store"
 import type { ChordEntry, Section, Song } from "@/lib/music/types"
 import { Button } from "@/components/ui/button"
+import { X } from "lucide-react"
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts"
 import { cn } from "@/lib/utils"
 
@@ -400,7 +401,7 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
     }
   })
 
-  const handleAddSection = useCallback(
+   const handleAddSection = useCallback(
     (name: string) => {
       const newSec: Section = {
         id: createId(),
@@ -414,16 +415,41 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
     [updateSections, song.keyTonic, song.beatsPerBar],
   )
 
+  const handleDeleteSection = useCallback(
+    (sectionId: string) => {
+      updateSections((sections) => {
+        if (sections.length <= 1) return sections // Keep at least one section
+        const filtered = sections.filter((s) => s.id !== sectionId)
+        return filtered
+      })
+      // Select first chord of remaining sections
+      const remaining = song.sections.filter((s) => s.id !== sectionId)
+      const firstChord = remaining.flatMap((s) => s.chords)[0]
+      if (firstChord) setSelectedId(firstChord.id)
+      toast.success("Section deleted")
+    },
+    [updateSections, song.sections],
+  )
+
+  const handleRenameSection = useCallback(
+    (sectionId: string, name: string) => {
+      updateSections((sections) =>
+        sections.map((s) => (s.id === sectionId ? { ...s, name } : s))
+      )
+    },
+    [updateSections],
+  )
+
   return (
     <div className="flex h-full flex-col bg-background overflow-hidden">
       {/* Mobile Screen Segment Bar (< lg only) */}
-      <div className="flex lg:hidden items-center justify-between border-b border-border/80 bg-card/60 px-3 py-1.5 backdrop-blur-md shrink-0">
+      <div className="flex lg:hidden items-center justify-between border-b border-border/80 bg-card/60 px-2 sm:px-3 py-1.5 backdrop-blur-md shrink-0">
         <div className="flex items-center gap-1 w-full bg-muted/50 p-0.5 rounded-xl border border-border/40">
           <button
             type="button"
             onClick={() => setMobileTab("progression")}
             className={cn(
-              "flex-1 py-1 text-center font-mono text-[11px] font-bold rounded-lg transition-all cursor-pointer",
+              "flex-1 py-1.5 text-center font-mono text-[11px] font-bold rounded-lg transition-all cursor-pointer touch-manipulation",
               mobileTab === "progression"
                 ? "bg-primary text-primary-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground",
@@ -435,7 +461,7 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
             type="button"
             onClick={() => setMobileTab("inspector")}
             className={cn(
-              "flex-1 py-1 text-center font-mono text-[11px] font-bold rounded-lg transition-all cursor-pointer",
+              "flex-1 py-1.5 text-center font-mono text-[11px] font-bold rounded-lg transition-all cursor-pointer touch-manipulation",
               mobileTab === "inspector"
                 ? "bg-primary text-primary-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground",
@@ -447,7 +473,7 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
             type="button"
             onClick={() => setMobileTab("sections")}
             className={cn(
-              "flex-1 py-1 text-center font-mono text-[11px] font-bold rounded-lg transition-all cursor-pointer",
+              "flex-1 py-1.5 text-center font-mono text-[11px] font-bold rounded-lg transition-all cursor-pointer touch-manipulation",
               mobileTab === "sections"
                 ? "bg-primary text-primary-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground",
@@ -480,19 +506,34 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
               {song.sections.map((sec) => (
                 <div
                   key={sec.id}
-                  className="flex items-center justify-between rounded-xl border border-border/60 bg-background/50 px-2.5 py-1.5 text-xs font-bold shadow-xs transition-colors hover:border-border hover:bg-muted"
+                  className="group flex items-center justify-between rounded-xl border border-border/60 bg-background/50 px-2.5 py-1.5 text-xs font-bold shadow-xs transition-colors hover:border-border hover:bg-muted"
                 >
-                  <span className="truncate">{sec.name}</span>
-                  <span className="font-mono text-[10px] text-muted-foreground">
-                    {sec.chords.length} {sec.chords.length === 1 ? "chord" : "chords"}
-                  </span>
+                  <span className="truncate flex-1">{sec.name}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-mono text-[10px] text-muted-foreground">
+                      {sec.chords.length}
+                    </span>
+                    {song.sections.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteSection(sec.id)}
+                        className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 rounded p-1 text-muted-foreground hover:bg-destructive/20 hover:text-destructive transition-all cursor-pointer touch-manipulation"
+                        aria-label={`Delete ${sec.name}`}
+                        title={`Delete ${sec.name}`}
+                      >
+                        <X className="size-3.5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
 
-            {/* Quick Add Section Dropdown/Buttons */}
+            {/* Quick Add Section Buttons — filters out existing names */}
             <div className="mt-2.5 flex flex-wrap gap-1">
-              {["Chorus", "Bridge", "Verse 2", "Outro"].map((name) => (
+              {["Intro", "Verse", "Pre-Chorus", "Chorus", "Bridge", "Outro", "Verse 2", "Verse 3"].filter(
+                (name) => !song.sections.some((s) => s.name.toLowerCase() === name.toLowerCase())
+              ).slice(0, 5).map((name) => (
                 <button
                   key={name}
                   type="button"
@@ -502,6 +543,17 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
                   + {name}
                 </button>
               ))}
+              {/* Always show a generic add */}
+              <button
+                type="button"
+                onClick={() => {
+                  const n = song.sections.length + 1
+                  handleAddSection(`Section ${n}`)
+                }}
+                className="rounded-lg border border-dashed border-primary/40 px-2 py-1 font-mono text-[10px] font-semibold text-primary/70 transition-colors hover:border-primary hover:text-primary cursor-pointer"
+              >
+                + Custom
+              </button>
             </div>
           </div>
 
@@ -624,6 +676,8 @@ export function SongLab({ song, onUpdate, undo, redo, canUndo, canRedo, showPian
               onMove={handleMoveChord}
               onAdd={handleAddChord}
               onDuplicate={handleDuplicateChord}
+              onDeleteSection={handleDeleteSection}
+              onRenameSection={handleRenameSection}
             />
           </div>
 

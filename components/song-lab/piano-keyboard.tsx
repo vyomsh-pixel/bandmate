@@ -173,9 +173,22 @@ export function PianoKeyboard({
                       return n
                     })
                   }}
+                  onTouchStart={(e) => {
+                    e.stopPropagation()
+                    preview(key.midi)
+                    setPressedKeys((prev) => new Set(prev).add(key.midi))
+                  }}
+                  onTouchEnd={(e) => {
+                    e.stopPropagation()
+                    setPressedKeys((prev) => {
+                      const n = new Set(prev)
+                      n.delete(key.midi)
+                      return n
+                    })
+                  }}
                   aria-label={`Play ${key.label}`}
                   className={cn(
-                    "relative flex-1 rounded-b-md border border-black/30 border-t-0 transition-all duration-75 shadow-xs",
+                    "relative flex-1 rounded-b-md border border-black/30 border-t-0 transition-all duration-75 shadow-xs touch-manipulation",
                     "flex items-end justify-center pb-2 cursor-pointer",
                     isRoot
                       ? "bg-amber-400 text-black font-extrabold shadow-[0_0_15px_rgba(251,191,36,0.8)_inset]"
@@ -235,9 +248,22 @@ export function PianoKeyboard({
                       return n
                     })
                   }}
+                  onTouchStart={(e) => {
+                    e.stopPropagation()
+                    preview(key.midi)
+                    setPressedKeys((prev) => new Set(prev).add(key.midi))
+                  }}
+                  onTouchEnd={(e) => {
+                    e.stopPropagation()
+                    setPressedKeys((prev) => {
+                      const n = new Set(prev)
+                      n.delete(key.midi)
+                      return n
+                    })
+                  }}
                   aria-label={`Play ${pcToName(midiToPc(key.midi), accidental)}`}
                   className={cn(
-                    "pointer-events-auto absolute top-0 h-[60%] rounded-b-md border border-black/90 transition-all duration-75 z-10 shadow-md cursor-pointer",
+                    "pointer-events-auto absolute top-0 h-[60%] rounded-b-md border border-black/90 transition-all duration-75 z-10 shadow-md cursor-pointer touch-manipulation",
                     isRoot
                       ? "bg-amber-400 text-black font-extrabold shadow-[0_0_12px_rgba(251,191,36,0.9)]"
                       : isActive
