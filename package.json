@@ -39,5 +39,11 @@
   },
   "overrides": {
     "hono": "4.12.25"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@firebase/util",
+      "protobufjs"
+    ]
   }
 }
