@@ -7,7 +7,7 @@
  * volume, and show a live beat indicator. Drives the shared audio engine.
  */
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { Play, Square, Repeat, Volume2, Volume1, VolumeX, Timer, Presentation, Plus, Minus, Sparkles, Activity } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
@@ -129,6 +129,17 @@ export function TransportBar({
   onInstrumentChange,
   onRhythmChange,
 }: TransportBarProps) {
+  const [prevVolume, setPrevVolume] = useState(0.85)
+
+  const handleToggleMute = useCallback(() => {
+    if (volume > 0) {
+      setPrevVolume(volume)
+      onVolumeChange(0)
+    } else {
+      onVolumeChange(prevVolume > 0 ? prevVolume : 0.85)
+    }
+  }, [volume, prevVolume, onVolumeChange])
+
   const VolumeIcon = volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2
   const currentInst = AVAILABLE_INSTRUMENTS.find((i) => i.id === instrument) ?? AVAILABLE_INSTRUMENTS[0]
   const currentRhythm = RHYTHM_PATTERNS.find((p) => p.id === rhythm) ?? RHYTHM_PATTERNS[0]
@@ -299,18 +310,55 @@ export function TransportBar({
 
         <div className="h-5 w-px bg-border/80" />
 
-        {/* Master Volume Slider */}
-        <div className="flex items-center gap-1.5 px-1.5">
-          <VolumeIcon className="size-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
+        {/* Master Volume Controller */}
+        <div className="flex items-center gap-1.5 sm:gap-2 px-1 sm:px-2 py-0.5">
+          <button
+            type="button"
+            onClick={handleToggleMute}
+            className={cn(
+              "rounded-md p-1.5 transition-colors cursor-pointer",
+              volume === 0
+                ? "text-destructive bg-destructive/10 hover:bg-destructive/20"
+                : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
+            )}
+            title={volume === 0 ? "Unmute sound" : "Mute sound (0%)"}
+            aria-label={volume === 0 ? "Unmute sound" : "Mute sound"}
+          >
+            <VolumeIcon className="size-3.5 shrink-0" aria-hidden="true" />
+          </button>
+
           <Slider
             value={[volume]}
             min={0}
             max={1}
             step={0.01}
             onValueChange={(v) => onVolumeChange(Array.isArray(v) ? v[0] : v)}
-            className="w-14 sm:w-16"
+            className="w-16 sm:w-20 md:w-24 cursor-pointer"
             aria-label={`Master volume ${(volume * 100).toFixed(0)}%`}
           />
+
+          {/* Live Volume Percentage Pill & Preset Cycler */}
+          <button
+            type="button"
+            onClick={() => {
+              // Cycle through convenient user presets: 85% -> 100% -> 55% -> 0% -> 85%
+              if (volume >= 0.95) onVolumeChange(0.55)
+              else if (volume >= 0.8) onVolumeChange(1.0)
+              else if (volume >= 0.4) onVolumeChange(0)
+              else onVolumeChange(0.85)
+            }}
+            className={cn(
+              "font-mono text-[10px] font-bold px-1.5 py-0.5 rounded-md border min-w-[34px] text-center transition-all hover:scale-105 active:scale-95 cursor-pointer select-none",
+              volume === 0
+                ? "border-destructive/40 bg-destructive/10 text-destructive font-black"
+                : volume >= 0.85
+                  ? "border-primary/40 bg-primary/10 text-primary font-black"
+                  : "border-border/80 bg-background/60 text-muted-foreground hover:text-foreground"
+            )}
+            title="Click to cycle presets: 85% (Base) -> 100% (Loud) -> 55% (Emotional) -> 0% (Silent)"
+          >
+            {volume === 0 ? "0%" : `${Math.round(volume * 100)}%`}
+          </button>
         </div>
       </div>
     </div>

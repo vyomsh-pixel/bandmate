@@ -74,14 +74,22 @@ class AudioEngine {
       this.ctx = new Ctor()
       this.master = this.ctx.createGain()
       this.master.gain.value = 1.0
+
+      // Transparent dynamics compressor: tames sharp transients while keeping full body
       const compressor = this.ctx.createDynamicsCompressor()
-      compressor.threshold.value = -16
-      compressor.knee.value = 12
-      compressor.ratio.value = 4
+      compressor.threshold.value = -12
+      compressor.knee.value = 10
+      compressor.ratio.value = 3.5
       compressor.attack.value = 0.003
-      compressor.release.value = 0.15
+      compressor.release.value = 0.12
+
+      // Studio Makeup Gain: boosts overall output loudness to commercial streaming levels (+5.5 dB)
+      const makeupGain = this.ctx.createGain()
+      makeupGain.gain.value = 1.85
+
       this.master.connect(compressor)
-      compressor.connect(this.ctx.destination)
+      compressor.connect(makeupGain)
+      makeupGain.connect(this.ctx.destination)
     }
     if (this.ctx.state === "suspended") await this.ctx.resume()
 
@@ -122,9 +130,15 @@ class AudioEngine {
     if (!this.ctx || !this.master) return
     const currentInst = options.instrument ?? this.getInstrument()
     const { when = this.ctx.currentTime, duration = 1.6, velocity = 0.95, wave = "triangle" } = options
-    const peak = (1.35 / Math.pow(Math.max(1, midis.length), 0.35)) * velocity
+    
+    // Increased base loudness multiplier
+    const peak = (1.75 / Math.pow(Math.max(1, midis.length), 0.28)) * velocity
+    const minMidi = midis.length > 0 ? Math.min(...midis) : -1
+
     for (const midi of midis) {
-      this.playVoice(midi, when, duration, peak, wave, currentInst)
+      // Ensure the bass note / root note has extra weight and punch (25% boost)
+      const voicePeak = midi === minMidi ? peak * 1.25 : peak
+      this.playVoice(midi, when, duration, voicePeak, wave, currentInst)
     }
   }
 
@@ -133,7 +147,7 @@ class AudioEngine {
     if (!this.ctx || !this.master) return
     const currentInst = options.instrument ?? this.getInstrument()
     const { when = this.ctx.currentTime, duration = 1.4, velocity = 0.95, wave = "triangle" } = options
-    this.playVoice(midi, when, duration, velocity * 1.3, wave, currentInst)
+    this.playVoice(midi, when, duration, velocity * 1.7, wave, currentInst)
   }
 
   private playVoice(
@@ -177,7 +191,7 @@ class AudioEngine {
     sub.type = targetInst === "synth_8bit" ? "square" : "sine"
     sub.frequency.value = freq / 2
     const subGain = ctx.createGain()
-    subGain.gain.value = targetInst === "synth_8bit" ? 0.3 : 0.45
+    subGain.gain.value = targetInst === "synth_8bit" ? 0.35 : 0.6
 
     // ADSR
     const attack = targetInst === "synth_8bit" ? 0.002 : 0.01

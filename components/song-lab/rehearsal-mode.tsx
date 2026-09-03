@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import { X, Play, Square } from "lucide-react"
+import { X, Play, Square, Volume2, Volume1, VolumeX } from "lucide-react"
+import { Slider } from "@/components/ui/slider"
 import { cn } from "@/lib/utils"
 import type { Song } from "@/lib/music/types"
 
@@ -9,11 +10,21 @@ interface RehearsalModeProps {
   song: Song
   isPlaying: boolean
   activeIndex: number | null
+  volume?: number
+  onVolumeChange?: (v: number) => void
   onTogglePlay: () => void
   onClose: () => void
 }
 
-export function RehearsalMode({ song, isPlaying, activeIndex, onTogglePlay, onClose }: RehearsalModeProps) {
+export function RehearsalMode({
+  song,
+  isPlaying,
+  activeIndex,
+  volume,
+  onVolumeChange,
+  onTogglePlay,
+  onClose,
+}: RehearsalModeProps) {
   const containerRef = useRef<HTMLDivElement>(null)
 
   // Calculate flat chords array for mapping activeIndex
@@ -54,6 +65,37 @@ export function RehearsalMode({ song, isPlaying, activeIndex, onTogglePlay, onCl
            <div className="text-xs sm:text-sm text-muted-foreground">{song.keyTonic} {song.keyMode} · {song.bpm} BPM</div>
         </div>
         <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+          {onVolumeChange !== undefined && volume !== undefined && (
+            <div className="hidden sm:flex items-center gap-2 rounded-full border border-border/80 bg-background/60 px-3 py-1.5 shadow-xs">
+              <button
+                type="button"
+                onClick={() => onVolumeChange(volume > 0 ? 0 : 0.85)}
+                className="text-muted-foreground hover:text-foreground cursor-pointer"
+                title={volume === 0 ? "Unmute" : "Mute (0%)"}
+              >
+                {volume === 0 ? (
+                  <VolumeX className="size-4 text-destructive" />
+                ) : volume < 0.5 ? (
+                  <Volume1 className="size-4" />
+                ) : (
+                  <Volume2 className="size-4" />
+                )}
+              </button>
+              <Slider
+                value={[volume]}
+                min={0}
+                max={1}
+                step={0.01}
+                onValueChange={(v) => onVolumeChange(Array.isArray(v) ? v[0] : v)}
+                className="w-20 cursor-pointer"
+                aria-label="Volume"
+              />
+              <span className="font-mono text-[11px] font-bold text-muted-foreground min-w-[28px]">
+                {Math.round(volume * 100)}%
+              </span>
+            </div>
+          )}
+
           <button 
             onClick={onTogglePlay}
             className="flex items-center gap-1.5 sm:gap-2 rounded-full bg-primary px-4 sm:px-6 py-2 sm:py-3 font-bold text-xs sm:text-base text-primary-foreground hover:bg-primary/90 touch-manipulation cursor-pointer"

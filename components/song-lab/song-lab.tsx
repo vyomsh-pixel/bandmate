@@ -72,7 +72,25 @@ export function SongLab({
   const [currentBeat, setCurrentBeat] = useState<number | null>(null)
   const [metronome, setMetronome] = useState(true)
   const [loop, setLoop] = useState(true)
-  const [volume, setVolume] = useState(0.85)
+  const [volume, setVolumeState] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("bandmate_volume")
+      if (saved !== null) {
+        const num = parseFloat(saved)
+        if (!isNaN(num) && num >= 0 && num <= 1) return num
+      }
+    }
+    return 0.85
+  })
+
+  const setVolume = useCallback((v: number) => {
+    const clamped = Math.min(1, Math.max(0, v))
+    setVolumeState(clamped)
+    if (typeof window !== "undefined") {
+      localStorage.setItem("bandmate_volume", clamped.toString())
+    }
+  }, [])
+
   const [instrument, setInstrumentState] = useState<InstrumentId>("acoustic_grand_piano")
   const [rhythm, setRhythm] = useState<RhythmPattern>("pulse")
   const [isRehearsing, setIsRehearsing] = useState(false)
@@ -834,6 +852,8 @@ export function SongLab({
           song={song}
           isPlaying={isPlaying}
           activeIndex={isPlaying ? activeIndex : null}
+          volume={volume}
+          onVolumeChange={setVolume}
           onTogglePlay={togglePlay}
           onClose={() => setIsRehearsing(false)}
         />

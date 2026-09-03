@@ -280,15 +280,15 @@ class SoundfontEngine {
       }
 
       const gain = ctx.createGain()
-      const peak = Math.min(1.8, Math.max(0.15, velocity * 1.55))
+      const peak = Math.min(2.4, Math.max(0.2, velocity * 2.1))
 
       // Natural acoustic envelope
       gain.gain.setValueAtTime(0.0001, when)
       gain.gain.linearRampToValueAtTime(peak, when + 0.005)
 
-      // Piano / guitar acoustic decay
-      const decayTime = Math.min(buffer.duration, duration + 1.0)
-      gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, peak * 0.08), when + decayTime)
+      // Piano / guitar acoustic decay - keep sustained warmth instead of dropping to a whisper
+      const decayTime = Math.min(buffer.duration, duration + 1.2)
+      gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, peak * 0.22), when + decayTime)
       gain.gain.setValueAtTime(0.0001, when + decayTime + 0.05)
 
       source.connect(gain)
