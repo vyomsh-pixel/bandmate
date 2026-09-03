@@ -101,7 +101,7 @@ export function SongLab({
   const [rightWidth, setRightWidth] = useState(290)
   const [isDraggingLeft, setIsDraggingLeft] = useState(false)
   const [isDraggingRight, setIsDraggingRight] = useState(false)
-  const [mobileTab, setMobileTab] = useState<"progression" | "inspector" | "sections">("progression")
+  const [mobileTab, setMobileTab] = useState<"progression" | "piano" | "inspector" | "sections">("progression")
 
   const startResizeLeft = useCallback((e: React.MouseEvent) => {
     e.preventDefault()
@@ -553,47 +553,6 @@ export function SongLab({
 
   return (
     <div className="flex h-full flex-col bg-background overflow-hidden">
-      {/* Mobile Screen Segment Bar (< lg only) */}
-      <div className="flex lg:hidden items-center justify-between border-b border-border/80 bg-card/60 px-2 sm:px-3 py-1.5 backdrop-blur-md shrink-0">
-        <div className="flex items-center gap-1 w-full bg-muted/50 p-0.5 rounded-xl border border-border/40">
-          <button
-            type="button"
-            onClick={() => setMobileTab("progression")}
-            className={cn(
-              "flex-1 py-1.5 text-center font-mono text-[11px] font-bold rounded-lg transition-all cursor-pointer touch-manipulation",
-              mobileTab === "progression"
-                ? "bg-primary text-primary-foreground shadow-xs"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            🎼 Chords
-          </button>
-          <button
-            type="button"
-            onClick={() => setMobileTab("inspector")}
-            className={cn(
-              "flex-1 py-1.5 text-center font-mono text-[11px] font-bold rounded-lg transition-all cursor-pointer touch-manipulation",
-              mobileTab === "inspector"
-                ? "bg-primary text-primary-foreground shadow-xs"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            🔍 Voice ({parsedSelected?.symbol ?? "—"})
-          </button>
-          <button
-            type="button"
-            onClick={() => setMobileTab("sections")}
-            className={cn(
-              "flex-1 py-1.5 text-center font-mono text-[11px] font-bold rounded-lg transition-all cursor-pointer touch-manipulation",
-              mobileTab === "sections"
-                ? "bg-primary text-primary-foreground shadow-xs"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            📑 Sections ({song.sections.length})
-          </button>
-        </div>
-      </div>
 
       {/* Main Workspace Panels */}
       <div className={cn("flex flex-1 flex-col lg:flex-row overflow-hidden min-h-0", (isDraggingLeft || isDraggingRight) && "select-none")}>
@@ -802,9 +761,9 @@ export function SongLab({
             />
           </div>
 
-          {/* Virtual Piano Dock (Collapsible) */}
+          {/* Virtual Piano Dock (Desktop Collapsible) */}
           {showPiano && (
-            <div className="shrink-0 border-t border-border/80 bg-card/40 px-2 sm:px-3 py-1.5 sm:py-2 backdrop-blur-md">
+            <div className="hidden lg:block shrink-0 border-t border-border/80 bg-card/40 px-2 sm:px-3 py-1.5 sm:py-2 backdrop-blur-md">
               <PianoKeyboard
                 activeMidis={activeMidis}
                 rootMidi={rootMidi}
@@ -829,6 +788,34 @@ export function SongLab({
             <div className="h-8 w-0.5 rounded-full bg-border/80 group-hover:bg-primary group-hover:h-12 group-hover:w-1 transition-all" />
           </div>
         )}
+
+        {/* Mobile Dedicated Piano View (< lg only) */}
+        <div
+          className={cn(
+            "border-t border-border/80 bg-card/30 p-3 shrink-0 overflow-y-auto",
+            mobileTab === "piano" ? "flex flex-col flex-1 w-full" : "hidden",
+          )}
+        >
+          <div className="mb-2 flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <span className="text-base">🎹</span>
+              <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Interactive Keyboard
+              </h3>
+            </div>
+            <span className="font-mono text-[10px] text-primary font-bold px-2 py-0.5 rounded-full bg-primary/10 border border-primary/30">
+              {parsedSelected?.symbol ? `Chord: ${parsedSelected.symbol}` : "88-Key Piano"}
+            </span>
+          </div>
+          <div className="flex-1 flex flex-col justify-center py-4">
+            <PianoKeyboard
+              activeMidis={activeMidis}
+              rootMidi={rootMidi}
+              bassMidi={bassMidi}
+              accidental={accidental}
+            />
+          </div>
+        </div>
 
         {/* Right Panel: Inspector */}
         <div
@@ -871,6 +858,65 @@ export function SongLab({
           />
         </div>
       </div>
+
+      {/* Mobile DAW Bottom Navigation Bar (< lg only) */}
+      <nav className="flex lg:hidden items-center justify-around border-t border-border/80 bg-card/95 px-2 py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] backdrop-blur-xl shrink-0 z-30 shadow-lg">
+        <button
+          type="button"
+          onClick={() => setMobileTab("progression")}
+          className={cn(
+            "flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all cursor-pointer touch-manipulation",
+            mobileTab === "progression"
+              ? "text-primary font-black scale-105"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <span className="text-base leading-none">🎼</span>
+          <span className="font-mono text-[10px] tracking-tight">Chords</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setMobileTab("piano")}
+          className={cn(
+            "flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all cursor-pointer touch-manipulation",
+            mobileTab === "piano"
+              ? "text-primary font-black scale-105"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <span className="text-base leading-none">🎹</span>
+          <span className="font-mono text-[10px] tracking-tight">Piano</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setMobileTab("inspector")}
+          className={cn(
+            "flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all cursor-pointer touch-manipulation",
+            mobileTab === "inspector"
+              ? "text-primary font-black scale-105"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <span className="text-base leading-none">🔍</span>
+          <span className="font-mono text-[10px] tracking-tight">Voice</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setMobileTab("sections")}
+          className={cn(
+            "flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all cursor-pointer touch-manipulation",
+            mobileTab === "sections"
+              ? "text-primary font-black scale-105"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          <span className="text-base leading-none">📑</span>
+          <span className="font-mono text-[10px] tracking-tight">Song</span>
+        </button>
+      </nav>
 
       {/* Fullscreen Overlays */}
       {isRehearsing && (

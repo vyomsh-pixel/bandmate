@@ -9,7 +9,14 @@
  */
 
 import { useEffect, useMemo, useRef } from "react"
-import { Plus, X, ChevronLeft, ChevronRight, Minus, Sparkles, Copy } from "lucide-react"
+import { Plus, X, ChevronLeft, ChevronRight, ChevronDown, Minus, Sparkles, Copy } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 import { parseChord } from "@/lib/music/chord-parser"
 import { diatonicChords, makeKey } from "@/lib/music/scales"
@@ -348,31 +355,113 @@ export function ProgressionEditor({
           )
         })}
 
-        {/* Add Section Quick Bar */}
+        {/* Add Section Menu Bar */}
         {onAddSection && (
-          <div className="flex items-center gap-1.5 flex-wrap p-2 sm:p-2.5 rounded-xl border border-dashed border-border/80 bg-card/30">
-            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground font-mono px-1">
-              + Add Section:
+          <div className="flex items-center justify-between gap-2 p-2 sm:p-2.5 rounded-xl border border-dashed border-border/80 bg-card/30">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground font-mono px-1 flex items-center gap-1.5">
+              <Plus className="size-3.5 text-primary" />
+              <span>Section Arranger</span>
             </span>
-            {["Verse", "Chorus", "Pre-Chorus", "Bridge", "Intro", "Outro"].map((type) => (
-              <button
-                key={type}
-                type="button"
-                onClick={() => onAddSection(type)}
-                className="rounded-lg border border-border/70 bg-background/70 px-2 sm:px-2.5 py-1 font-mono text-[10px] sm:text-[11px] font-semibold text-muted-foreground transition-all hover:border-primary/60 hover:bg-primary/10 hover:text-primary cursor-pointer active:scale-95 shadow-xs"
-                title={`Add another ${type} section`}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 gap-1.5 rounded-lg border-primary/40 bg-primary/10 text-xs font-bold text-primary hover:bg-primary/20 cursor-pointer shadow-xs"
+                >
+                  <Plus className="size-3.5" />
+                  <span>+ Add Section</span>
+                  <ChevronDown className="size-3 ml-0.5 opacity-70" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 p-1.5 z-50">
+                {["Verse", "Chorus", "Pre-Chorus", "Bridge", "Intro", "Outro", "Custom"].map((type) => (
+                  <DropdownMenuItem
+                    key={type}
+                    onClick={() => onAddSection(type)}
+                    className="cursor-pointer font-bold text-xs flex items-center justify-between py-2"
+                  >
+                    <span>+ {type}</span>
+                    <span className="text-[10px] font-mono text-muted-foreground">Section</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
+
+        {/* Mobile Contextual Selected Chord Action Bar (< md) */}
+        {selectedChord && (
+          <div className="flex md:hidden items-center justify-between gap-1.5 p-2 rounded-xl border border-primary/40 bg-primary/10 backdrop-blur-md shadow-xs animate-in fade-in slide-in-from-bottom-2 duration-150">
+            <div className="flex items-center gap-1.5">
+              <span className="font-mono text-xs font-black text-primary px-1.5 py-0.5 rounded bg-primary/20">
+                {selectedChord.symbol}
+              </span>
+              <div className="flex items-center gap-1 rounded bg-background/60 px-1 py-0.5 border border-border/60">
+                <button
+                  type="button"
+                  onClick={() => onUpdate(selectedChord.id, { beats: Math.max(1, selectedChord.beats - 1) })}
+                  className="size-5 flex items-center justify-center rounded text-muted-foreground hover:text-foreground active:scale-95"
+                  aria-label="Decrease beats"
+                >
+                  <Minus className="size-2.5" />
+                </button>
+                <span className="font-mono text-xs font-bold px-1 tabular-nums">
+                  {selectedChord.beats}b
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onUpdate(selectedChord.id, { beats: Math.min(16, selectedChord.beats + 1) })}
+                  className="size-5 flex items-center justify-center rounded text-muted-foreground hover:text-foreground active:scale-95"
+                  aria-label="Increase beats"
+                >
+                  <Plus className="size-2.5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-[10px] font-bold gap-1 rounded-lg bg-background/60"
+                onClick={() => onMove(selectedChord.id, -1)}
+                title="Move chord left"
               >
-                + {type}
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => onAddSection("Custom")}
-              className="rounded-lg border border-primary/40 bg-primary/10 px-2 sm:px-2.5 py-1 font-mono text-[10px] sm:text-[11px] font-semibold text-primary transition-all hover:border-primary hover:bg-primary/20 cursor-pointer active:scale-95 shadow-xs"
-              title="Add a custom named section"
-            >
-              + Custom
-            </button>
+                <ChevronLeft className="size-3" />
+                Left
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-[10px] font-bold gap-1 rounded-lg bg-background/60"
+                onClick={() => onMove(selectedChord.id, 1)}
+                title="Move chord right"
+              >
+                Right
+                <ChevronRight className="size-3" />
+              </Button>
+              {onDuplicate && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-2 text-[10px] font-bold gap-1 rounded-lg bg-background/60 text-primary border-primary/30"
+                  onClick={() => onDuplicate(selectedChord.id)}
+                  title="Duplicate chord"
+                >
+                  <Copy className="size-3" />
+                </Button>
+              )}
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 size-7 p-0 rounded-lg text-destructive hover:bg-destructive/10"
+                onClick={() => onRemove(selectedChord.id)}
+                title="Delete chord"
+              >
+                <X className="size-3.5" />
+              </Button>
+            </div>
           </div>
         )}
       </div>
