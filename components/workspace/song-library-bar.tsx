@@ -65,177 +65,96 @@ export function SongLibraryBar({
   const upcomingModules = MODULES.filter((m) => !m.available)
 
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between border-b border-border/80 bg-card/70 px-2.5 sm:px-4 backdrop-blur-md gap-2 sm:gap-3 overflow-x-auto no-scrollbar">
-      {/* Left: Studio Module Menu + Project Selector + Title Edit */}
-      <div className="flex items-center gap-2 min-w-0">
-        {/* Studio Brand & Module Switcher Menu */}
+    <header className="flex h-12 md:h-14 shrink-0 items-center justify-between border-b border-border/80 bg-card/70 px-2.5 sm:px-4 backdrop-blur-md">
+      {/* ========================================================================= */}
+      {/* MOBILE-ONLY HEADER (< md) — ZERO CLUTTER, SPACIOUS, 100% VISIBLE          */}
+      {/* ========================================================================= */}
+      <div className="flex md:hidden items-center justify-between w-full gap-2 min-w-0">
+        {/* Brand + Current Song Dropdown Picker */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="flex items-center gap-2 rounded-xl border border-border/80 bg-background/70 px-2.5 py-1 text-xs font-bold shadow-xs hover:border-primary/50 hover:bg-muted/80 transition-all cursor-pointer shrink-0 group focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-primary"
-              aria-label="Open Workspace Modules Menu"
-              title="Switch Studio Module or View Roadmap"
+              className="flex items-center gap-1.5 rounded-xl border border-border/80 bg-background/60 px-2 py-1 text-xs font-bold shadow-xs hover:border-primary/50 transition-all cursor-pointer min-w-0 max-w-[55%]"
+              aria-label="Select song track"
             >
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 text-black shadow-xs group-hover:scale-105 transition-transform">
-                <TrebleClefIcon className="size-4.5 fill-current" />
+              <div className="size-6 shrink-0 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 text-black flex items-center justify-center shadow-xs">
+                <TrebleClefIcon className="size-3.5 fill-current" />
               </div>
-              <div className="flex flex-col text-left leading-tight">
-                <span className="font-mono text-xs font-black tracking-tight text-foreground flex items-center gap-1">
-                  BandMate
-                </span>
-                <span className="text-[10px] font-semibold text-primary font-mono uppercase">
-                  {currentModule.name}
-                </span>
-              </div>
-              <ChevronDown className="size-3.5 text-muted-foreground group-hover:text-foreground transition-colors ml-0.5" />
+              <span className="font-mono text-xs font-black truncate text-foreground">
+                {currentSong?.title || "Untitled Song"}
+              </span>
+              <ChevronDown className="size-3 text-muted-foreground shrink-0" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-64 p-2 z-50">
-            <div className="px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
-              Studio Modules
+          <DropdownMenuContent align="start" className="w-64 p-2 space-y-2 z-50">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
+                Song Tracks ({songs.length})
+              </span>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={onCreate}
+                className="h-6 px-2 text-[10px] font-bold text-primary hover:bg-primary/10 gap-1 cursor-pointer"
+              >
+                <Plus className="size-3" />
+                New
+              </Button>
             </div>
-            {activeModules.map((mod) => {
-              const Icon = mod.icon
-              const isActive = mod.id === activeModule
-              return (
-                <DropdownMenuItem
-                  key={mod.id}
-                  onClick={() => onSelectModule?.(mod.id)}
+
+            {onTitleChange && currentSong && (
+              <div className="px-1">
+                <Input
+                  value={currentSong.title}
+                  onChange={(e) => onTitleChange(e.target.value)}
+                  className="h-7 border-border/60 bg-background/50 px-2 text-xs font-bold text-foreground"
+                  placeholder="Rename song..."
+                />
+              </div>
+            )}
+
+            <div className="max-h-48 overflow-y-auto space-y-0.5">
+              {songs.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => onSelect(s.id)}
                   className={cn(
-                    "flex items-start gap-2.5 p-2 rounded-xl cursor-pointer transition-colors mb-1",
-                    isActive ? "bg-primary/15 text-primary" : "hover:bg-muted",
+                    "w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors text-left",
+                    s.id === currentId
+                      ? "bg-primary/15 text-primary font-bold"
+                      : "hover:bg-muted text-foreground",
                   )}
                 >
-                  <div
-                    className={cn(
-                      "p-1.5 rounded-lg shrink-0 mt-0.5",
-                      isActive ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground",
-                    )}
-                  >
-                    <Icon className="size-4" />
-                  </div>
-                  <div className="flex flex-col flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-foreground">{mod.name}</span>
-                      {isActive && (
-                        <Badge variant="default" className="text-[9px] font-mono px-1.5 py-0 h-4 bg-primary text-primary-foreground">
-                          Active
-                        </Badge>
-                      )}
-                    </div>
-                    <span className="text-[10px] text-muted-foreground line-clamp-1">{mod.description}</span>
-                  </div>
-                </DropdownMenuItem>
-              )
-            })}
-
-            <div className="my-1.5 h-px bg-border/60" />
-
-            <div className="flex items-center justify-between px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <Sparkles className="size-3 text-primary" />
-                Roadmap
-              </span>
-              <span className="text-[9px] opacity-70">Coming Soon</span>
+                  <span className="truncate flex-1">{s.title || "Untitled Song"}</span>
+                  <Badge variant="outline" className="text-[9px] font-mono shrink-0 ml-1.5">
+                    {s.keyTonic} {s.keyMode === "major" ? "maj" : "min"}
+                  </Badge>
+                </button>
+              ))}
             </div>
-
-            {upcomingModules.map((mod) => {
-              const Icon = mod.icon
-              return (
-                <div
-                  key={mod.id}
-                  className="flex items-start gap-2.5 p-2 rounded-xl opacity-60 hover:opacity-80 transition-opacity"
-                >
-                  <div className="p-1.5 rounded-lg bg-muted text-muted-foreground shrink-0 mt-0.5">
-                    <Icon className="size-4" />
-                  </div>
-                  <div className="flex flex-col flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-foreground">{mod.name}</span>
-                      <span className="text-[9px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded-xs">
-                        Phase {mod.phase}
-                      </span>
-                    </div>
-                    <span className="text-[10px] text-muted-foreground line-clamp-1">{mod.description}</span>
-                  </div>
-                </div>
-              )
-            })}
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <div className="h-6 w-px bg-border/60 shrink-0" />
-
-        <Select value={currentId ?? ""} onValueChange={(v) => v && onSelect(v)}>
-          <SelectTrigger
-            className="h-8.5 w-auto px-2 sm:px-3 border-border/80 bg-background/60 font-semibold text-xs text-foreground hover:border-border transition-colors rounded-xl gap-1.5 sm:gap-2 cursor-pointer shrink-0"
-            aria-label="Select active song"
-          >
-            <Music className="size-3.5 text-primary shrink-0" aria-hidden="true" />
-            <span className="font-mono text-[11px] text-muted-foreground">
-              <span className="hidden sm:inline">Tracks </span>
-              <span className="text-foreground font-bold">({songs.length})</span>
-            </span>
-          </SelectTrigger>
-          <SelectContent align="start" className="min-w-[220px]">
-            {songs.map((s) => (
-              <SelectItem key={s.id} value={s.id} className="cursor-pointer py-2 font-medium">
-                <div className="flex items-center justify-between w-full gap-2">
-                  <span className="truncate">{s.title || "Untitled Song"}</span>
-                  <Badge variant="outline" className="text-[10px] font-mono shrink-0">
-                    {s.keyTonic} {s.keyMode === "major" ? "maj" : "min"}
-                  </Badge>
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {onTitleChange && currentSong && (
-          <Input
-            value={currentSong.title}
-            onChange={(e) => onTitleChange(e.target.value)}
-            className="h-8.5 w-24 sm:w-40 md:w-56 border-border/60 bg-background/50 px-2 sm:px-3 text-xs font-black text-foreground focus-visible:ring-1 focus-visible:ring-primary rounded-xl shrink-0"
-            placeholder="Track title..."
-            aria-label="Rename song track"
-          />
-        )}
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onCreate}
-          className="h-8.5 w-8.5 sm:w-auto p-0 sm:px-2.5 sm:gap-1.5 border-border/80 bg-background/50 text-xs font-semibold shadow-xs hover:border-primary/50 hover:bg-primary/5 rounded-xl cursor-pointer shrink-0"
-          aria-label="Create new song"
-          title="Create new song track"
-        >
-          <Plus className="size-3.5 text-primary" aria-hidden="true" />
-          <span className="hidden md:inline">New</span>
-        </Button>
-      </div>
-
-      {/* Center: Key & Transpose Controls */}
-      {currentSong && onKeyChange && onModeChange && onTranspose && (
-        <>
-          {/* Mobile Single-Pill Key & Transpose Popover (< md) */}
-          <div className="md:hidden flex items-center shrink-0">
+        {/* Right: Key Pill + Settings Menu */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {currentSong && onKeyChange && onModeChange && onTranspose && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="flex items-center gap-1.5 rounded-xl border border-border/80 bg-background/60 px-2.5 py-1.5 text-xs font-mono font-bold text-foreground hover:border-primary/50 transition-all cursor-pointer shrink-0 shadow-xs"
+                  className="flex items-center gap-1 rounded-xl border border-border/80 bg-background/60 px-2.5 py-1 text-xs font-mono font-bold text-foreground hover:border-primary/50 transition-all cursor-pointer shadow-xs"
                   aria-label="Change Key and Transpose"
-                  title="Key & Transposition Settings"
                 >
                   <span className="text-primary font-black text-xs">{currentSong.keyTonic}</span>
                   <span className="text-[10px] text-muted-foreground uppercase font-semibold">
                     {currentSong.keyMode === "major" ? "maj" : "min"}
                   </span>
-                  <ChevronDown className="size-3 text-muted-foreground" />
+                  <ChevronDown className="size-3 text-muted-foreground ml-0.5" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="w-64 p-3 space-y-3 z-50">
+              <DropdownMenuContent align="end" className="w-64 p-3 space-y-3 z-50">
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
@@ -318,10 +237,231 @@ export function SongLibraryBar({
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
+          )}
 
-          {/* Desktop Inline Controls (>= md) */}
-          <div className="hidden md:flex items-center gap-2 shrink-0">
+          {/* Settings / Tools Drawer */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="flex size-8 items-center justify-center rounded-xl border border-border/80 bg-background/60 text-muted-foreground hover:border-primary/50 hover:text-foreground cursor-pointer shadow-xs transition-colors"
+                aria-label="Studio tools and options"
+                title="Tools & Settings"
+              >
+                <Settings className="size-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 p-2 space-y-2 z-50">
+              <div className="flex items-center justify-between px-2 py-1">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
+                  Quick Actions
+                </span>
+                <div className="flex items-center gap-1 text-[10px] font-medium text-emerald-400">
+                  <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Saved
+                </div>
+              </div>
+
+              <DropdownMenuItem
+                onClick={onCreate}
+                className="cursor-pointer font-bold text-xs flex items-center gap-2 py-2"
+              >
+                <Plus className="size-3.5 text-primary" />
+                <span>New Song Track</span>
+              </DropdownMenuItem>
+
+              <div className="px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground border-t border-border/60 pt-2">
+                Studio Modules
+              </div>
+              {activeModules.map((mod) => (
+                <DropdownMenuItem
+                  key={mod.id}
+                  onClick={() => onSelectModule?.(mod.id)}
+                  className={cn(
+                    "cursor-pointer text-xs flex items-center justify-between py-1.5",
+                    mod.id === activeModule && "font-bold text-primary bg-primary/10"
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <mod.icon className="size-3.5" />
+                    <span>{mod.name}</span>
+                  </div>
+                  {mod.id === activeModule && <span className="size-1.5 rounded-full bg-primary" />}
+                </DropdownMenuItem>
+              ))}
+
+              {currentId && songs.length > 1 && (
+                <>
+                  <div className="my-1 border-t border-border/60" />
+                  <DropdownMenuItem
+                    className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive text-xs py-2"
+                    onClick={() => currentId && onDelete(currentId)}
+                  >
+                    <Trash2 className="mr-2 size-3.5" />
+                    Delete this track
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* DESKTOP-ONLY HEADER (>= md) — POWERFUL FULL STUDIO WORKSPACE               */}
+      {/* ========================================================================= */}
+      <div className="hidden md:flex items-center justify-between w-full gap-3 min-w-0">
+        {/* Left: Studio Module Menu + Project Selector + Title Edit */}
+        <div className="flex items-center gap-2 min-w-0">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="flex items-center gap-2 rounded-xl border border-border/80 bg-background/70 px-2.5 py-1 text-xs font-bold shadow-xs hover:border-primary/50 hover:bg-muted/80 transition-all cursor-pointer shrink-0 group focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-primary"
+                aria-label="Open Workspace Modules Menu"
+                title="Switch Studio Module or View Roadmap"
+              >
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 text-black shadow-xs group-hover:scale-105 transition-transform">
+                  <TrebleClefIcon className="size-4.5 fill-current" />
+                </div>
+                <div className="flex flex-col text-left leading-tight">
+                  <span className="font-mono text-xs font-black tracking-tight text-foreground flex items-center gap-1">
+                    BandMate
+                  </span>
+                  <span className="text-[10px] font-semibold text-primary font-mono uppercase">
+                    {currentModule.name}
+                  </span>
+                </div>
+                <ChevronDown className="size-3.5 text-muted-foreground group-hover:text-foreground transition-colors ml-0.5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-64 p-2 z-50">
+              <div className="px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
+                Studio Modules
+              </div>
+              {activeModules.map((mod) => {
+                const Icon = mod.icon
+                const isActive = mod.id === activeModule
+                return (
+                  <DropdownMenuItem
+                    key={mod.id}
+                    onClick={() => onSelectModule?.(mod.id)}
+                    className={cn(
+                      "flex items-start gap-2.5 p-2 rounded-xl cursor-pointer transition-colors mb-1",
+                      isActive ? "bg-primary/15 text-primary" : "hover:bg-muted",
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "p-1.5 rounded-lg shrink-0 mt-0.5",
+                        isActive ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      <Icon className="size-4" />
+                    </div>
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-foreground">{mod.name}</span>
+                        {isActive && (
+                          <Badge variant="default" className="text-[9px] font-mono px-1.5 py-0 h-4 bg-primary text-primary-foreground">
+                            Active
+                          </Badge>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-muted-foreground line-clamp-1">{mod.description}</span>
+                    </div>
+                  </DropdownMenuItem>
+                )
+              })}
+
+              <div className="my-1.5 h-px bg-border/60" />
+
+              <div className="flex items-center justify-between px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <Sparkles className="size-3 text-primary" />
+                  Roadmap
+                </span>
+                <span className="text-[9px] opacity-70">Coming Soon</span>
+              </div>
+
+              {upcomingModules.map((mod) => {
+                const Icon = mod.icon
+                return (
+                  <div
+                    key={mod.id}
+                    className="flex items-start gap-2.5 p-2 rounded-xl opacity-60 hover:opacity-80 transition-opacity"
+                  >
+                    <div className="p-1.5 rounded-lg bg-muted text-muted-foreground shrink-0 mt-0.5">
+                      <Icon className="size-4" />
+                    </div>
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-foreground">{mod.name}</span>
+                        <span className="text-[9px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded-xs">
+                          Phase {mod.phase}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground line-clamp-1">{mod.description}</span>
+                    </div>
+                  </div>
+                )
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <div className="h-6 w-px bg-border/60 shrink-0" />
+
+          <Select value={currentId ?? ""} onValueChange={(v) => v && onSelect(v)}>
+            <SelectTrigger
+              className="h-8.5 w-auto px-2 sm:px-3 border-border/80 bg-background/60 font-semibold text-xs text-foreground hover:border-border transition-colors rounded-xl gap-1.5 sm:gap-2 cursor-pointer shrink-0"
+              aria-label="Select active song"
+            >
+              <Music className="size-3.5 text-primary shrink-0" aria-hidden="true" />
+              <span className="font-mono text-[11px] text-muted-foreground">
+                <span>Tracks </span>
+                <span className="text-foreground font-bold">({songs.length})</span>
+              </span>
+            </SelectTrigger>
+            <SelectContent align="start" className="min-w-[220px]">
+              {songs.map((s) => (
+                <SelectItem key={s.id} value={s.id} className="cursor-pointer py-2 font-medium">
+                  <div className="flex items-center justify-between w-full gap-2">
+                    <span className="truncate">{s.title || "Untitled Song"}</span>
+                    <Badge variant="outline" className="text-[10px] font-mono shrink-0">
+                      {s.keyTonic} {s.keyMode === "major" ? "maj" : "min"}
+                    </Badge>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {onTitleChange && currentSong && (
+            <Input
+              value={currentSong.title}
+              onChange={(e) => onTitleChange(e.target.value)}
+              className="h-8.5 w-36 sm:w-44 md:w-56 border-border/60 bg-background/50 px-2 sm:px-3 text-xs font-black text-foreground focus-visible:ring-1 focus-visible:ring-primary rounded-xl shrink-0"
+              placeholder="Track title..."
+              aria-label="Rename song track"
+            />
+          )}
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onCreate}
+            className="h-8.5 px-2.5 gap-1.5 border-border/80 bg-background/50 text-xs font-semibold shadow-xs hover:border-primary/50 hover:bg-primary/5 rounded-xl cursor-pointer shrink-0"
+            aria-label="Create new song"
+            title="Create new song track"
+          >
+            <Plus className="size-3.5 text-primary" aria-hidden="true" />
+            <span>New</span>
+          </Button>
+        </div>
+
+        {/* Desktop Center: Key & Transpose Controls */}
+        {currentSong && onKeyChange && onModeChange && onTranspose && (
+          <div className="flex items-center gap-2 shrink-0">
             {/* Key Tonic Selector */}
             <div className="flex items-center gap-1.5 rounded-xl border border-border/80 bg-background/50 p-1 shadow-xs">
               <span className="px-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
@@ -392,81 +532,10 @@ export function SongLibraryBar({
               </Button>
             </div>
           </div>
-        </>
-      )}
+        )}
 
-      {/* Right: Mobile Settings Drawer (< md) & Desktop Action Bar (>= md) */}
-      <div className="flex items-center gap-1.5 sm:gap-2">
-        {/* Mobile Tools Menu Trigger (< md) */}
-        <div className="flex md:hidden items-center">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="flex size-8 items-center justify-center rounded-xl border border-border/80 bg-background/60 text-muted-foreground hover:border-primary/50 hover:text-foreground cursor-pointer shadow-xs transition-colors"
-                aria-label="Studio tools and options"
-                title="Tools & Settings"
-              >
-                <Settings className="size-4" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 p-2 space-y-2 z-50">
-              <div className="flex items-center justify-between px-2 py-1">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
-                  Quick Actions
-                </span>
-                <div className="flex items-center gap-1 text-[10px] font-medium text-emerald-400">
-                  <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Saved
-                </div>
-              </div>
-
-              <DropdownMenuItem
-                onClick={onCreate}
-                className="cursor-pointer font-bold text-xs flex items-center gap-2 py-2"
-              >
-                <Plus className="size-3.5 text-primary" />
-                <span>New Song Track</span>
-              </DropdownMenuItem>
-
-              <div className="px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground border-t border-border/60 pt-2">
-                Studio Modules
-              </div>
-              {activeModules.map((mod) => (
-                <DropdownMenuItem
-                  key={mod.id}
-                  onClick={() => onSelectModule?.(mod.id)}
-                  className={cn(
-                    "cursor-pointer text-xs flex items-center justify-between py-1.5",
-                    mod.id === activeModule && "font-bold text-primary bg-primary/10"
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    <mod.icon className="size-3.5" />
-                    <span>{mod.name}</span>
-                  </div>
-                  {mod.id === activeModule && <span className="size-1.5 rounded-full bg-primary" />}
-                </DropdownMenuItem>
-              ))}
-
-              {currentId && songs.length > 1 && (
-                <>
-                  <div className="my-1 border-t border-border/60" />
-                  <DropdownMenuItem
-                    className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive text-xs py-2"
-                    onClick={() => currentId && onDelete(currentId)}
-                  >
-                    <Trash2 className="mr-2 size-3.5" />
-                    Delete this track
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        {/* Desktop Controls (>= md) */}
-        <div className="hidden md:flex items-center gap-2">
+        {/* Desktop Right: Piano + Inspector + Autosaved + More */}
+        <div className="flex items-center gap-2">
           {onTogglePiano && (
             <Button
               variant={showPiano ? "default" : "outline"}

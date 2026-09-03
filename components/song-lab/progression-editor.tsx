@@ -201,10 +201,10 @@ export function ProgressionEditor({
                           )}
                         </div>
 
-                        {/* Card Actions (Visible on hover and always when selected on touch/mobile) */}
+                        {/* Card Actions (Desktop hover, mobile uses dedicated contextual toolbar) */}
                         <div
                           className={cn(
-                            "flex items-center gap-0.5 transition-opacity",
+                            "hidden sm:flex items-center gap-0.5 transition-opacity",
                             selected ? "opacity-100" : "opacity-0 group-hover:opacity-100 focus-within:opacity-100",
                           )}
                         >
