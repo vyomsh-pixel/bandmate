@@ -12,6 +12,12 @@ export const metadata: Metadata = {
   description:
     'BandMate Song Lab: build chord progressions, transpose keys instantly, visualize chords on the keyboard with inversions, and play along with a built-in metronome.',
   generator: 'v0.app',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'BandMate',
+  },
 }
 
 export const viewport: Viewport = {

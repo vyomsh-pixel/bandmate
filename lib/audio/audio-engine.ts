@@ -138,10 +138,16 @@ class AudioEngine {
     const peak = (1.75 / Math.pow(Math.max(1, midis.length), 0.28)) * velocity
     const minMidi = midis.length > 0 ? Math.min(...midis) : -1
 
-    for (const midi of midis) {
+    // Acoustic Strum Humanization (16ms micro-offsets per note to simulate realistic fingerpicking/strumming)
+    const isAcoustic = currentInst.includes("guitar") || currentInst.includes("piano") || currentInst.includes("nylon")
+    const strumStep = isAcoustic && midis.length > 1 ? 0.016 : 0 // 16ms roll between notes
+
+    for (let i = 0; i < midis.length; i++) {
+      const midi = midis[i]
       // Ensure the bass note / root note has extra weight and punch (25% boost)
       const voicePeak = midi === minMidi ? peak * 1.25 : peak
-      this.playVoice(midi, when, duration, voicePeak, wave, currentInst)
+      const noteWhen = when + (i * strumStep)
+      this.playVoice(midi, noteWhen, duration, voicePeak, wave, currentInst)
     }
   }
 
