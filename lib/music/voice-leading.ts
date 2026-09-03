@@ -45,10 +45,14 @@ export function suggestSmoothInversion(
   let minDistance = Infinity
   
   for (const inv of targetInversions) {
-    const dist = voiceLeadingDistance(currentVoicing, inv.notes)
-    if (dist < minDistance) {
-      minDistance = dist
-      bestInversion = inv.inversion
+    // Check inversion directly and with octave shifts to find true minimal distance
+    for (const octaveShift of [-12, 0, 12]) {
+      const shiftedNotes = inv.notes.map((n) => ({ ...n, midi: n.midi + octaveShift }))
+      const dist = voiceLeadingDistance(currentVoicing, shiftedNotes)
+      if (dist < minDistance) {
+        minDistance = dist
+        bestInversion = inv.inversion
+      }
     }
   }
   

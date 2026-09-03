@@ -78,7 +78,7 @@ export interface DiatonicChord {
 export function diatonicChords(key: Key): DiatonicChord[] {
   const tonicPc = noteNameToPc(key.tonic) ?? 0
   const acc = key.accidental
-  return SCALE_STEPS[key.mode].map((step, i) => {
+  const list: DiatonicChord[] = SCALE_STEPS[key.mode].map((step, i) => {
     const rootPc = (tonicPc + step) % 12
     const suffix = DIATONIC_QUALITIES[key.mode][i]
     return {
@@ -87,4 +87,22 @@ export function diatonicChords(key: Key): DiatonicChord[] {
       symbol: `${pcToName(rootPc, acc)}${suffix}`,
     }
   })
+
+  // In minor keys, add the Harmonic Minor dominant (V Major and V7) alongside natural minor v
+  if (key.mode === "minor") {
+    const dominantRootPc = (tonicPc + 7) % 12
+    const dominantName = pcToName(dominantRootPc, acc)
+    list.push({
+      degree: 5,
+      roman: "V",
+      symbol: dominantName,
+    })
+    list.push({
+      degree: 5,
+      roman: "V7",
+      symbol: `${dominantName}7`,
+    })
+  }
+
+  return list
 }

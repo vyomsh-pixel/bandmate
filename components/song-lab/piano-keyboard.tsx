@@ -24,6 +24,8 @@ interface PianoKeyboardProps {
   activeMidis: number[]
   /** MIDI note of the chord root (stronger highlight). */
   rootMidi?: number | null
+  /** Optional separate MIDI note for slash bass. */
+  bassMidi?: number | null
   accidental?: Accidental
 }
 
@@ -35,6 +37,7 @@ export function PianoKeyboard({
   endMidi = 108,
   activeMidis,
   rootMidi = null,
+  bassMidi = null,
   accidental = "sharp",
 }: PianoKeyboardProps) {
   const activeSet = useMemo(() => new Set(activeMidis), [activeMidis])
@@ -152,24 +155,28 @@ export function PianoKeyboard({
           <div className="absolute inset-0 flex gap-0.5">
             {whiteKeys.map((key) => {
               const isActive = activeSet.has(key.midi) || pressedKeys.has(key.midi)
-              const isRoot = rootMidi === key.midi
+              const isBass = bassMidi === key.midi
+              const isRoot = !isBass && rootMidi === key.midi
 
               return (
                 <button
                   key={key.midi}
                   type="button"
-                  onMouseDown={() => {
+                  onMouseDown={(e) => {
+                    e.stopPropagation()
                     preview(key.midi)
                     setPressedKeys((prev) => new Set(prev).add(key.midi))
                   }}
-                  onMouseUp={() => {
+                  onMouseUp={(e) => {
+                    e.stopPropagation()
                     setPressedKeys((prev) => {
                       const n = new Set(prev)
                       n.delete(key.midi)
                       return n
                     })
                   }}
-                  onMouseLeave={() => {
+                  onMouseLeave={(e) => {
+                    e.stopPropagation()
                     setPressedKeys((prev) => {
                       const n = new Set(prev)
                       n.delete(key.midi)
@@ -193,26 +200,32 @@ export function PianoKeyboard({
                   className={cn(
                     "relative flex-1 rounded-b-md border border-black/30 border-t-0 transition-all duration-75 shadow-xs touch-manipulation",
                     "flex items-end justify-center pb-2 cursor-pointer",
-                    isRoot
-                      ? "bg-amber-400 text-black font-extrabold shadow-[0_0_15px_rgba(251,191,36,0.8)_inset]"
-                      : isActive
-                        ? "bg-amber-300 text-black font-bold shadow-[0_0_10px_rgba(252,211,77,0.5)_inset]"
-                        : "bg-stone-200 hover:bg-stone-100 active:bg-stone-300 text-stone-700",
+                    isBass
+                      ? "bg-emerald-400 text-black font-extrabold shadow-[0_0_15px_rgba(52,211,153,0.8)_inset]"
+                      : isRoot
+                        ? "bg-amber-400 text-black font-extrabold shadow-[0_0_15px_rgba(251,191,36,0.8)_inset]"
+                        : isActive
+                          ? "bg-amber-300 text-black font-bold shadow-[0_0_10px_rgba(252,211,77,0.5)_inset]"
+                          : "bg-stone-200 hover:bg-stone-100 active:bg-stone-300 text-stone-700",
                   )}
                 >
                   <span
                     className={cn(
                       "font-mono text-[10px] leading-none pointer-events-none",
-                      isActive || isRoot ? "opacity-100 font-extrabold" : "opacity-60",
+                      isActive || isRoot || isBass ? "opacity-100 font-extrabold" : "opacity-60",
                     )}
                   >
                     {key.label}
                   </span>
-                  {isRoot && (
+                  {isBass ? (
+                    <span className="absolute top-2 left-1/2 -translate-x-1/2 text-[8px] font-mono font-black text-black bg-emerald-300 px-1 rounded-xs uppercase shadow-xs">
+                      Bass
+                    </span>
+                  ) : isRoot ? (
                     <span className="absolute top-2 left-1/2 -translate-x-1/2 text-[8px] font-mono font-black text-black bg-amber-200 px-1 rounded-xs uppercase">
                       Root
                     </span>
-                  )}
+                  ) : null}
                 </button>
               )
             })}
@@ -222,7 +235,8 @@ export function PianoKeyboard({
           <div className="pointer-events-none absolute inset-0">
             {blackKeys.map((key) => {
               const isActive = activeSet.has(key.midi) || pressedKeys.has(key.midi)
-              const isRoot = rootMidi === key.midi
+              const isBass = bassMidi === key.midi
+              const isRoot = !isBass && rootMidi === key.midi
               const leftPct = ((key.leftIndex + 1) / whiteKeys.length) * 100
               const widthPct = (1 / whiteKeys.length) * 100
 
@@ -267,18 +281,20 @@ export function PianoKeyboard({
                   aria-label={`Play ${pcToName(midiToPc(key.midi), accidental)}`}
                   className={cn(
                     "pointer-events-auto absolute top-0 h-[60%] rounded-b-md border border-black/90 transition-all duration-75 z-10 shadow-md cursor-pointer touch-manipulation",
-                    isRoot
-                      ? "bg-amber-400 text-black font-extrabold shadow-[0_0_12px_rgba(251,191,36,0.9)]"
-                      : isActive
-                        ? "bg-amber-300 text-black font-bold shadow-[0_0_8px_rgba(252,211,77,0.7)]"
-                        : "bg-stone-900 hover:bg-stone-800 active:bg-black",
+                    isBass
+                      ? "bg-emerald-400 text-black font-extrabold shadow-[0_0_12px_rgba(52,211,153,0.9)]"
+                      : isRoot
+                        ? "bg-amber-400 text-black font-extrabold shadow-[0_0_12px_rgba(251,191,36,0.9)]"
+                        : isActive
+                          ? "bg-amber-300 text-black font-bold shadow-[0_0_8px_rgba(252,211,77,0.7)]"
+                          : "bg-stone-900 hover:bg-stone-800 active:bg-black",
                   )}
                   style={{
                     width: `${widthPct * 0.65}%`,
                     left: `${leftPct - widthPct * 0.325}%`,
                   }}
                 >
-                  {(isActive || isRoot) && (
+                  {(isActive || isRoot || isBass) && (
                     <div className="absolute bottom-1 w-full text-center">
                       <span className="text-[9px] font-mono font-black text-black pointer-events-none">
                         {pcToName(midiToPc(key.midi), accidental)}

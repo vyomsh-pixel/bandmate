@@ -30,6 +30,7 @@ interface ProgressionEditorProps {
   onDuplicate?: (id: string) => void
   onDeleteSection?: (sectionId: string) => void
   onRenameSection?: (sectionId: string, name: string) => void
+  onAutoVoice?: (sectionId: string) => void
 }
 
 export function ProgressionEditor({
@@ -46,6 +47,7 @@ export function ProgressionEditor({
   onDuplicate,
   onDeleteSection,
   onRenameSection,
+  onAutoVoice,
 }: ProgressionEditorProps) {
   const key = makeKey(keyTonic, keyMode)
   const diatonic = diatonicChords(key)
@@ -102,6 +104,19 @@ export function ProgressionEditor({
                   <span className="text-[10px] opacity-70">({section.chords.length})</span>
                 </span>
                 <div className="h-px flex-1 bg-border/60" />
+                {/* Auto-Voice Button — optimize voice leading across this section */}
+                {section.chords.length > 1 && onAutoVoice && (
+                  <button
+                    type="button"
+                    onClick={() => onAutoVoice(section.id)}
+                    className="flex items-center gap-1.5 rounded-lg border border-primary/40 bg-primary/10 px-2 sm:px-2.5 py-1 text-[10px] font-bold text-primary transition-all hover:bg-primary/20 hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-xs"
+                    title="Automatically optimize inversions for smooth voice leading"
+                    aria-label={`Auto-voice ${section.name} section`}
+                  >
+                    <Sparkles className="size-3 text-primary" />
+                    <span>Auto-Voice</span>
+                  </button>
+                )}
                 {/* Delete Section Button — only show if more than 1 section */}
                 {sections.length > 1 && (
                   <button
@@ -166,6 +181,13 @@ export function ProgressionEditor({
                               )}
                             >
                               {harm.roman}
+                            </span>
+                          )}
+
+                          {/* Inversion Badge */}
+                          {entry.inversion !== undefined && entry.inversion > 0 && (
+                            <span className="rounded-md border border-primary/40 bg-primary/15 px-1 py-0.5 font-mono text-[8.5px] font-black text-primary">
+                              Inv {entry.inversion}
                             </span>
                           )}
                         </div>
@@ -340,7 +362,7 @@ export function ProgressionEditor({
               const harm = getHarmonicFunction(d.symbol, key)
               return (
                 <button
-                  key={d.degree}
+                  key={`${d.degree}-${d.symbol}`}
                   type="button"
                   onClick={() => onAdd(d.symbol)}
                   className={cn(

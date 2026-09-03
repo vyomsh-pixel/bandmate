@@ -2,10 +2,10 @@ import { describe, it, expect } from "vitest"
 import { parseChord } from "../chord-parser"
 import { chordShapeForCapo, suggestCapo } from "../capo"
 import { detectKey, getRomanNumeral } from "../analysis"
-import { makeKey } from "../scales"
+import { makeKey, diatonicChords } from "../scales"
 import { generateGuitarVoicings } from "../guitar-voicings"
 import { voiceLeadingDistance, suggestSmoothInversion } from "../voice-leading"
-import { voiceChord } from "../chords"
+import { voiceChord, playableVoicing } from "../chords"
 
 describe("Music Engine: Chord Parser", () => {
   it("parses 11th and 13th chords", () => {
@@ -18,6 +18,28 @@ describe("Music Engine: Chord Parser", () => {
     expect(fmin11.valid).toBe(true)
     expect(fmin11.quality).toBe("m11")
     expect(fmin11.intervals).toEqual([0, 3, 7, 10, 14, 17])
+  })
+
+  it("parses altered dominants and minor-major 7ths", () => {
+    const hendrix = parseChord("E7#9")
+    expect(hendrix.valid).toBe(true)
+    expect(hendrix.quality).toBe("7#9")
+    expect(hendrix.intervals).toEqual([0, 4, 7, 10, 15])
+
+    const flat9 = parseChord("G7b9")
+    expect(flat9.valid).toBe(true)
+    expect(flat9.quality).toBe("7b9")
+    expect(flat9.intervals).toEqual([0, 4, 7, 10, 13])
+
+    const sharp5 = parseChord("C7#5")
+    expect(sharp5.valid).toBe(true)
+    expect(sharp5.quality).toBe("7#5")
+    expect(sharp5.intervals).toEqual([0, 4, 8, 10])
+
+    const jamesBond = parseChord("Am(maj7)")
+    expect(jamesBond.valid).toBe(true)
+    expect(jamesBond.quality).toBe("mM7")
+    expect(jamesBond.intervals).toEqual([0, 3, 7, 11])
   })
 
   it("rejects invalid chord suffixes with trailing characters", () => {
@@ -116,4 +138,51 @@ describe("Music Engine: Voice Leading", () => {
     const bestInv = suggestSmoothInversion(cMaj, fMaj)
     expect(typeof bestInv).toBe("number")
   })
+
+  it("optimizes a full chord progression with minimal voice-leading leaps", () => {
+    const symbols = ["C", "F", "G", "C"]
+    let prevVoicing = playableVoicing(parseChord(symbols[0]), { octave: 4, inversion: 0 })
+    const inversions: number[] = [0]
+
+    for (let i = 1; i < symbols.length; i++) {
+      const parsed = parseChord(symbols[i])
+      const bestInv = suggestSmoothInversion(prevVoicing, parsed, "sharp")
+      inversions.push(bestInv)
+      prevVoicing = playableVoicing(parsed, { octave: 4, inversion: bestInv })
+    }
+
+    expect(inversions.length).toBe(4)
+    // F should be inverted (typically 2nd inversion: C-F-A) to keep common tone C near C major
+    expect(inversions[1]).toBe(2)
+  })
 })
+
+describe("Music Engine: Scales & Slash Chords", () => {
+  it("includes harmonic minor major dominant (V and V7) in minor keys", () => {
+    const aMinor = makeKey("A", "minor")
+    const chords = diatonicChords(aMinor)
+
+    // Should include natural minor v (Em)
+    expect(chords.some((c) => c.roman === "v" && c.symbol === "Em")).toBe(true)
+
+    // Should also include harmonic minor V (E) and V7 (E7)
+    expect(chords.some((c) => c.roman === "V" && c.symbol === "E")).toBe(true)
+    expect(chords.some((c) => c.roman === "V7" && c.symbol === "E7")).toBe(true)
+  })
+
+  it("voices slash chord bass note in the lower bass register", () => {
+    const gOverB = parseChord("G/B")
+    expect(gOverB.valid).toBe(true)
+    expect(gOverB.bassName).toBe("B")
+
+    const notes = playableVoicing(gOverB, { octave: 4, accidental: "sharp" })
+    expect(notes.length).toBeGreaterThanOrEqual(4)
+
+    // First note should be the bass note B in octave 3
+    const bassNote = notes[0]
+    expect(bassNote.name).toBe("B")
+    expect(bassNote.octave).toBe(3)
+    expect(bassNote.midi).toBe(59) // B3 is 59 (48 + 11)
+  })
+})
+

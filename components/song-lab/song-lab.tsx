@@ -20,6 +20,7 @@ import { TransportBar } from "./transport-bar"
 import { RehearsalMode } from "./rehearsal-mode"
 import { parseChord } from "@/lib/music/chord-parser"
 import { voiceChord, invertVoicing, playableVoicing } from "@/lib/music/chords"
+import { suggestSmoothInversion } from "@/lib/music/voice-leading"
 import { keyAccidental, MAJOR_TONICS, MINOR_TONICS } from "@/lib/music/scales"
 import { transposeProgression, transposeSymbol, semitonesBetween } from "@/lib/music/transpose"
 import { midiToPc, noteNameToPc, pcToName } from "@/lib/music/notes"
@@ -133,12 +134,18 @@ export function SongLab({
   useEffect(() => {
     if (!allChords.some((c) => c.id === selectedId)) {
       setSelectedId(allChords[0]?.id ?? null)
-      setInversion(0)
     }
   }, [allChords, selectedId])
 
   const selectedEntry = allChords.find((c) => c.id === selectedId) ?? null
   const parsedSelected = selectedEntry ? parseChord(selectedEntry.symbol) : null
+
+  // Keep local inversion state synced with selectedEntry's stored inversion
+  useEffect(() => {
+    if (selectedEntry) {
+      setInversion(selectedEntry.inversion ?? 0)
+    }
+  }, [selectedEntry?.id, selectedEntry?.inversion])
 
   // Currently playing chord entry (during playback) or selected chord entry (when stopped)
   const playingEntry = isPlaying && activeIndex !== null ? allChords[activeIndex] ?? null : null
@@ -146,15 +153,17 @@ export function SongLab({
   const parsedDisplayed = displayedEntry ? parseChord(displayedEntry.symbol) : null
 
   // Notes shown on the keyboard: follows the active running chord during playback, otherwise the selected chord
+  // Using playableVoicing ensures slash chord bass notes (e.g. G/B) and inversions are properly rendered on the piano!
   const keyboardNotes = useMemo(() => {
     if (!parsedDisplayed?.valid) return []
-    const root = voiceChord(parsedDisplayed, { octave: 4, accidental })
-    // If we're displaying the user's selected chord, use their chosen inversion; during playback, use root voicing
-    const inv = displayedEntry?.id === selectedId ? inversion : 0
-    return invertVoicing(root, inv, accidental)
-  }, [parsedDisplayed, displayedEntry?.id, selectedId, inversion, accidental])
+    const inv = displayedEntry?.inversion ?? (displayedEntry?.id === selectedId ? inversion : 0)
+    return playableVoicing(parsedDisplayed, { octave: 4, accidental, inversion: inv })
+  }, [parsedDisplayed, displayedEntry?.inversion, displayedEntry?.id, selectedId, inversion, accidental])
 
   const activeMidis = keyboardNotes.map((n) => n.midi)
+  const bassMidi = parsedDisplayed?.valid && parsedDisplayed.bassPc !== null
+    ? activeMidis.find((m) => midiToPc(m) === parsedDisplayed.bassPc) ?? null
+    : null
   const rootMidi = parsedDisplayed?.valid
     ? activeMidis.find((m) => midiToPc(m) === parsedDisplayed.rootPc) ?? null
     : null
@@ -170,7 +179,9 @@ export function SongLab({
       rhythm,
       chords: allChords.map((entry) => {
         const parsed = parseChord(entry.symbol)
-        const midis = parsed.valid ? playableVoicing(parsed, { octave: 4, accidental: acc }).map((n) => n.midi) : []
+        const midis = parsed.valid
+          ? playableVoicing(parsed, { octave: 4, accidental: acc, inversion: entry.inversion ?? 0 }).map((n) => n.midi)
+          : []
         return { midis, beats: Math.max(1, entry.beats) }
       }),
     }
@@ -235,10 +246,11 @@ export function SongLab({
     const engine = getAudioEngine()
     engine.ensureContext().then(() => {
       engine.setMasterVolume(volume)
-      const midis = playableVoicing(parsedSelected, { octave: 4, accidental, inversion }).map((n) => n.midi)
+      const currentInv = selectedEntry?.inversion ?? inversion
+      const midis = playableVoicing(parsedSelected, { octave: 4, accidental, inversion: currentInv }).map((n) => n.midi)
       engine.playChord(midis, { duration: 1.4 })
     })
-  }, [parsedSelected, accidental, inversion, volume])
+  }, [parsedSelected, accidental, selectedEntry?.inversion, inversion, volume])
 
   // ---- Chord editing ---------------------------------------------------------
   const updateSections = useCallback(
@@ -258,6 +270,16 @@ export function SongLab({
       )
     },
     [updateSections],
+  )
+
+  const handleInversionChange = useCallback(
+    (inv: number) => {
+      setInversion(inv)
+      if (selectedId) {
+        handleUpdateChord(selectedId, { inversion: inv })
+      }
+    },
+    [selectedId, handleUpdateChord],
   )
 
   const handleRemoveChord = useCallback(
@@ -361,6 +383,7 @@ export function SongLab({
             id: createId(),
             symbol: orig.symbol,
             beats: orig.beats,
+            inversion: orig.inversion ?? 0,
           }
           nextId = clone.id
           const next = [...s.chords]
@@ -374,6 +397,32 @@ export function SongLab({
       }
     },
     [updateSections],
+  )
+
+  const handleAutoVoiceSection = useCallback(
+    (sectionId: string) => {
+      updateSections((sections) =>
+        sections.map((sec) => {
+          if (sec.id !== sectionId || sec.chords.length <= 1) return sec
+          let prevVoicing: Note[] = []
+          const newChords = sec.chords.map((entry, idx) => {
+            const parsed = parseChord(entry.symbol)
+            if (!parsed.valid) return entry
+            if (idx === 0) {
+              const inv = entry.inversion ?? 0
+              prevVoicing = playableVoicing(parsed, { octave: 4, accidental, inversion: inv })
+              return entry
+            }
+            const bestInversion = suggestSmoothInversion(prevVoicing, parsed, accidental)
+            prevVoicing = playableVoicing(parsed, { octave: 4, accidental, inversion: bestInversion })
+            return { ...entry, inversion: bestInversion }
+          })
+          return { ...sec, chords: newChords }
+        }),
+      )
+      toast.success("Voicings optimized for smooth voice leading!")
+    },
+    [updateSections, accidental],
   )
 
   // ---- Keyboard Shortcuts ----------------------------------------------------
@@ -697,7 +746,6 @@ export function SongLab({
               activeIndex={isPlaying ? activeIndex : null}
               onSelect={(id) => {
                 setSelectedId(id)
-                setInversion(0)
               }}
               onUpdate={handleUpdateChord}
               onRemove={handleRemoveChord}
@@ -706,13 +754,19 @@ export function SongLab({
               onDuplicate={handleDuplicateChord}
               onDeleteSection={handleDeleteSection}
               onRenameSection={handleRenameSection}
+              onAutoVoice={handleAutoVoiceSection}
             />
           </div>
 
           {/* Virtual Piano Dock (Collapsible) */}
           {showPiano && (
             <div className="shrink-0 border-t border-border/80 bg-card/40 px-2 sm:px-3 py-1.5 sm:py-2 backdrop-blur-md">
-              <PianoKeyboard activeMidis={activeMidis} rootMidi={rootMidi} accidental={accidental} />
+              <PianoKeyboard
+                activeMidis={activeMidis}
+                rootMidi={rootMidi}
+                bassMidi={bassMidi}
+                accidental={accidental}
+              />
             </div>
           )}
         </div>
@@ -766,8 +820,8 @@ export function SongLab({
           <ChordDetail
             chord={isPlaying && parsedDisplayed ? parsedDisplayed : parsedSelected}
             accidental={accidental}
-            inversion={isPlaying && displayedEntry?.id !== selectedId ? 0 : inversion}
-            onInversionChange={setInversion}
+            inversion={isPlaying ? (displayedEntry?.inversion ?? 0) : (selectedEntry?.inversion ?? inversion)}
+            onInversionChange={handleInversionChange}
             onPlay={playSelectedChord}
             onDuplicate={selectedId ? () => handleDuplicateChord(selectedId) : undefined}
           />

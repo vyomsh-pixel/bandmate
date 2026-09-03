@@ -79,8 +79,8 @@ export function allInversions(chord: ParsedChord, options: { octave?: number; ac
 }
 
 /**
- * Full playable voicing including an optional slash-bass note placed an octave
- * below the chord. Used by the audio engine.
+ * Full playable voicing including an optional slash-bass note placed in the
+ * bass register below the chord. Used by the audio engine and keyboard visualizer.
  */
 export function playableVoicing(
   chord: ParsedChord,
@@ -90,8 +90,10 @@ export function playableVoicing(
   const root = voiceChord(chord, { octave, accidental })
   const voiced = invertVoicing(root, inversion, accidental)
   if (chord.bassPc !== null) {
-    const bass = makeNote(chord.bassPc, octave - 1, accidental)
-    return [bass, ...voiced]
+    const bassOctave = octave <= 4 ? octave - 1 : 3
+    const bass = makeNote(chord.bassPc, bassOctave, accidental)
+    const filtered = voiced.filter((n) => n.midi !== bass.midi)
+    return [bass, ...filtered]
   }
   return voiced
 }

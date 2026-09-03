@@ -51,6 +51,11 @@ export type ChordQuality =
   | "maj13"
   | "m13"
   | "7sus4"
+  | "7#9"
+  | "7b9"
+  | "7#5"
+  | "7b5"
+  | "mM7"
 
 /** A fully parsed chord symbol. */
 export interface ParsedChord {
@@ -92,6 +97,8 @@ export interface ChordEntry {
   symbol: string
   /** Duration in beats. */
   beats: number
+  /** Inversion index (0 = root position, 1 = 1st inversion, etc.). */
+  inversion?: number
 }
 
 /** A named section of the song, grouping multiple chords. */
