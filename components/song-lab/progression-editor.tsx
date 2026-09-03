@@ -106,7 +106,7 @@ export function ProgressionEditor({
                     type="text"
                     value={section.name}
                     onChange={(e) => onRenameSection?.(section.id, e.target.value)}
-                    className="bg-transparent outline-hidden w-16 sm:w-auto min-w-[3ch] max-w-[14ch] text-zinc-100 font-mono text-xs font-bold uppercase tracking-wider"
+                    className="bg-transparent outline-hidden w-auto min-w-[3ch] max-w-[20ch] text-zinc-100 font-mono text-xs font-bold uppercase tracking-wider"
                     spellCheck={false}
                     aria-label={`Section name: ${section.name}`}
                   />
@@ -303,7 +303,7 @@ export function ProgressionEditor({
                           <span className="truncate flex-1 min-w-0 text-zinc-200">
                             {parsed.valid ? parsed.qualityLabel : invalid ? "Unknown" : "Triad"}
                           </span>
-                          <span className="font-mono text-zinc-300 shrink-0">
+                          <span className="hidden sm:inline font-mono text-zinc-300 shrink-0">
                             {harm.label}
                           </span>
                         </div>
