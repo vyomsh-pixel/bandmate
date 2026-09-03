@@ -166,7 +166,7 @@ export function TransportBar({
             "size-8 rounded-lg p-0 shadow-xs transition-all cursor-pointer shrink-0",
             isPlaying
               ? "bg-rose-600 text-white animate-pulse shadow-rose-950/40"
-              : "bg-primary text-primary-foreground hover:bg-primary/90",
+              : "bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black shadow-md shadow-emerald-950/30",
           )}
           aria-label={isPlaying ? "Stop playback" : "Start playback"}
         >
@@ -365,7 +365,7 @@ export function TransportBar({
               "size-8.5 rounded-lg p-0 shadow-md transition-all duration-150 cursor-pointer",
               isPlaying
                 ? "bg-rose-600 text-white hover:bg-rose-500 shadow-rose-950/40 animate-pulse"
-                : "bg-primary text-primary-foreground hover:bg-primary/90 shadow-primary/20",
+                : "bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black shadow-md shadow-emerald-950/30",
             )}
             aria-label={isPlaying ? "Stop playback (Space)" : "Start playback (Space)"}
             title={isPlaying ? "Stop (Space)" : "Play (Space)"}

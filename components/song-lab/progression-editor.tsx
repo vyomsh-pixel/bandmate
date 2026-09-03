@@ -99,39 +99,54 @@ export function ProgressionEditor({
           return (
             <div key={section.id} className="flex flex-col gap-3">
               {/* Section Header */}
-              <div className="flex items-center gap-3">
-                <span className="flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 font-mono text-xs font-bold tracking-wider text-primary shadow-xs uppercase">
-                  <span className="size-1.5 rounded-full bg-primary" />
+              <div className="flex items-center gap-2 sm:gap-3">
+                <span className="flex items-center gap-1.5 sm:gap-2 rounded-full border border-zinc-700/80 bg-zinc-800/80 px-2.5 sm:px-3 py-1 font-mono text-xs font-bold tracking-wider text-zinc-100 shadow-xs uppercase">
+                  <span className="size-1.5 rounded-full bg-emerald-400 shrink-0" />
                   <input
                     type="text"
                     value={section.name}
                     onChange={(e) => onRenameSection?.(section.id, e.target.value)}
-                    className="bg-transparent outline-hidden w-20 sm:w-auto min-w-[3ch] max-w-[14ch] text-primary font-mono text-xs font-bold uppercase tracking-wider"
+                    className="bg-transparent outline-hidden w-16 sm:w-auto min-w-[3ch] max-w-[14ch] text-zinc-100 font-mono text-xs font-bold uppercase tracking-wider"
                     spellCheck={false}
                     aria-label={`Section name: ${section.name}`}
                   />
-                  <span className="text-[10px] opacity-70">({section.chords.length})</span>
+                  <span className="text-[10px] text-zinc-400 font-bold">({section.chords.length})</span>
                 </span>
                 <div className="h-px flex-1 bg-border/60" />
+
+                {/* Add Chord to Section Button */}
+                <button
+                  type="button"
+                  onClick={() => onAdd(key.tonic)}
+                  className="flex items-center gap-1 rounded-lg border border-zinc-700/80 bg-zinc-800/90 px-2 sm:px-2.5 py-1 text-[10px] font-bold text-zinc-200 transition-all hover:bg-zinc-700 hover:text-white active:scale-[0.98] cursor-pointer shadow-xs"
+                  title="Add chord to this section"
+                  aria-label={`Add chord to ${section.name}`}
+                >
+                  <Plus className="size-3 text-emerald-400" />
+                  <span className="sm:hidden">Chord</span>
+                  <span className="hidden sm:inline">Add Chord</span>
+                </button>
+
                 {/* Auto-Voice Button — optimize voice leading across this section */}
                 {section.chords.length > 1 && onAutoVoice && (
                   <button
                     type="button"
                     onClick={() => onAutoVoice(section.id)}
-                    className="flex items-center gap-1.5 rounded-lg border border-primary/40 bg-primary/10 px-2 sm:px-2.5 py-1 text-[10px] font-bold text-primary transition-all hover:bg-primary/20 hover:scale-[1.02] active:scale-[0.98] cursor-pointer shadow-xs"
+                    className="flex items-center gap-1.5 rounded-lg border border-zinc-700/80 bg-zinc-800/90 px-2 sm:px-2.5 py-1 text-[10px] font-bold text-zinc-200 transition-all hover:bg-zinc-700 hover:text-white hover:border-zinc-600 active:scale-[0.98] cursor-pointer shadow-xs"
                     title="Automatically optimize inversions for smooth voice leading"
                     aria-label={`Auto-voice ${section.name} section`}
                   >
-                    <Sparkles className="size-3 text-primary" />
+                    <Sparkles className="size-3 text-amber-400" />
                     <span>Auto-Voice</span>
                   </button>
                 )}
+
                 {/* Delete Section Button — only show if more than 1 section */}
                 {sections.length > 1 && (
                   <button
                     type="button"
                     onClick={() => onDeleteSection?.(section.id)}
-                    className="flex items-center gap-1 rounded-lg border border-border/60 bg-background/50 px-2 py-1 text-[10px] font-semibold text-muted-foreground transition-colors hover:border-destructive/60 hover:bg-destructive/10 hover:text-destructive cursor-pointer"
+                    className="flex items-center gap-1 rounded-lg border border-zinc-700/80 bg-zinc-800/80 px-2 py-1 text-[10px] font-semibold text-zinc-400 transition-colors hover:border-destructive/60 hover:bg-destructive/10 hover:text-destructive cursor-pointer"
                     aria-label={`Delete ${section.name} section`}
                     title={`Delete ${section.name} section`}
                   >
@@ -141,8 +156,8 @@ export function ProgressionEditor({
                 )}
               </div>
 
-              {/* Grid / Timeline of Chord Cards */}
-              <div className="flex items-stretch gap-2 sm:gap-3 overflow-x-auto pb-2 pt-1 no-scrollbar scrollbar-thin">
+              {/* Grid / Timeline of Chord Cards: 4-COL GRID ON MOBILE, ZERO CUTOFF */}
+              <div className="grid grid-cols-4 gap-1.5 sm:flex sm:items-stretch sm:gap-3 sm:overflow-x-auto pb-1 sm:pb-2 pt-0.5 no-scrollbar scrollbar-thin">
                 {section.chords.map((entry, idxWithinSection) => {
                   const globalIdx = startIndex + idxWithinSection
                   const parsed = parseChord(entry.symbol)
@@ -157,25 +172,26 @@ export function ProgressionEditor({
                       data-index={globalIdx}
                       onClick={() => onSelect(entry.id)}
                       className={cn(
-                        "group relative flex w-28 sm:w-36 md:w-40 shrink-0 flex-col justify-between rounded-xl sm:rounded-2xl border p-2 sm:p-3 transition-all duration-150 cursor-pointer select-none",
-                        "bg-card/80 backdrop-blur-md shadow-sm",
+                        "group relative flex flex-col justify-between rounded-xl sm:rounded-2xl border transition-all duration-150 cursor-pointer select-none",
+                        "w-full sm:w-36 md:w-40 sm:shrink-0 p-1.5 sm:p-3 min-h-[76px] sm:min-h-[140px]",
+                        "bg-card/90 backdrop-blur-md shadow-xs",
                         selected
-                          ? "border-primary bg-primary/10 ring-2 ring-primary/40 shadow-md shadow-primary/10 -translate-y-0.5"
+                          ? "border-amber-400 bg-amber-400/10 ring-2 ring-amber-400/60 shadow-md shadow-amber-400/10 -translate-y-0.5"
                           : "border-border/80 hover:border-border hover:bg-card hover:-translate-y-0.5",
-                        active && "border-amber-400 bg-amber-400/15 ring-2 ring-amber-400/60 shadow-[0_0_20px_rgba(251,191,36,0.3)] scale-[1.02]",
+                        active && "border-emerald-400 bg-emerald-400/15 ring-2 ring-emerald-400/60 shadow-[0_0_16px_rgba(52,211,153,0.35)] scale-[1.02]",
                       )}
                     >
-                      {/* Top Header: Index, Harmonic Role & Actions */}
+                      {/* Top Header: Index, Harmonic Role, Beats & Actions */}
                       <div className="flex items-center justify-between gap-1">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1 min-w-0">
                           <span
                             className={cn(
-                              "flex size-4.5 items-center justify-center rounded-full font-mono text-[9px] font-bold",
+                              "flex size-4 sm:size-4.5 items-center justify-center rounded-full font-mono text-[8px] sm:text-[9px] font-black shrink-0",
                               active
-                                ? "bg-amber-400 text-black font-extrabold"
+                                ? "bg-emerald-400 text-black font-extrabold"
                                 : selected
-                                  ? "bg-primary text-primary-foreground"
-                                  : "bg-muted text-muted-foreground",
+                                  ? "bg-amber-400 text-black font-extrabold"
+                                  : "bg-muted text-zinc-300",
                             )}
                           >
                             {globalIdx + 1}
@@ -185,7 +201,7 @@ export function ProgressionEditor({
                           {harm.roman && (
                             <span
                               className={cn(
-                                "rounded-md border px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-tight",
+                                "rounded px-1 sm:px-1.5 py-0.2 sm:py-0.5 font-mono text-[8px] sm:text-[9px] font-black tracking-tight shrink-0 border",
                                 harm.badgeColor,
                               )}
                             >
@@ -195,10 +211,15 @@ export function ProgressionEditor({
 
                           {/* Inversion Badge */}
                           {entry.inversion !== undefined && entry.inversion > 0 && (
-                            <span className="rounded-md border border-primary/40 bg-primary/15 px-1 py-0.5 font-mono text-[8.5px] font-black text-primary">
-                              Inv {entry.inversion}
+                            <span className="rounded border border-primary/40 bg-primary/15 px-0.5 sm:px-1 py-0.2 font-mono text-[7.5px] sm:text-[8.5px] font-black text-primary shrink-0">
+                              i{entry.inversion}
                             </span>
                           )}
+                        </div>
+
+                        {/* Mobile Beat Badge (< sm) */}
+                        <div className="sm:hidden font-mono text-[8.5px] font-bold text-zinc-200 bg-zinc-800/80 px-1 py-0.2 rounded border border-zinc-700/80 shrink-0">
+                          {entry.beats}b
                         </div>
 
                         {/* Card Actions (Desktop hover, mobile uses dedicated contextual toolbar) */}
@@ -262,7 +283,7 @@ export function ProgressionEditor({
                       </div>
 
                       {/* Large Hero Chord Symbol */}
-                      <div className="my-1.5 sm:my-2">
+                      <div className="my-0.5 sm:my-2">
                         <input
                           value={entry.symbol}
                           onChange={(e) => onUpdate(entry.id, { symbol: e.target.value })}
@@ -270,23 +291,27 @@ export function ProgressionEditor({
                           aria-label={`Chord ${globalIdx + 1} symbol`}
                           spellCheck={false}
                           className={cn(
-                            "w-full bg-transparent font-mono text-xl sm:text-2xl md:text-3xl font-black tracking-tight outline-hidden transition-colors",
+                            "w-full bg-transparent font-mono text-base sm:text-2xl md:text-3xl font-black tracking-tight outline-hidden transition-colors truncate",
                             invalid
                               ? "text-destructive"
                               : active
-                                ? "text-amber-400 drop-shadow-[0_0_12px_rgba(251,191,36,0.6)]"
-                                : "text-foreground",
+                                ? "text-emerald-400 drop-shadow-[0_0_12px_rgba(52,211,153,0.6)]"
+                                : "text-white",
                           )}
                         />
-                        <div className="flex items-center justify-between gap-1 text-[9px] sm:text-[10px] font-semibold text-muted-foreground mt-0.5">
-                          <span className="truncate flex-1 min-w-0">{parsed.valid ? parsed.qualityLabel : invalid ? "Unknown" : "Triad"}</span>
-                          <span className="font-mono opacity-80 shrink-0">{harm.label}</span>
+                        <div className="flex items-center justify-between gap-1 text-[8px] sm:text-[10px] font-bold mt-0.2 sm:mt-0.5">
+                          <span className="truncate flex-1 min-w-0 text-zinc-200">
+                            {parsed.valid ? parsed.qualityLabel : invalid ? "Unknown" : "Triad"}
+                          </span>
+                          <span className="font-mono text-zinc-300 shrink-0">
+                            {harm.label}
+                          </span>
                         </div>
                       </div>
 
-                      {/* Beats Stepper */}
-                      <div className="flex items-center justify-between rounded-lg sm:rounded-xl bg-background/60 px-1.5 sm:px-2 py-0.5 sm:py-1 border border-border/50 shadow-inner">
-                        <span className="text-[8px] sm:text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      {/* Beats Stepper (Desktop Only — Mobile uses the dedicated thumb action bar) */}
+                      <div className="hidden sm:flex items-center justify-between rounded-lg sm:rounded-xl bg-background/60 px-1.5 sm:px-2 py-0.5 sm:py-1 border border-border/50 shadow-inner">
+                        <span className="text-[8px] sm:text-[9px] font-bold uppercase tracking-wider text-zinc-300">
                           Beats
                         </span>
                         <div className="flex items-center gap-0.5 sm:gap-1">
@@ -321,12 +346,12 @@ export function ProgressionEditor({
                   )
                 })}
 
-                {/* Duplicate Selected Shortcut Button */}
+                {/* Duplicate Selected Shortcut Button (Desktop Only) */}
                 {selectedChord && (
                   <button
                     type="button"
                     onClick={() => onDuplicate?.(selectedChord.id)}
-                    className="flex w-24 sm:w-32 md:w-36 shrink-0 flex-col items-center justify-center gap-1 rounded-xl sm:rounded-2xl border border-dashed border-primary/40 bg-primary/5 text-primary transition-all hover:bg-primary/15 hover:border-primary hover:scale-[1.02] cursor-pointer p-2"
+                    className="hidden sm:flex w-24 sm:w-32 md:w-36 shrink-0 flex-col items-center justify-center gap-1 rounded-xl sm:rounded-2xl border border-dashed border-primary/40 bg-primary/5 text-primary transition-all hover:bg-primary/15 hover:border-primary hover:scale-[1.02] cursor-pointer p-2"
                     aria-label={`Duplicate selected chord ${selectedChord.symbol}`}
                     title="Repeat / Duplicate selected chord (D)"
                   >
@@ -338,11 +363,11 @@ export function ProgressionEditor({
                   </button>
                 )}
 
-                {/* Add Slot Button */}
+                {/* Add Slot Button (Desktop Only — Mobile uses the Header Add button) */}
                 <button
                   type="button"
                   onClick={() => onAdd(key.tonic)}
-                  className="flex w-24 sm:w-32 md:w-36 shrink-0 flex-col items-center justify-center gap-1.5 sm:gap-2 rounded-xl sm:rounded-2xl border-2 border-dashed border-border/80 bg-card/20 text-muted-foreground transition-all hover:border-primary/60 hover:bg-primary/5 hover:text-primary hover:scale-[1.02] cursor-pointer p-2"
+                  className="hidden sm:flex w-24 sm:w-32 md:w-36 shrink-0 flex-col items-center justify-center gap-1.5 sm:gap-2 rounded-xl sm:rounded-2xl border-2 border-dashed border-border/80 bg-card/20 text-muted-foreground transition-all hover:border-primary/60 hover:bg-primary/5 hover:text-primary hover:scale-[1.02] cursor-pointer p-2"
                   aria-label="Add chord to section"
                 >
                   <div className="flex size-6 sm:size-8 items-center justify-center rounded-xl bg-muted/60">
@@ -392,30 +417,30 @@ export function ProgressionEditor({
 
         {/* Mobile Contextual Selected Chord Action Bar (< md) */}
         {selectedChord && (
-          <div className="flex md:hidden items-center justify-between gap-1.5 p-2 rounded-xl border border-primary/40 bg-primary/10 backdrop-blur-md shadow-xs animate-in fade-in slide-in-from-bottom-2 duration-150">
+          <div className="flex md:hidden items-center justify-between gap-1.5 p-2 rounded-xl border border-zinc-700 bg-zinc-900/95 backdrop-blur-md shadow-lg animate-in fade-in slide-in-from-bottom-2 duration-150">
             <div className="flex items-center gap-1.5">
-              <span className="font-mono text-xs font-black text-primary px-1.5 py-0.5 rounded bg-primary/20">
+              <span className="font-mono text-xs font-black text-amber-400 px-2 py-1 rounded-lg bg-amber-400/15 border border-amber-400/30">
                 {selectedChord.symbol}
               </span>
-              <div className="flex items-center gap-1 rounded bg-background/60 px-1 py-0.5 border border-border/60">
+              <div className="flex items-center gap-1 rounded-lg bg-zinc-800/90 px-1 py-0.5 border border-zinc-700">
                 <button
                   type="button"
                   onClick={() => onUpdate(selectedChord.id, { beats: Math.max(1, selectedChord.beats - 1) })}
-                  className="size-5 flex items-center justify-center rounded text-muted-foreground hover:text-foreground active:scale-95"
+                  className="size-6 flex items-center justify-center rounded text-zinc-300 hover:text-white active:scale-90"
                   aria-label="Decrease beats"
                 >
-                  <Minus className="size-2.5" />
+                  <Minus className="size-3" />
                 </button>
-                <span className="font-mono text-xs font-bold px-1 tabular-nums">
+                <span className="font-mono text-xs font-bold px-1 tabular-nums text-white">
                   {selectedChord.beats}b
                 </span>
                 <button
                   type="button"
                   onClick={() => onUpdate(selectedChord.id, { beats: Math.min(16, selectedChord.beats + 1) })}
-                  className="size-5 flex items-center justify-center rounded text-muted-foreground hover:text-foreground active:scale-95"
+                  className="size-6 flex items-center justify-center rounded text-zinc-300 hover:text-white active:scale-90"
                   aria-label="Increase beats"
                 >
-                  <Plus className="size-2.5" />
+                  <Plus className="size-3" />
                 </button>
               </div>
             </div>
@@ -424,7 +449,7 @@ export function ProgressionEditor({
               <Button
                 size="sm"
                 variant="outline"
-                className="h-7 px-2 text-[10px] font-bold gap-1 rounded-lg bg-background/60"
+                className="h-7.5 px-2 text-[10px] font-bold gap-1 rounded-lg bg-zinc-800 border-zinc-700 text-zinc-200 hover:text-white"
                 onClick={() => onMove(selectedChord.id, -1)}
                 title="Move chord left"
               >
@@ -434,7 +459,7 @@ export function ProgressionEditor({
               <Button
                 size="sm"
                 variant="outline"
-                className="h-7 px-2 text-[10px] font-bold gap-1 rounded-lg bg-background/60"
+                className="h-7.5 px-2 text-[10px] font-bold gap-1 rounded-lg bg-zinc-800 border-zinc-700 text-zinc-200 hover:text-white"
                 onClick={() => onMove(selectedChord.id, 1)}
                 title="Move chord right"
               >
@@ -445,7 +470,7 @@ export function ProgressionEditor({
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-7 px-2 text-[10px] font-bold gap-1 rounded-lg bg-background/60 text-primary border-primary/30"
+                  className="h-7.5 px-2 text-[10px] font-bold gap-1 rounded-lg bg-zinc-800 text-amber-400 border-amber-400/30 hover:bg-amber-400/10"
                   onClick={() => onDuplicate(selectedChord.id)}
                   title="Duplicate chord"
                 >
@@ -455,7 +480,7 @@ export function ProgressionEditor({
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-7 size-7 p-0 rounded-lg text-destructive hover:bg-destructive/10"
+                className="h-7.5 size-7.5 p-0 rounded-lg text-rose-400 hover:bg-rose-950/40 hover:text-rose-300"
                 onClick={() => onRemove(selectedChord.id)}
                 title="Delete chord"
               >
@@ -471,10 +496,10 @@ export function ProgressionEditor({
         {/* Diatonic quick-add */}
         <div>
           <div className="mb-1.5 sm:mb-2.5 flex items-center justify-between">
-            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-foreground">
+            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-zinc-100">
               Diatonic Scale Chords in {key.label}
             </span>
-            <span className="font-mono text-[9px] sm:text-[10px] text-muted-foreground">Click chord to append</span>
+            <span className="font-mono text-[9px] sm:text-[10px] text-zinc-300 font-bold">Click chord to append</span>
           </div>
           <div className="flex sm:flex-wrap items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-0.5">
             {diatonic.map((d) => {
@@ -500,7 +525,7 @@ export function ProgressionEditor({
         {/* Chords in Song (Recently Used) */}
         {chordsInSong.length > 0 && (
           <div className="border-t border-border/50 pt-2 sm:pt-3">
-            <div className="mb-1.5 sm:mb-2 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="mb-1.5 sm:mb-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-zinc-300">
               Progression Chords
             </div>
             <div className="flex sm:flex-wrap items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-0.5">

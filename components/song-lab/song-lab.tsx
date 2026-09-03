@@ -867,8 +867,8 @@ export function SongLab({
           className={cn(
             "flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all cursor-pointer touch-manipulation",
             mobileTab === "progression"
-              ? "text-primary font-black scale-105"
-              : "text-muted-foreground hover:text-foreground",
+              ? "text-foreground font-black scale-105 bg-white/10 shadow-xs"
+              : "text-zinc-400 hover:text-foreground",
           )}
         >
           <span className="text-base leading-none">🎼</span>
@@ -881,8 +881,8 @@ export function SongLab({
           className={cn(
             "flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all cursor-pointer touch-manipulation",
             mobileTab === "piano"
-              ? "text-primary font-black scale-105"
-              : "text-muted-foreground hover:text-foreground",
+              ? "text-foreground font-black scale-105 bg-white/10 shadow-xs"
+              : "text-zinc-400 hover:text-foreground",
           )}
         >
           <span className="text-base leading-none">🎹</span>
@@ -895,8 +895,8 @@ export function SongLab({
           className={cn(
             "flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all cursor-pointer touch-manipulation",
             mobileTab === "inspector"
-              ? "text-primary font-black scale-105"
-              : "text-muted-foreground hover:text-foreground",
+              ? "text-foreground font-black scale-105 bg-white/10 shadow-xs"
+              : "text-zinc-400 hover:text-foreground",
           )}
         >
           <span className="text-base leading-none">🔍</span>
@@ -909,8 +909,8 @@ export function SongLab({
           className={cn(
             "flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl transition-all cursor-pointer touch-manipulation",
             mobileTab === "sections"
-              ? "text-primary font-black scale-105"
-              : "text-muted-foreground hover:text-foreground",
+              ? "text-foreground font-black scale-105 bg-white/10 shadow-xs"
+              : "text-zinc-400 hover:text-foreground",
           )}
         >
           <span className="text-base leading-none">📑</span>
