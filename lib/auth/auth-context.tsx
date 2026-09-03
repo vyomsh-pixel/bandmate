@@ -217,12 +217,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       closeAuthModal()
       return true
     } catch (err: any) {
-      console.warn("Google Sign-In failed:", err)
+      console.warn("Google Sign-In error:", err)
       if (err?.code === "auth/popup-closed-by-user") {
         toast.info("Google Sign-In popup was closed.")
+      } else if (err?.code === "auth/api-key-not-valid" || err?.message?.includes("api-key-not-valid")) {
+        toast.error("Google OAuth requires your Firebase API Key. Please sign in with Email & Password below!")
       } else {
         toast.error(
-          err?.message || "Google Sign-In failed. Please configure your Firebase keys or sign in with Email/Password."
+          err?.message || "Google Sign-In failed. Please sign in with Email & Password."
         )
       }
       return false

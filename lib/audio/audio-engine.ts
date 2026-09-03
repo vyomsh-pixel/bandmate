@@ -73,7 +73,7 @@ class AudioEngine {
       const Ctor = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
       this.ctx = new Ctor()
       this.master = this.ctx.createGain()
-      this.master.gain.value = 1.0
+      this.master.gain.value = 0.85
 
       // Transparent dynamics compressor: tames sharp transients while keeping full body
       const compressor = this.ctx.createDynamicsCompressor()
@@ -90,8 +90,20 @@ class AudioEngine {
       this.master.connect(compressor)
       compressor.connect(makeupGain)
       makeupGain.connect(this.ctx.destination)
+
+      // Listen for window focus to keep WebAudio engine alive on laptops
+      if (typeof window !== "undefined") {
+        window.addEventListener("focus", () => {
+          if (this.ctx && this.ctx.state === "suspended") {
+            this.ctx.resume().catch(() => {})
+          }
+        })
+      }
     }
-    if (this.ctx.state === "suspended") await this.ctx.resume()
+
+    if (this.ctx.state === "suspended" || (this.ctx.state as string) === "interrupted") {
+      await this.ctx.resume()
+    }
 
     // Preload top core instruments in background so user has zero latency switching
     const sf = getSoundfontEngine()
@@ -124,13 +136,23 @@ class AudioEngine {
 
   setMasterVolume(value: number) {
     if (this.master && this.ctx) {
-      this.master.gain.setTargetAtTime(value, this.ctx.currentTime, 0.01)
+      const now = this.ctx.currentTime
+      this.master.gain.cancelScheduledValues(now)
+      this.master.gain.setValueAtTime(Math.max(0, Math.min(1, value)), now)
     }
   }
 
   /** Play a set of MIDI notes as a chord with realistic acoustic samples or synth. */
   playChord(midis: number[], options: PlayOptions = {}) {
-    if (!this.ctx || !this.master) return
+    if (!this.ctx || !this.master) {
+      this.ensureContext().then(() => this.playChord(midis, options)).catch(() => {})
+      return
+    }
+
+    if (this.ctx.state === "suspended" || (this.ctx.state as string) === "interrupted") {
+      this.ctx.resume().catch(() => {})
+    }
+
     const currentInst = options.instrument ?? this.getInstrument()
     const { when = this.ctx.currentTime, duration = 1.6, velocity = 0.95, wave = "triangle" } = options
     
@@ -153,7 +175,15 @@ class AudioEngine {
 
   /** Play a single MIDI note. */
   playNote(midi: number, options: PlayOptions = {}) {
-    if (!this.ctx || !this.master) return
+    if (!this.ctx || !this.master) {
+      this.ensureContext().then(() => this.playNote(midi, options)).catch(() => {})
+      return
+    }
+
+    if (this.ctx.state === "suspended" || (this.ctx.state as string) === "interrupted") {
+      this.ctx.resume().catch(() => {})
+    }
+
     const currentInst = options.instrument ?? this.getInstrument()
     const { when = this.ctx.currentTime, duration = 1.4, velocity = 0.95, wave = "triangle" } = options
     this.playVoice(midi, when, duration, velocity * 1.7, wave, currentInst)
