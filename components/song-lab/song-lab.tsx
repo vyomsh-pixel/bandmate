@@ -739,7 +739,7 @@ export function SongLab({
           </div>
 
           {/* Hero Progression Editor (Spacious, Zero Clipping) */}
-          <div className="flex-1 overflow-y-auto p-2 sm:p-4 md:p-5 min-h-0">
+          <div className={cn("flex-1 overflow-y-auto p-2 sm:p-4 md:p-5 min-h-0", mobileTab !== "progression" && "hidden lg:block")}>
             <ProgressionEditor
               sections={song.sections}
               keyTonic={song.keyTonic}
@@ -792,22 +792,25 @@ export function SongLab({
         {/* Mobile Dedicated Piano View (< lg only) */}
         <div
           className={cn(
-            "border-t border-border/80 bg-card/30 p-3 shrink-0 overflow-y-auto",
-            mobileTab === "piano" ? "flex flex-col flex-1 w-full" : "hidden",
+            "flex-1 flex flex-col w-full h-full p-3 overflow-y-auto bg-card/40 backdrop-blur-md shrink-0",
+            mobileTab === "piano" ? "flex" : "hidden",
           )}
         >
-          <div className="mb-2 flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <span className="text-base">🎹</span>
-              <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Interactive Keyboard
-              </h3>
+          <div className="mb-2 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🎹</span>
+              <div>
+                <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-zinc-200">
+                  Interactive Keyboard
+                </h3>
+                <p className="text-[10px] text-zinc-400">Hear voicings and touch keys directly</p>
+              </div>
             </div>
-            <span className="font-mono text-[10px] text-primary font-bold px-2 py-0.5 rounded-full bg-primary/10 border border-primary/30">
+            <span className="font-mono text-xs text-amber-400 font-bold px-2.5 py-1 rounded-full bg-amber-400/10 border border-amber-400/30">
               {parsedSelected?.symbol ? `Chord: ${parsedSelected.symbol}` : "88-Key Piano"}
             </span>
           </div>
-          <div className="flex-1 flex flex-col justify-center py-4">
+          <div className="flex-1 flex flex-col justify-center py-2">
             <PianoKeyboard
               activeMidis={activeMidis}
               rootMidi={rootMidi}

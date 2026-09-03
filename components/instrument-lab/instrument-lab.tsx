@@ -27,9 +27,12 @@ export function InstrumentLab({ song }: InstrumentLabProps) {
     <div className="flex flex-col lg:flex-row h-full w-full overflow-hidden bg-background">
       <div className="flex-1 flex flex-col bg-card/40 min-w-0 overflow-y-auto">
         <div className="flex-1 p-3 sm:p-6">
-          <div className="mb-4 sm:mb-6">
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight">Guitar Workspace</h2>
-            <p className="text-xs sm:text-sm text-muted-foreground">Interactive fretboard, chord diagrams, and capo calculations for {song.title}.</p>
+          <div className="mb-3 sm:mb-6 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg sm:text-2xl font-bold tracking-tight">Guitar Workspace</h2>
+              <p className="hidden sm:block text-xs sm:text-sm text-muted-foreground">Interactive fretboard, chord diagrams, and capo calculations for {song.title}.</p>
+            </div>
+            <Badge variant="outline" className="font-mono text-xs">{song.keyTonic} {song.keyMode}</Badge>
           </div>
 
           {/* Progression Chord Strip */}
