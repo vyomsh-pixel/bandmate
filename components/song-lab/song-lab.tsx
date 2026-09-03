@@ -490,8 +490,27 @@ export function SongLab({
     }
   })
 
-   const handleAddSection = useCallback(
-    (name: string) => {
+  const handleAddSection = useCallback(
+    (type: string) => {
+      let name = type
+      if (type !== "Custom") {
+        // Count existing sections of this type (e.g. "Verse", "Verse 1", "Verse 2")
+        const regex = new RegExp(`^${type}(\\s+(\\d+))?$`, "i")
+        const existingNums: number[] = []
+        song.sections.forEach((s) => {
+          const m = s.name.trim().match(regex)
+          if (m) {
+            existingNums.push(m[2] ? parseInt(m[2], 10) : 1)
+          }
+        })
+        if (existingNums.length > 0) {
+          const nextNum = Math.max(...existingNums) + 1
+          name = `${type} ${nextNum}`
+        }
+      } else {
+        name = `Section ${song.sections.length + 1}`
+      }
+
       const newSec: Section = {
         id: createId(),
         name,
@@ -501,7 +520,7 @@ export function SongLab({
       setSelectedId(newSec.chords[0].id)
       toast.success(`Added ${name} section`)
     },
-    [updateSections, song.keyTonic, song.beatsPerBar],
+    [updateSections, song.keyTonic, song.beatsPerBar, song.sections],
   )
 
   const handleDeleteSection = useCallback(
@@ -618,31 +637,33 @@ export function SongLab({
               ))}
             </div>
 
-            {/* Quick Add Section Buttons — filters out existing names */}
-            <div className="mt-2.5 flex flex-wrap gap-1">
-              {["Intro", "Verse", "Pre-Chorus", "Chorus", "Bridge", "Outro", "Verse 2", "Verse 3"].filter(
-                (name) => !song.sections.some((s) => s.name.toLowerCase() === name.toLowerCase())
-              ).slice(0, 5).map((name) => (
+            {/* Permanent Quick-Add Section Palette (NEVER disappears) */}
+            <div className="mt-2.5">
+              <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 font-mono">
+                + Add Section
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {["Verse", "Chorus", "Pre-Chorus", "Bridge", "Intro", "Outro"].map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => handleAddSection(type)}
+                    className="rounded-lg border border-dashed border-border/80 bg-card/60 px-2 py-1 font-mono text-[10px] font-semibold text-muted-foreground transition-all hover:border-primary/60 hover:bg-primary/10 hover:text-primary cursor-pointer active:scale-95 shadow-xs"
+                    title={`Add another ${type} section`}
+                  >
+                    + {type}
+                  </button>
+                ))}
+                {/* Custom Section */}
                 <button
-                  key={name}
                   type="button"
-                  onClick={() => handleAddSection(name)}
-                  className="rounded-lg border border-dashed border-border px-2 py-1 font-mono text-[10px] font-semibold text-muted-foreground transition-colors hover:border-primary/60 hover:text-primary cursor-pointer"
+                  onClick={() => handleAddSection("Custom")}
+                  className="rounded-lg border border-dashed border-primary/40 bg-primary/5 px-2 py-1 font-mono text-[10px] font-semibold text-primary/80 transition-all hover:border-primary hover:bg-primary/15 hover:text-primary cursor-pointer active:scale-95 shadow-xs"
+                  title="Add a custom named section"
                 >
-                  + {name}
+                  + Custom
                 </button>
-              ))}
-              {/* Always show a generic add */}
-              <button
-                type="button"
-                onClick={() => {
-                  const n = song.sections.length + 1
-                  handleAddSection(`Section ${n}`)
-                }}
-                className="rounded-lg border border-dashed border-primary/40 px-2 py-1 font-mono text-[10px] font-semibold text-primary/70 transition-colors hover:border-primary hover:text-primary cursor-pointer"
-              >
-                + Custom
-              </button>
+              </div>
             </div>
           </div>
 
@@ -773,6 +794,7 @@ export function SongLab({
               onDeleteSection={handleDeleteSection}
               onRenameSection={handleRenameSection}
               onAutoVoice={handleAutoVoiceSection}
+              onAddSection={handleAddSection}
             />
           </div>
 

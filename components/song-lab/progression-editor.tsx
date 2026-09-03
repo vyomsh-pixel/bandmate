@@ -31,6 +31,7 @@ interface ProgressionEditorProps {
   onDeleteSection?: (sectionId: string) => void
   onRenameSection?: (sectionId: string, name: string) => void
   onAutoVoice?: (sectionId: string) => void
+  onAddSection?: (name: string) => void
 }
 
 export function ProgressionEditor({
@@ -48,6 +49,7 @@ export function ProgressionEditor({
   onDeleteSection,
   onRenameSection,
   onAutoVoice,
+  onAddSection,
 }: ProgressionEditorProps) {
   const key = makeKey(keyTonic, keyMode)
   const diatonic = diatonicChords(key)
@@ -345,6 +347,34 @@ export function ProgressionEditor({
             </div>
           )
         })}
+
+        {/* Add Section Quick Bar */}
+        {onAddSection && (
+          <div className="flex items-center gap-1.5 flex-wrap p-2 sm:p-2.5 rounded-xl border border-dashed border-border/80 bg-card/30">
+            <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-muted-foreground font-mono px-1">
+              + Add Section:
+            </span>
+            {["Verse", "Chorus", "Pre-Chorus", "Bridge", "Intro", "Outro"].map((type) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => onAddSection(type)}
+                className="rounded-lg border border-border/70 bg-background/70 px-2 sm:px-2.5 py-1 font-mono text-[10px] sm:text-[11px] font-semibold text-muted-foreground transition-all hover:border-primary/60 hover:bg-primary/10 hover:text-primary cursor-pointer active:scale-95 shadow-xs"
+                title={`Add another ${type} section`}
+              >
+                + {type}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => onAddSection("Custom")}
+              className="rounded-lg border border-primary/40 bg-primary/10 px-2 sm:px-2.5 py-1 font-mono text-[10px] sm:text-[11px] font-semibold text-primary transition-all hover:border-primary hover:bg-primary/20 cursor-pointer active:scale-95 shadow-xs"
+              title="Add a custom named section"
+            >
+              + Custom
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Palette Groupings */}
