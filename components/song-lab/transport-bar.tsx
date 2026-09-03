@@ -37,15 +37,16 @@ interface TransportBarProps {
   metronome: boolean
   volume: number
   instrument?: InstrumentId
+  isInstrumentLoading?: boolean
   rhythm?: RhythmPattern
   onTogglePlay: () => void
   onBpmChange: (bpm: number) => void
   onToggleLoop: () => void
   onToggleMetronome: () => void
   onToggleRehearsal: () => void
-  onVolumeChange: (v: number) => void
+  onVolumeChange?: (volume: number) => void
   onInstrumentChange?: (id: InstrumentId) => void
-  onRhythmChange?: (rhythm: RhythmPattern) => void
+  onRhythmChange?: (pattern: RhythmPattern) => void
 }
 
 function BpmInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
@@ -119,6 +120,7 @@ export function TransportBar({
   metronome,
   volume,
   instrument = "acoustic_grand_piano",
+  isInstrumentLoading = false,
   rhythm = "pulse",
   onTogglePlay,
   onBpmChange,
@@ -230,21 +232,30 @@ export function TransportBar({
         {/* Instrument Dropdown */}
         <Select value={instrument} onValueChange={(val) => onInstrumentChange?.(val as InstrumentId)}>
           <SelectTrigger
-            className="h-8.5 w-auto max-w-[110px] sm:max-w-none px-2 sm:px-2.5 gap-1.5 font-bold text-xs bg-background/50 border-border/80 rounded-lg cursor-pointer hover:border-primary/50 transition-colors"
+            className="h-8.5 w-auto max-w-[125px] sm:max-w-none px-2 sm:px-2.5 gap-1.5 font-bold text-xs bg-background/50 border-border/80 rounded-lg cursor-pointer hover:border-primary/50 transition-colors"
             aria-label="Select instrument sound"
           >
-            <span>{currentInst.icon}</span>
+            {isInstrumentLoading ? (
+              <span className="animate-spin text-xs">⏳</span>
+            ) : (
+              <span>{currentInst.icon}</span>
+            )}
             <span className="hidden sm:inline">{currentInst.name}</span>
             <span className="sm:hidden text-[11px] truncate">{currentInst.name.split(" ")[0]}</span>
           </SelectTrigger>
-          <SelectContent align="center" className="min-w-[240px]">
+          <SelectContent align="center" className="min-w-[270px] max-h-[380px]">
             {AVAILABLE_INSTRUMENTS.map((inst) => (
               <SelectItem key={inst.id} value={inst.id} className="cursor-pointer py-2">
                 <div className="flex items-center gap-2.5">
-                  <span className="text-base">{inst.icon}</span>
-                  <div className="flex flex-col text-left">
-                    <span className="text-xs font-bold text-foreground">{inst.name}</span>
-                    <span className="text-[10px] text-muted-foreground">{inst.description}</span>
+                  <span className="text-base shrink-0">{inst.icon}</span>
+                  <div className="flex flex-col text-left min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-foreground truncate">{inst.name}</span>
+                      <span className="text-[9px] uppercase font-mono px-1 py-0.5 rounded bg-muted text-muted-foreground font-semibold shrink-0">
+                        {inst.category}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground truncate">{inst.description}</span>
                   </div>
                 </div>
               </SelectItem>

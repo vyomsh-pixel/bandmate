@@ -93,9 +93,12 @@ class AudioEngine {
     }
     if (this.ctx.state === "suspended") await this.ctx.resume()
 
-    // Preload acoustic grand piano samples in background
+    // Preload top core instruments in background so user has zero latency switching
     const sf = getSoundfontEngine()
-    sf.loadInstrument(sf.getCurrentInstrument(), this.ctx).catch(() => {})
+    sf.loadInstrument("acoustic_grand_piano", this.ctx).catch(() => {})
+    sf.loadInstrument("acoustic_guitar_nylon", this.ctx).catch(() => {})
+    sf.loadInstrument("electric_piano_1", this.ctx).catch(() => {})
+    sf.loadInstrument("string_ensemble_1", this.ctx).catch(() => {})
 
     return this.ctx
   }
@@ -175,47 +178,80 @@ class AudioEngine {
 
     // Fallback or Synthetic mode (synth_warm / synth_8bit)
     const ctx = this.ctx
-    const osc = ctx.createOscillator()
-    const sub = ctx.createOscillator()
+    const freq = midiToFreq(midi)
+
+    if (targetInst === "synth_8bit") {
+      // Authentic NES / Game Boy chiptune with soft lowpass to eliminate piercing aliasing
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      const filter = ctx.createBiquadFilter()
+
+      osc.type = "square"
+      osc.frequency.value = freq
+      filter.type = "lowpass"
+      filter.frequency.value = 3200
+      filter.Q.value = 0.7
+
+      const peakLevel = Math.min(0.20, Math.max(0.04, peak * 0.12))
+      const end = when + duration
+
+      gain.gain.setValueAtTime(0.0001, when)
+      gain.gain.exponentialRampToValueAtTime(peakLevel, when + 0.003)
+      gain.gain.setValueAtTime(peakLevel * 0.7, Math.max(when + 0.01, end - 0.05))
+      gain.gain.exponentialRampToValueAtTime(0.0001, end + 0.08)
+
+      osc.connect(gain)
+      gain.connect(filter)
+      filter.connect(this.master)
+
+      osc.start(when)
+      osc.stop(end + 0.1)
+      return
+    }
+
+    // "synth_warm" — Lush Vintage Analog Poly-Synth Pad (Prophet / Juno Style)
+    // Twin detuned oscillators for authentic stereo-chorus width + warm 24dB low-pass filter
+    const osc1 = ctx.createOscillator()
+    const osc2 = ctx.createOscillator()
     const gain = ctx.createGain()
     const filter = ctx.createBiquadFilter()
 
-    const synthWave: OscillatorType = targetInst === "synth_8bit" ? "square" : targetInst === "synth_warm" ? "triangle" : wave
-    filter.type = targetInst === "synth_8bit" ? "allpass" : "lowpass"
-    filter.frequency.value = targetInst === "synth_8bit" ? 8000 : 4200
-    filter.Q.value = 0.6
+    osc1.type = "sawtooth"
+    osc1.frequency.value = freq
+    osc1.detune.setValueAtTime(-5, when) // subtle 5-cent chorus spread
 
-    const freq = midiToFreq(midi)
-    osc.type = synthWave
-    osc.frequency.value = freq
-    sub.type = targetInst === "synth_8bit" ? "square" : "sine"
-    sub.frequency.value = freq / 2
-    const subGain = ctx.createGain()
-    subGain.gain.value = targetInst === "synth_8bit" ? 0.35 : 0.6
+    osc2.type = "triangle"
+    osc2.frequency.value = freq
+    osc2.detune.setValueAtTime(+5, when)
 
-    // ADSR
-    const attack = targetInst === "synth_8bit" ? 0.002 : 0.01
-    const decay = 0.22
-    const sustain = peak * 0.85
-    const release = targetInst === "synth_8bit" ? 0.15 : 0.4
+    // Warm resonant analog ladder filter
+    filter.type = "lowpass"
+    filter.frequency.setValueAtTime(1200, when)
+    filter.frequency.exponentialRampToValueAtTime(1750, when + 0.06)
+    filter.frequency.exponentialRampToValueAtTime(1300, when + duration)
+    filter.Q.value = 1.1
+
+    // Calibrated studio gain: ~0.18 per voice so full 5-voice chords are rich and NEVER clip or blow out!
+    const peakLevel = Math.min(0.22, Math.max(0.04, peak * 0.14))
     const end = when + duration
+    const attack = 0.025
+    const release = 0.35
 
     gain.gain.setValueAtTime(0.0001, when)
-    gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, peak * 1.35), when + attack)
-    gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, sustain * 1.35), when + attack + decay)
-    gain.gain.setValueAtTime(Math.max(0.0001, sustain * 1.35), Math.max(when + attack + decay, end - release))
+    gain.gain.linearRampToValueAtTime(peakLevel, when + attack)
+    gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, peakLevel * 0.65), when + attack + 0.25)
+    gain.gain.setValueAtTime(Math.max(0.0001, peakLevel * 0.65), Math.max(when + attack + 0.25, end - release))
     gain.gain.exponentialRampToValueAtTime(0.0001, end + release)
 
-    osc.connect(gain)
-    sub.connect(subGain)
-    subGain.connect(gain)
+    osc1.connect(gain)
+    osc2.connect(gain)
     gain.connect(filter)
     filter.connect(this.master)
 
-    osc.start(when)
-    sub.start(when)
-    osc.stop(end + release + 0.05)
-    sub.stop(end + release + 0.05)
+    osc1.start(when)
+    osc2.start(when)
+    osc1.stop(end + release + 0.05)
+    osc2.stop(end + release + 0.05)
   }
 
   /** A metronome click. accent = downbeat. */

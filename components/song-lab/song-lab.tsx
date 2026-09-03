@@ -92,6 +92,7 @@ export function SongLab({
   }, [])
 
   const [instrument, setInstrumentState] = useState<InstrumentId>("acoustic_grand_piano")
+  const [isInstrumentLoading, setIsInstrumentLoading] = useState(false)
   const [rhythm, setRhythm] = useState<RhythmPattern>("pulse")
   const [isRehearsing, setIsRehearsing] = useState(false)
 
@@ -242,7 +243,9 @@ export function SongLab({
 
   const handleInstrumentChange = useCallback(async (id: InstrumentId) => {
     setInstrumentState(id)
+    setIsInstrumentLoading(true)
     await getAudioEngine().setInstrument(id)
+    setIsInstrumentLoading(false)
     const name = AVAILABLE_INSTRUMENTS.find((i) => i.id === id)?.name ?? "Instrument"
     toast.success(`Sound: ${name}`)
   }, [])
@@ -763,6 +766,7 @@ export function SongLab({
               metronome={metronome}
               volume={volume}
               instrument={instrument}
+              isInstrumentLoading={isInstrumentLoading}
               rhythm={rhythm}
               onTogglePlay={togglePlay}
               onBpmChange={handleBpmChange}

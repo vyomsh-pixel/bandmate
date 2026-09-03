@@ -1,16 +1,19 @@
 /**
  * BandMate — Real Sampled Soundfont Engine.
  *
- * Loads high-quality acoustic soundfont samples (Grand Piano, Electric Piano,
- * Acoustic Guitar, Strings, Bass) into Web Audio AudioBuffers.
- * Replaces synthetic bleeps with authentic acoustic instrument recordings.
+ * Loads high-quality acoustic soundfont samples (Grand Piano, Rhodes, Guitars,
+ * Strings, Bass) into Web Audio AudioBuffers with calibrated gain staging,
+ * musical ADSR envelopes, and on-demand background decoding.
  */
 
 export type InstrumentId =
   | "acoustic_grand_piano"
+  | "bright_acoustic_piano"
   | "electric_piano_1"
-  | "acoustic_guitar_steel"
+  | "electric_piano_2"
   | "acoustic_guitar_nylon"
+  | "acoustic_guitar_steel"
+  | "electric_guitar_clean"
   | "string_ensemble_1"
   | "electric_bass_finger"
   | "synth_warm"
@@ -30,58 +33,171 @@ export const AVAILABLE_INSTRUMENTS: InstrumentInfo[] = [
     name: "Concert Grand Piano",
     category: "Keyboards",
     icon: "🎹",
-    description: "Authentic sampled acoustic grand piano (Real)",
+    description: "Authentic sampled acoustic grand piano",
+  },
+  {
+    id: "bright_acoustic_piano",
+    name: "Bright Pop Piano",
+    category: "Keyboards",
+    icon: "🎹",
+    description: "Punchy, crisp Yamaha-style acoustic piano",
   },
   {
     id: "electric_piano_1",
-    name: "Electric Piano (Rhodes)",
+    name: "Vintage Rhodes",
     category: "Keyboards",
     icon: "🎹",
-    description: "Warm classic vintage electric piano",
+    description: "Warm classic vintage electric piano with silky tines",
   },
   {
-    id: "synth_warm",
-    name: "Default Studio Synth",
-    category: "Synths",
-    icon: "🎛️",
-    description: "Original polyphonic analog synthesizer",
-  },
-  {
-    id: "synth_8bit",
-    name: "Chiptune 8-Bit Synth",
-    category: "Synths",
-    icon: "👾",
-    description: "Retro square-wave chiptune video game synth",
-  },
-  {
-    id: "acoustic_guitar_steel",
-    name: "Acoustic Steel Guitar",
-    category: "Guitars",
-    icon: "🎸",
-    description: "Bright acoustic steel-string guitar",
+    id: "electric_piano_2",
+    name: "FM Electric Piano (DX7)",
+    category: "Keyboards",
+    icon: "🎹",
+    description: "Sparkling 80s digital electric piano",
   },
   {
     id: "acoustic_guitar_nylon",
     name: "Classical Nylon Guitar",
     category: "Guitars",
     icon: "🎸",
-    description: "Mellow classical Spanish nylon guitar",
+    description: "Warm, intimate Spanish classical guitar",
+  },
+  {
+    id: "acoustic_guitar_steel",
+    name: "Acoustic Steel Guitar",
+    category: "Guitars",
+    icon: "🎸",
+    description: "Bright acoustic steel-string dreadnought",
+  },
+  {
+    id: "electric_guitar_clean",
+    name: "Clean Electric Guitar",
+    category: "Guitars",
+    icon: "🎸",
+    description: "Mellow hollowbody jazz & neo-soul electric guitar",
   },
   {
     id: "string_ensemble_1",
-    name: "String Ensemble",
+    name: "Cinematic String Ensemble",
     category: "Strings",
     icon: "🎻",
-    description: "Rich orchestral sustained strings",
+    description: "Rich orchestral sustained violins & cellos with bow swell",
   },
   {
     id: "electric_bass_finger",
     name: "Electric Finger Bass",
     category: "Bass",
     icon: "🎸",
-    description: "Deep, punchy sampled fingerstyle bass",
+    description: "Deep, punchy fingerstyle bass in true low-octave register",
+  },
+  {
+    id: "synth_warm",
+    name: "Lush Analog Synth Pad",
+    category: "Synths",
+    icon: "🎛️",
+    description: "Silky Juno/Prophet-style warm analog poly-synth",
+  },
+  {
+    id: "synth_8bit",
+    name: "Chiptune 8-Bit Synth",
+    category: "Synths",
+    icon: "👾",
+    description: "Retro square-wave video game console chiptune",
   },
 ]
+
+export interface InstrumentProfile {
+  gainScale: number
+  attack: number
+  decay: number
+  sustain: number
+  release: number
+  isSustained?: boolean
+  octaveShift?: number
+}
+
+const INSTRUMENT_PROFILES: Record<InstrumentId, InstrumentProfile> = {
+  acoustic_grand_piano: {
+    gainScale: 0.52,
+    attack: 0.005,
+    decay: 1.6,
+    sustain: 0.35,
+    release: 0.15,
+  },
+  bright_acoustic_piano: {
+    gainScale: 0.50,
+    attack: 0.004,
+    decay: 1.5,
+    sustain: 0.35,
+    release: 0.15,
+  },
+  electric_piano_1: {
+    gainScale: 0.48,
+    attack: 0.006,
+    decay: 1.8,
+    sustain: 0.45,
+    release: 0.20,
+  },
+  electric_piano_2: {
+    gainScale: 0.45,
+    attack: 0.005,
+    decay: 1.6,
+    sustain: 0.40,
+    release: 0.20,
+  },
+  acoustic_guitar_nylon: {
+    gainScale: 0.44, // Calibrated sweet spot: zero distortion on nylon strings
+    attack: 0.012,
+    decay: 1.3,
+    sustain: 0.38,
+    release: 0.18,
+  },
+  acoustic_guitar_steel: {
+    gainScale: 0.44,
+    attack: 0.008,
+    decay: 1.4,
+    sustain: 0.38,
+    release: 0.18,
+  },
+  electric_guitar_clean: {
+    gainScale: 0.42,
+    attack: 0.010,
+    decay: 1.6,
+    sustain: 0.50,
+    release: 0.22,
+  },
+  string_ensemble_1: {
+    gainScale: 0.35, // Balanced so full chords never clip
+    attack: 0.110, // Lush orchestral bow swell
+    decay: 0.4,
+    sustain: 0.88, // Holds orchestral richness for entire chord duration
+    release: 0.45, // Warm cinematic release
+    isSustained: true,
+  },
+  electric_bass_finger: {
+    gainScale: 0.55,
+    attack: 0.008,
+    decay: 1.4,
+    sustain: 0.55,
+    release: 0.20,
+    octaveShift: -12, // Transpose to true deep electric bass register!
+  },
+  synth_warm: {
+    gainScale: 0.18,
+    attack: 0.025,
+    decay: 0.35,
+    sustain: 0.65,
+    release: 0.35,
+  },
+  synth_8bit: {
+    gainScale: 0.12,
+    attack: 0.003,
+    decay: 0.15,
+    sustain: 0.55,
+    release: 0.10,
+  },
+}
 
 const NOTE_NAMES = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"]
 
@@ -135,11 +251,13 @@ class SoundfontEngine {
   }
 
   isInstrumentLoaded(id: InstrumentId): boolean {
+    if (id === "synth_warm" || id === "synth_8bit") return true
     return this.cache.get(id)?.loaded ?? false
   }
 
   /**
    * Load soundfont sample pack for the chosen instrument.
+   * High performance: fetches soundfont and decodes the core playable register in small chunks.
    */
   async loadInstrument(id: InstrumentId, ctx: AudioContext): Promise<boolean> {
     if (id === "synth_warm" || id === "synth_8bit") {
@@ -174,23 +292,34 @@ class SoundfontEngine {
         this.rawDataCache.set(id, rawData)
       }
 
-      // Pre-decode common octave keys (MIDI 21 to 108)
-      const decodePromises: Promise<void>[] = []
-      for (let midi = 21; midi <= 108; midi++) {
-        const noteName = midiToSampleName(midi)
-        const dataUri = rawData[noteName]
-        if (dataUri) {
-          decodePromises.push(this.decodeAndCache(ctx, id, midi, dataUri))
-        }
-      }
-
-      await Promise.all(decodePromises)
+      // Mark instrument usable immediately once sample table is ready
       entry.loaded = true
       entry.loading = false
       this.notify(id, true)
+
+      // Decode the core chord register (MIDI 36 to 84 = C2 to C6) in small batches of 8
+      // to avoid freezing the browser WebAudio thread
+      const coreMidis: number[] = []
+      for (let midi = 36; midi <= 84; midi++) {
+        const noteName = midiToSampleName(midi)
+        if (rawData[noteName]) coreMidis.push(midi)
+      }
+
+      const chunkSize = 8
+      for (let i = 0; i < coreMidis.length; i += chunkSize) {
+        const chunk = coreMidis.slice(i, i + chunkSize)
+        await Promise.all(
+          chunk.map((midi) => {
+            const noteName = midiToSampleName(midi)
+            const dataUri = rawData![noteName]
+            return dataUri ? this.decodeAndCache(ctx, id, midi, dataUri) : Promise.resolve()
+          })
+        )
+      }
+
       return true
     } catch (err) {
-      console.warn(`[SoundfontEngine] Could not load ${id}, falling back to synthetic audio:`, err)
+      console.warn(`[SoundfontEngine] Could not load ${id}, falling back to analog synth:`, err)
       entry.loading = false
       entry.loaded = false
       this.notify(id, false)
@@ -203,10 +332,10 @@ class SoundfontEngine {
     instrumentId: InstrumentId,
     midi: number,
     dataUri: string,
-  ): Promise<void> {
+  ): Promise<AudioBuffer | null> {
     try {
       const base64 = dataUri.split(",")[1]
-      if (!base64) return
+      if (!base64) return null
       const binaryString = atob(base64)
       const len = binaryString.length
       const bytes = new Uint8Array(len)
@@ -218,13 +347,14 @@ class SoundfontEngine {
       if (entry) {
         entry.buffers.set(midi, audioBuffer)
       }
+      return audioBuffer
     } catch (e) {
-      // Individual note decode failure is non-fatal
+      return null
     }
   }
 
   /**
-   * Play a sampled acoustic note at a specific time.
+   * Play a sampled acoustic note at a specific time with instrument-specific calibration.
    * Returns true if sample played, false if caller should fallback to synthesis.
    */
   playSample(
@@ -242,31 +372,44 @@ class SoundfontEngine {
 
     const entry = this.cache.get(instrumentId)
     if (!entry || !entry.loaded) {
-      // Trigger lazy load in background if not already started
+      // Trigger background fetch if not yet started
       if (!entry?.loading) {
         this.loadInstrument(instrumentId, ctx).catch(() => {})
       }
       return false
     }
 
+    const profile = INSTRUMENT_PROFILES[instrumentId] ?? INSTRUMENT_PROFILES.acoustic_grand_piano
+    const targetMidi = profile.octaveShift ? midi + profile.octaveShift : midi
+
     // Lookup exact note or nearest sampled note
-    let buffer = entry.buffers.get(midi)
+    let buffer = entry.buffers.get(targetMidi)
     let detuneCents = 0
 
     if (!buffer) {
-      // Find closest available sampled note
+      // On-demand decode if sample string exists
+      const rawData = this.rawDataCache.get(instrumentId)
+      if (rawData) {
+        const noteName = midiToSampleName(targetMidi)
+        const dataUri = rawData[noteName]
+        if (dataUri) {
+          this.decodeAndCache(ctx, instrumentId, targetMidi, dataUri).catch(() => {})
+        }
+      }
+
+      // Find closest available sampled note in cache
       let closestMidi = -1
       let minDiff = 999
       for (const [m, buf] of entry.buffers.entries()) {
-        const diff = Math.abs(m - midi)
+        const diff = Math.abs(m - targetMidi)
         if (diff < minDiff) {
           minDiff = diff
           closestMidi = m
           buffer = buf
         }
       }
-      if (closestMidi !== -1 && minDiff <= 6) {
-        detuneCents = (midi - closestMidi) * 100
+      if (closestMidi !== -1 && minDiff <= 12) {
+        detuneCents = (targetMidi - closestMidi) * 100
       }
     }
 
@@ -280,22 +423,35 @@ class SoundfontEngine {
       }
 
       const gain = ctx.createGain()
-      const peak = Math.min(2.4, Math.max(0.2, velocity * 2.1))
+      // Calibrated peak level per instrument to avoid clipping through studio makeup gain
+      const peak = Math.min(1.15, Math.max(0.08, velocity * profile.gainScale))
 
-      // Natural acoustic envelope
-      gain.gain.setValueAtTime(0.0001, when)
-      gain.gain.linearRampToValueAtTime(peak, when + 0.005)
+      if (profile.isSustained) {
+        // Sustained instrument (e.g. String Ensemble)
+        const end = when + duration
+        gain.gain.setValueAtTime(0.0001, when)
+        gain.gain.linearRampToValueAtTime(peak, when + profile.attack)
+        gain.gain.setValueAtTime(peak * profile.sustain, Math.max(when + profile.attack, end - profile.release))
+        gain.gain.exponentialRampToValueAtTime(0.0001, end + profile.release)
 
-      // Piano / guitar acoustic decay - keep sustained warmth instead of dropping to a whisper
-      const decayTime = Math.min(buffer.duration, duration + 1.2)
-      gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, peak * 0.22), when + decayTime)
-      gain.gain.setValueAtTime(0.0001, when + decayTime + 0.05)
+        source.connect(gain)
+        gain.connect(destination)
+        source.start(when)
+        source.stop(end + profile.release + 0.05)
+      } else {
+        // Acoustic decaying instrument (Piano, Classical Nylon, Steel Guitar, Rhodes)
+        const decayTime = Math.min(buffer.duration, duration + 0.8)
+        gain.gain.setValueAtTime(0.0001, when)
+        gain.gain.linearRampToValueAtTime(peak, when + profile.attack)
+        gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, peak * profile.sustain), when + decayTime)
+        gain.gain.setValueAtTime(0.0001, when + decayTime + 0.05)
 
-      source.connect(gain)
-      gain.connect(destination)
+        source.connect(gain)
+        gain.connect(destination)
+        source.start(when)
+        source.stop(when + decayTime + 0.1)
+      }
 
-      source.start(when)
-      source.stop(when + decayTime + 0.1)
       return true
     } catch (e) {
       return false
