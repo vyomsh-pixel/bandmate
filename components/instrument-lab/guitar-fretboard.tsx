@@ -10,6 +10,8 @@ import { generateGuitarVoicings } from "@/lib/music/guitar-voicings"
 interface GuitarFretboardProps {
   chord: ParsedChord | null
   frets?: number
+  capoFret?: number
+  concertSymbol?: string
 }
 
 // Standard tuning: E2, A2, D3, G3, B3, E4
@@ -22,7 +24,7 @@ const STRINGS = [
   { note: "E", midi: 40 },
 ]
 
-export function GuitarFretboard({ chord, frets = 15 }: GuitarFretboardProps) {
+export function GuitarFretboard({ chord, frets = 15, capoFret = 0, concertSymbol }: GuitarFretboardProps) {
   const voicings = useMemo(() => {
     if (!chord || !chord.valid) return []
     return generateGuitarVoicings(chord)
@@ -59,7 +61,11 @@ export function GuitarFretboard({ chord, frets = 15 }: GuitarFretboardProps) {
             {activeVoicing.label}
           </span>
           <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-black bg-amber-400/15 text-amber-400 border border-amber-400/30">
-            {baseFret > 1 ? `Fret ${baseFret} (Barre)` : "Nut (Open Chord)"}
+            {capoFret > 0
+              ? `Capo ${capoFret}: Play ${chord.symbol} shape`
+              : baseFret > 1
+                ? `Fret ${baseFret} (Barre)`
+                : "Nut (Open Chord)"}
           </span>
         </div>
 
