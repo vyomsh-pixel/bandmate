@@ -9,13 +9,14 @@
  */
 
 import { useCallback, useEffect, useState, useRef } from "react"
+import { createId } from "@/lib/storage/local-store"
 import {
-  createId,
-  loadCurrentSongId,
-  loadSongs,
-  saveCurrentSongId,
-  saveSongs,
-} from "@/lib/storage/local-store"
+  loadUserSongs,
+  saveUserSongs,
+  loadUserCurrentSongId,
+  saveUserCurrentSongId,
+  migrateGuestSongsToUser,
+} from "@/lib/storage/cloud-sync"
 import type { ChordEntry, Section, Song } from "@/lib/music/types"
 
 function makeDefaultSong(): Song {
@@ -44,7 +45,7 @@ function makeDefaultSong(): Song {
   }
 }
 
-export function useSongLibrary() {
+export function useSongLibrary(userId: string = "guest-user") {
   const [songs, setSongs] = useState<Song[]>([])
   const [currentId, setCurrentId] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
@@ -55,42 +56,42 @@ export function useSongLibrary() {
   const undoStack = useRef<Song[]>([])
   const redoStack = useRef<Song[]>([])
   const currentSongRef = useRef<Song | null>(null)
+  const userRef = useRef<string>(userId)
 
-  // Hydrate from localStorage on mount.
+  // Update user ref
   useEffect(() => {
-    const stored = loadSongs()
-    
-    // Migrate old songs that had 'chords' instead of 'sections'
-    const migrated = stored.map(s => {
-      const anySong = s as any
-      if (anySong.chords && !anySong.sections) {
-        return {
-          ...s,
-          sections: [{ id: createId(), name: "Verse 1", chords: anySong.chords }]
-        }
-      }
-      return s
-    }) as Song[]
+    userRef.current = userId
+  }, [userId])
 
-    if (migrated.length === 0) {
+  // Hydrate per-user songs from storage & migrate guest songs if logging in.
+  useEffect(() => {
+    setLoaded(false)
+    let stored = loadUserSongs(userId)
+
+    if (userId !== "guest-user" && userId !== "guest") {
+      const migrated = migrateGuestSongsToUser(userId)
+      if (migrated.length > 0) stored = migrated
+    }
+
+    if (stored.length === 0) {
       const seed = makeDefaultSong()
       setSongs([seed])
       setCurrentId(seed.id)
-      saveSongs([seed])
-      saveCurrentSongId(seed.id)
+      saveUserSongs(userId, [seed])
+      saveUserCurrentSongId(userId, seed.id)
     } else {
-      setSongs(migrated)
-      const savedId = loadCurrentSongId()
-      const validId = savedId && migrated.some((s) => s.id === savedId) ? savedId : migrated[0].id
+      setSongs(stored)
+      const savedId = loadUserCurrentSongId(userId)
+      const validId = savedId && stored.some((s) => s.id === savedId) ? savedId : stored[0].id
       setCurrentId(validId)
-      saveCurrentSongId(validId)
+      saveUserCurrentSongId(userId, validId)
     }
     setLoaded(true)
-  }, [])
+  }, [userId])
 
   const persist = useCallback((next: Song[]) => {
     setSongs(next)
-    saveSongs(next)
+    saveUserSongs(userRef.current, next)
   }, [])
 
   const currentSong = songs.find((s) => s.id === currentId) ?? null
@@ -102,7 +103,7 @@ export function useSongLibrary() {
 
   const selectSong = useCallback((id: string) => {
     setCurrentId(id)
-    saveCurrentSongId(id)
+    saveUserCurrentSongId(userRef.current, id)
     undoStack.current = []
     redoStack.current = []
     setUndoCount(0)
@@ -115,11 +116,11 @@ export function useSongLibrary() {
       const song: Song = { ...base, ...partial, id: base.id, createdAt: base.createdAt, updatedAt: base.createdAt }
       setSongs((prev) => {
         const next = [song, ...prev]
-        saveSongs(next)
+        saveUserSongs(userRef.current, next)
         return next
       })
       setCurrentId(song.id)
-      saveCurrentSongId(song.id)
+      saveUserCurrentSongId(userRef.current, song.id)
       undoStack.current = []
       redoStack.current = []
       setUndoCount(0)
@@ -145,7 +146,7 @@ export function useSongLibrary() {
           const changes = typeof patch === "function" ? patch(s) : patch
           return { ...s, ...changes, id: s.id, updatedAt: Date.now() }
         })
-        saveSongs(next)
+        saveUserSongs(userRef.current, next)
         return next
       })
     },
@@ -161,7 +162,7 @@ export function useSongLibrary() {
     
     setSongs((songs) => {
       const next = songs.map(s => s.id === prev.id ? prev : s)
-      saveSongs(next)
+      saveUserSongs(userRef.current, next)
       return next
     })
   }, [])
@@ -175,7 +176,7 @@ export function useSongLibrary() {
     
     setSongs((songs) => {
       const next = songs.map(s => s.id === nextState.id ? nextState : s)
-      saveSongs(next)
+      saveUserSongs(userRef.current, next)
       return next
     })
   }, [])
@@ -185,11 +186,11 @@ export function useSongLibrary() {
       setSongs((prev) => {
         const next = prev.filter((s) => s.id !== id)
         const finalList = next.length === 0 ? [makeDefaultSong()] : next
-        saveSongs(finalList)
+        saveUserSongs(userRef.current, finalList)
         setCurrentId((curr) => {
           if (curr !== id) return curr
           const newId = finalList[0].id
-          saveCurrentSongId(newId)
+          saveUserCurrentSongId(userRef.current, newId)
           return newId
         })
         undoStack.current = []

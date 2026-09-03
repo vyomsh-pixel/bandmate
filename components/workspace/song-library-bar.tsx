@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils"
 import { TrebleClefIcon } from "@/components/ui/treble-clef-icon"
 import { downloadMidi } from "@/lib/export/midi-export"
 import { downloadLeadSheetText } from "@/lib/export/lead-sheet"
+import { UserProfileButton } from "@/components/auth/user-profile-button"
 import { MODULES } from "./modules"
 
 export interface SongLibraryBarProps {
@@ -139,8 +140,9 @@ export function SongLibraryBar({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Right: Key Pill + Settings Menu */}
+        {/* Right: Key Pill + User Profile + Settings Menu */}
         <div className="flex items-center gap-1.5 shrink-0">
+          <UserProfileButton savedSongsCount={songs.length} />
           {currentSong && onKeyChange && onModeChange && onTranspose && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -558,8 +560,9 @@ export function SongLibraryBar({
           </div>
         )}
 
-        {/* Desktop Right: Export + Piano + Inspector + Autosaved */}
+        {/* Desktop Right: User Profile + Export + Piano + Inspector + Autosaved */}
         <div className="flex items-center gap-2">
+          <UserProfileButton savedSongsCount={songs.length} />
           {currentSong && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

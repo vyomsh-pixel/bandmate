@@ -7,6 +7,7 @@ import { SongLab } from "@/components/song-lab/song-lab"
 import { InstrumentLab } from "@/components/instrument-lab/instrument-lab"
 import { SongLibraryBar } from "./song-library-bar"
 import { useSongLibrary } from "@/hooks/use-song-library"
+import { useAuth } from "@/lib/auth/auth-context"
 import { transposeSymbol, semitonesBetween } from "@/lib/music/transpose"
 import { keyAccidental } from "@/lib/music/scales"
 
@@ -14,7 +15,8 @@ export function Workspace() {
   const [activeModule, setActiveModule] = useState("song-lab")
   const [showPiano, setShowPiano] = useState(false)
   const [showInspector, setShowInspector] = useState(true)
-  const lib = useSongLibrary()
+  const { user } = useAuth()
+  const lib = useSongLibrary(user?.uid ?? "guest-user")
 
   // On desktop screens (>= 1024px), show piano by default; on mobile, keep collapsed for maximum space
   useEffect(() => {
