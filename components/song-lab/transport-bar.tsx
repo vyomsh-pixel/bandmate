@@ -230,7 +230,9 @@ export function TransportBar({
         <Select value={instrument} onValueChange={(val) => onInstrumentChange?.(val as InstrumentId)}>
           <SelectTrigger className="h-8 flex-1 min-w-0 max-w-[125px] px-2 gap-1 text-xs font-bold bg-background/50 border-border/60 rounded-lg cursor-pointer">
             {isInstrumentLoading ? <span className="animate-spin text-xs">⏳</span> : <span>{currentInst.icon}</span>}
-            <span className="truncate text-[11px]">{currentInst.name.split(" ")[0]}</span>
+            <span className="truncate text-[11px] font-medium">
+              {currentInst.name.replace("Concert ", "").replace(" Vintage", "")}
+            </span>
           </SelectTrigger>
           <SelectContent align="center" className="min-w-[260px] max-h-[380px] z-50">
             {AVAILABLE_INSTRUMENTS.map((inst) => (

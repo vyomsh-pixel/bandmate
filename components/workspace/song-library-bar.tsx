@@ -75,7 +75,7 @@ export function SongLibraryBar({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="flex items-center gap-1.5 rounded-xl border border-border/80 bg-background/60 px-2 py-1 text-xs font-bold shadow-xs hover:border-primary/50 transition-all cursor-pointer min-w-0 max-w-[55%]"
+              className="flex items-center gap-1.5 rounded-xl border border-border/80 bg-background/60 px-2.5 py-1 text-xs font-bold shadow-xs hover:border-primary/50 transition-all cursor-pointer min-w-0 max-w-[200px]"
               aria-label="Select song track"
             >
               <div className="size-6 shrink-0 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 text-black flex items-center justify-center shadow-xs">
