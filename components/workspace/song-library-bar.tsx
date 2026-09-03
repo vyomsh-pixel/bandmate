@@ -15,12 +15,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Plus, MoreVertical, Trash2, Music, ChevronDown, ChevronUp, Piano, Sparkles, PanelRight, Settings } from "lucide-react"
+import { Plus, MoreVertical, Trash2, Music, ChevronDown, ChevronUp, Piano, Sparkles, PanelRight, Settings, Download, FileText } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { MAJOR_TONICS, MINOR_TONICS } from "@/lib/music/scales"
 import { cn } from "@/lib/utils"
 import { TrebleClefIcon } from "@/components/ui/treble-clef-icon"
+import { downloadMidi } from "@/lib/export/midi-export"
+import { downloadLeadSheetText } from "@/lib/export/lead-sheet"
 import { MODULES } from "./modules"
 
 export interface SongLibraryBarProps {
@@ -269,6 +271,28 @@ export function SongLibraryBar({
                 <Plus className="size-3.5 text-primary" />
                 <span>New Song Track</span>
               </DropdownMenuItem>
+
+              {currentSong && (
+                <>
+                  <div className="px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground border-t border-border/60 pt-2">
+                    Export Track
+                  </div>
+                  <DropdownMenuItem
+                    onClick={() => downloadMidi(currentSong)}
+                    className="cursor-pointer font-bold text-xs flex items-center gap-2 py-1.5 text-amber-400 focus:text-amber-300"
+                  >
+                    <Download className="size-3.5" />
+                    <span>Export MIDI File (.mid)</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => downloadLeadSheetText(currentSong)}
+                    className="cursor-pointer font-bold text-xs flex items-center gap-2 py-1.5 text-zinc-200"
+                  >
+                    <FileText className="size-3.5" />
+                    <span>Export Lead Sheet (.txt)</span>
+                  </DropdownMenuItem>
+                </>
+              )}
 
               <div className="px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground border-t border-border/60 pt-2">
                 Studio Modules
@@ -534,8 +558,50 @@ export function SongLibraryBar({
           </div>
         )}
 
-        {/* Desktop Right: Piano + Inspector + Autosaved + More */}
+        {/* Desktop Right: Export + Piano + Inspector + Autosaved */}
         <div className="flex items-center gap-2">
+          {currentSong && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8.5 gap-1.5 rounded-xl border-amber-400/40 bg-amber-400/10 text-amber-400 hover:bg-amber-400/20 text-xs font-bold shadow-xs cursor-pointer"
+                  title="Export song progression to MIDI or Lead Sheet"
+                >
+                  <Download className="size-3.5" />
+                  <span>Export</span>
+                  <ChevronDown className="size-3 opacity-70" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 p-1.5 z-50">
+                <div className="px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
+                  Export Options
+                </div>
+                <DropdownMenuItem
+                  onClick={() => downloadMidi(currentSong)}
+                  className="cursor-pointer font-bold text-xs flex items-center justify-between py-2 text-amber-400 focus:text-amber-300"
+                >
+                  <div className="flex items-center gap-2">
+                    <Download className="size-3.5" />
+                    <span>MIDI File (.mid)</span>
+                  </div>
+                  <span className="text-[9px] font-mono text-muted-foreground">DAW Ready</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => downloadLeadSheetText(currentSong)}
+                  className="cursor-pointer font-bold text-xs flex items-center justify-between py-2 text-zinc-200"
+                >
+                  <div className="flex items-center gap-2">
+                    <FileText className="size-3.5 text-zinc-400" />
+                    <span>Lead Sheet (.txt)</span>
+                  </div>
+                  <span className="text-[9px] font-mono text-muted-foreground">Print / Text</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
           {onTogglePiano && (
             <Button
               variant={showPiano ? "default" : "outline"}
