@@ -2,17 +2,10 @@
 
 import { useState } from "react"
 import { useAuth } from "@/lib/auth/auth-context"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { TrebleClefIcon } from "@/components/ui/treble-clef-icon"
-import { Eye, EyeOff, Mail, Lock, User, Sparkles, ArrowRight } from "lucide-react"
+import { Eye, EyeOff, Mail, Lock, User, Sparkles, ArrowRight, X } from "lucide-react"
 
 export function AuthModal() {
   const {
@@ -31,6 +24,8 @@ export function AuthModal() {
   const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  if (!isAuthModalOpen) return null
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
@@ -47,24 +42,38 @@ export function AuthModal() {
   }
 
   return (
-    <Dialog open={isAuthModalOpen} onOpenChange={(open) => !open && closeAuthModal()}>
-      <DialogContent className="sm:max-w-md bg-zinc-950 border-zinc-800 text-zinc-100 p-6 z-50 rounded-2xl shadow-2xl backdrop-blur-xl">
-        <DialogHeader className="flex flex-col items-center text-center space-y-2">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+      <div
+        className="relative w-full max-w-md bg-zinc-950 border border-zinc-800 text-zinc-100 p-6 rounded-2xl shadow-2xl backdrop-blur-xl animate-in zoom-in-95 duration-150"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close Button */}
+        <button
+          type="button"
+          onClick={closeAuthModal}
+          className="absolute right-4 top-4 rounded-lg p-1 text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors cursor-pointer"
+          aria-label="Close dialog"
+        >
+          <X className="size-4" />
+        </button>
+
+        {/* Header */}
+        <div className="flex flex-col items-center text-center space-y-2 mb-3">
           <div className="size-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-black flex items-center justify-center shadow-lg shadow-amber-500/20 mb-1">
             <TrebleClefIcon className="size-7 fill-current" />
           </div>
-          <DialogTitle className="text-xl font-mono font-black tracking-tight text-white">
+          <h2 className="text-xl font-mono font-black tracking-tight text-white">
             {mode === "login" ? "Welcome Back to BandMate" : "Create Your Song Lab Account"}
-          </DialogTitle>
-          <DialogDescription className="text-xs text-zinc-400">
+          </h2>
+          <p className="text-xs text-zinc-400">
             {mode === "login"
               ? "Sign in to access your saved chord progressions and cloud setlists."
               : "Save your songs permanently across devices and unlock full studio features."}
-          </DialogDescription>
-        </DialogHeader>
+          </p>
+        </div>
 
         {/* Tab Switcher */}
-        <div className="flex rounded-xl bg-zinc-900 p-1 border border-zinc-800 my-2">
+        <div className="flex rounded-xl bg-zinc-900 p-1 border border-zinc-800 my-3">
           <button
             type="button"
             onClick={() => setMode("login")}
@@ -90,7 +99,7 @@ export function AuthModal() {
         </div>
 
         {/* Form Inputs */}
-        <form onSubmit={handleSubmit} className="space-y-3.5 mt-2">
+        <form onSubmit={handleSubmit} className="space-y-3 mt-2">
           {mode === "signup" && (
             <div className="space-y-1">
               <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400">
@@ -180,7 +189,7 @@ export function AuthModal() {
           <Sparkles className="size-4 text-amber-400" />
           <span>Continue with Google</span>
         </Button>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   )
 }
