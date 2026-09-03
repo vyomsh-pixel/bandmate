@@ -216,20 +216,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       toast.success(`Signed in with Google as ${googleUser.displayName}! 🚀`)
       closeAuthModal()
       return true
-    } catch (err: unknown) {
-      console.warn("Firebase popup failed, attempting fallback...", err)
-      // Demo / fallback Google Sign In
-      const fallbackUser: User = {
-        uid: `goog_${Date.now().toString(36)}`,
-        email: "musician@google.com",
-        displayName: "Google Musician",
-        isGuest: false,
-        createdAt: Date.now(),
+    } catch (err: any) {
+      console.warn("Google Sign-In failed:", err)
+      if (err?.code === "auth/popup-closed-by-user") {
+        toast.info("Google Sign-In popup was closed.")
+      } else {
+        toast.error(
+          err?.message || "Google Sign-In failed. Please configure your Firebase keys or sign in with Email/Password."
+        )
       }
-      persistUser(fallbackUser)
-      toast.success("Signed in with Google! 🚀")
-      closeAuthModal()
-      return true
+      return false
     }
   }
 
