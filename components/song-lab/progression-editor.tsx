@@ -561,46 +561,10 @@ export function ProgressionEditor({
 
       {/* Palette Groupings: 4-COL ZERO-CLIPPING WRAPPING GRID */}
       <div className="flex flex-col gap-3 sm:gap-4 rounded-xl sm:rounded-2xl border border-border/80 bg-card/40 p-3 sm:p-5 backdrop-blur-md shadow-xs">
-        {/* Smart AI Next Chord Recommendations */}
-        {(() => {
-          const suggestions = suggestNextChords(chordsInSong, key)
-          return (
-            <div>
-              <div className="mb-1.5 sm:mb-2 flex items-center justify-between">
-                <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-amber-400 font-mono flex items-center gap-1.5">
-                  <Sparkles className="size-3.5" />
-                  <span>AI Next Chord Suggestions</span>
-                </span>
-                <span className="font-mono text-[9px] sm:text-[10px] text-zinc-400 font-bold">1-Tap Append</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 sm:gap-2">
-                {suggestions.map((s) => (
-                  <button
-                    key={`${s.symbol}-${s.label}`}
-                    type="button"
-                    onClick={() => onAdd(s.symbol)}
-                    className="flex flex-col text-left p-2 rounded-xl border border-amber-400/30 bg-amber-400/5 hover:bg-amber-400/15 hover:border-amber-400/60 transition-all cursor-pointer group"
-                  >
-                    <div className="flex items-center justify-between gap-1 mb-0.5">
-                      <span className="font-mono text-sm font-black text-white group-hover:text-amber-300">
-                        {s.symbol} <span className="text-xs text-amber-400 font-normal">({s.roman})</span>
-                      </span>
-                      <span className="text-[9px] font-mono font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300">
-                        {s.label}
-                      </span>
-                    </div>
-                    <span className="text-[10px] text-zinc-300 line-clamp-1">{s.reason}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )
-        })()}
-
-        {/* Diatonic quick-add */}
-        <div className="border-t border-border/50 pt-3">
+        {/* Diatonic quick-add (FIRST) */}
+        <div>
           <div className="mb-1.5 sm:mb-2.5 flex items-center justify-between">
-            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-zinc-100">
+            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-zinc-100 font-mono">
               Diatonic Scale Chords in {key.label}
             </span>
             <span className="font-mono text-[9px] sm:text-[10px] text-zinc-300 font-bold">Click to append</span>
@@ -625,6 +589,42 @@ export function ProgressionEditor({
             })}
           </div>
         </div>
+
+        {/* Smart AI Next Chord Recommendations (SECOND) */}
+        {(() => {
+          const suggestions = suggestNextChords(chordsInSong, key)
+          return (
+            <div className="border-t border-border/50 pt-3">
+              <div className="mb-1.5 sm:mb-2 flex items-center justify-between">
+                <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-amber-400 font-mono flex items-center gap-1.5">
+                  <Sparkles className="size-3.5" />
+                  <span>AI Next Chord Suggestions</span>
+                </span>
+                <span className="font-mono text-[9px] sm:text-[10px] text-zinc-400 font-bold">1-Tap Append</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 sm:gap-2">
+                {suggestions.map((s) => (
+                  <button
+                    key={`${s.symbol}-${s.label}`}
+                    type="button"
+                    onClick={() => onAdd(s.symbol)}
+                    className="flex flex-col text-left p-2.5 rounded-xl border border-amber-400/30 bg-amber-400/5 hover:bg-amber-400/15 hover:border-amber-400/60 transition-all cursor-pointer group"
+                  >
+                    <div className="flex items-center justify-between gap-1 mb-0.5">
+                      <span className="font-mono text-sm font-black text-white group-hover:text-amber-300">
+                        {s.symbol} <span className="text-xs text-amber-400 font-normal">({s.roman})</span>
+                      </span>
+                      <span className="text-[9px] font-mono font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300">
+                        {s.label}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-zinc-300 line-clamp-1">{s.reason}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )
+        })()}
 
         {/* Chords in Song (Recently Used) */}
         {chordsInSong.length > 0 && (
