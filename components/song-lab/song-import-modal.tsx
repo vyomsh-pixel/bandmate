@@ -133,10 +133,27 @@ export function SongImportModal({ onImport, triggerClassName }: SongImportModalP
             id="song-prompt"
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            rows={6}
+            rows={5}
             className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 p-3 font-mono text-xs font-medium text-zinc-100 placeholder:text-zinc-500 focus:border-amber-400/80 focus:outline-hidden focus:ring-1 focus:ring-amber-400/30 transition-all no-scrollbar"
             placeholder="Paste song details e.g. Key: C Major | BPM: 120 | Chords: Am7 -> Dm7 -> G7 -> Cmaj7..."
           />
+          <div className="flex items-center justify-between text-[10px] font-mono text-zinc-400 pt-1">
+            <span>✨ Live real-time parsing active as you type or paste</span>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                // Force re-evaluation of parsed result
+                setInputText((prev) => prev + " ")
+                setTimeout(() => setInputText((prev) => prev.trimEnd()), 50)
+              }}
+              className="h-6 px-2.5 text-[10px] font-bold border-amber-400/40 bg-amber-400/10 text-amber-300 hover:bg-amber-400/20 cursor-pointer gap-1"
+            >
+              <Wand2 className="size-3" />
+              <span>⚡ Refresh Parser</span>
+            </Button>
+          </div>
         </div>
 
         {/* Live Parsed Preview Box */}

@@ -89,18 +89,18 @@ export function parseSongFromDescription(text: string): ParsedSongResult {
     const line = lines[i]
 
     // 1. Title Extraction:
-    // e.g. '"Fly Me To The Moon" — Frank Sinatra' or 'Title: Fly Me To The Moon'
+    // e.g. '4. "Fly Me To The Moon" — Frank Sinatra' or 'Title: Fly Me To The Moon'
     const titlePrefixed = line.match(/^(?:title|song|track|name):\s*(.+)$/i)
-    const quotedTitle = line.match(/^["'“]([^"'”]+)["'”]/)
+    const quotedTitle = line.match(/(?:^\d+[\.\)\s-]*)?["'“]([^"'”]+)["'”]/)
 
     if (titlePrefixed) {
       title = titlePrefixed[1].trim()
     } else if (quotedTitle && title === "Untitled Song") {
-      // Include optional artist if present e.g. "Fly Me To The Moon" — Frank Sinatra
-      const remaining = line.replace(/^["'“][^"'”]+["'”]\s*[-—–]?\s*/, "").trim()
+      // Extract title & artist e.g. 4. "Fly Me To The Moon" — Frank Sinatra
+      const remaining = line.replace(/^(?:\d+[\.\)\s-]*)?["'“][^"'”]+["'”]\s*[-—–]?\s*/, "").trim()
       title = remaining ? `${quotedTitle[1]} (${remaining})` : quotedTitle[1]
     } else if (i === 0 && !line.includes(":") && !line.includes("Key") && title === "Untitled Song") {
-      title = line.replace(/[-—–].*$/, "").trim()
+      title = line.replace(/^(?:\d+[\.\)\s-]*)?/, "").replace(/[-—–].*$/, "").trim()
     }
 
     // 2. Key Extraction:
@@ -146,35 +146,49 @@ export function parseSongFromDescription(text: string): ParsedSongResult {
       continue
     }
 
+    // Skip metadata lines from chord extraction
+    const isMetadataLine = line.match(/^(?:genre|best to test|key|bpm|tempo|time signature|meter|description|note|style|tags|title|song|track|name):\s*/i)
+    if (isMetadataLine) {
+      continue
+    }
+
     // 6. Chord Line Extraction:
-    // Splits by '→', '->', '|', ',', or space, e.g. 'Am7 (4 beats) → Dm7 (4 beats) → G7 (4 beats) → Cmaj7 (4 beats)'
-    if (
+    // Splits by '→', '->', '|', ',', '-', or space
+    const isExplicitChordLine =
       line.includes("→") ||
       line.includes("->") ||
       line.includes("|") ||
       line.match(/[A-G][#b♭♯]?(?:m|maj|dim|aug|sus|7|9|11|13|b5|#5)?\s*\(\d+/i)
-    ) {
-      const tokens = line.split(/(?:→|->|\|)/).flatMap((t) => t.trim().split(/\s{2,}/))
 
-      tokens.forEach((token) => {
-        const clean = token.trim()
-        if (!clean) return
+    // Tokenize potential chord sequences
+    const rawTokens = isExplicitChordLine
+      ? line.split(/(?:→|->|\|)/)
+      : line.split(/(?:,\s*|\s+-\s+|\s{2,}|\t+)/)
 
-        // Extract chord symbol (e.g. Am7 from "Am7 (4 beats)")
-        const symbolMatch = clean.match(/^([A-G][#b♭♯]?[^\s()]*)/i)
-        if (symbolMatch) {
-          const sym = symbolMatch[1]
-          const parsed = parseChord(sym)
-          if (parsed.valid) {
-            const beats = extractBeats(clean, beatsPerBar)
-            currentChords.push({
-              id: createId(),
-              symbol: sym,
-              beats,
-            })
-          }
+    const lineChords: ChordEntry[] = []
+
+    rawTokens.forEach((token) => {
+      const clean = token.trim()
+      if (!clean) return
+
+      // Extract chord symbol (e.g. Am7 from "Am7 (4 beats)" or "Am7")
+      const symbolMatch = clean.match(/^([A-G][#b♭♯]?[^\s()]*)/i)
+      if (symbolMatch) {
+        const sym = symbolMatch[1]
+        const parsed = parseChord(sym)
+        if (parsed.valid) {
+          const beats = extractBeats(clean, beatsPerBar)
+          lineChords.push({
+            id: createId(),
+            symbol: sym,
+            beats,
+          })
         }
-      })
+      }
+    })
+
+    if (lineChords.length > 0) {
+      currentChords.push(...lineChords)
     }
   }
 

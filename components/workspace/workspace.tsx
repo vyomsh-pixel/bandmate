@@ -56,8 +56,7 @@ export function Workspace() {
 
   const handleImportSong = useCallback(
     (data: ParsedSongResult) => {
-      if (!lib.currentSong) return
-      lib.updateSong(lib.currentSong.id, {
+      lib.createSong({
         title: data.title,
         keyTonic: data.keyTonic,
         keyMode: data.keyMode,
