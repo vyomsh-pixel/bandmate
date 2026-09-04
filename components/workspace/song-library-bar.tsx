@@ -68,7 +68,7 @@ export function SongLibraryBar({
   const upcomingModules = MODULES.filter((m) => !m.available)
 
   return (
-    <header className="flex h-12 md:h-14 shrink-0 items-center justify-between border-b border-border/80 bg-card/70 px-2.5 sm:px-4 backdrop-blur-md">
+    <header className="flex h-12 md:h-14 shrink-0 items-center justify-between border-b border-border/80 bg-card/70 px-2.5 sm:px-4 backdrop-blur-md overflow-x-auto no-scrollbar">
       {/* ========================================================================= */}
       {/* MOBILE-ONLY HEADER (< md) — ZERO CLUTTER, SPACIOUS, 100% VISIBLE          */}
       {/* ========================================================================= */}
@@ -336,9 +336,9 @@ export function SongLibraryBar({
       {/* ========================================================================= */}
       {/* DESKTOP-ONLY HEADER (>= md) — POWERFUL FULL STUDIO WORKSPACE               */}
       {/* ========================================================================= */}
-      <div className="hidden md:flex items-center justify-between w-full gap-3 min-w-0">
+      <div className="hidden md:flex items-center justify-between w-full gap-4 min-w-max">
         {/* Left: Studio Module Menu + Project Selector + Title Edit */}
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex items-center gap-2 shrink-0">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
