@@ -26,10 +26,13 @@ function parseKeyString(rawKey: string): { keyTonic: string; keyMode: "major" | 
   const match = rawKey.match(/([A-G][#b♭♯]?)\s*(major|minor|maj|min|m)?/i)
   if (!match) return { keyTonic: "C", keyMode: "major" }
 
-  let tonic = match[1].toUpperCase()
-  if (tonic.endsWith("B")) tonic = tonic.slice(0, -1) + "b"
-  if (tonic.endsWith("♯")) tonic = tonic.slice(0, -1) + "#"
-  if (tonic.endsWith("♭")) tonic = tonic.slice(0, -1) + "b"
+  let tonic = match[1]
+  const firstLetter = tonic[0].toUpperCase()
+  let accidentalSymbol = tonic.slice(1)
+  if (accidentalSymbol.toLowerCase() === "b") accidentalSymbol = "b"
+  if (accidentalSymbol === "♯") accidentalSymbol = "#"
+  if (accidentalSymbol === "♭") accidentalSymbol = "b"
+  tonic = firstLetter + accidentalSymbol
 
   const rawMode = (match[2] || "").toLowerCase()
   const keyMode: "major" | "minor" =
@@ -132,16 +135,36 @@ export function parseSongFromDescription(text: string): ParsedSongResult {
       }
     }
 
-    // 5. Section Header Detection:
-    // e.g. 'Section Breakdown', 'Main Section (8 Bars):', 'Verse 1:', 'Chorus:'
-    const isSectionHeader =
-      line.match(/^(?:section\s+breakdown|section\s+structure)/i) ||
-      (line.endsWith(":") && !line.toLowerCase().startsWith("key:") && !line.toLowerCase().startsWith("genre:") && !line.toLowerCase().startsWith("best to test:"))
+    // 5. Multi-Section Header Detection:
+    // Matches '[Verse 1]', 'Verse 1:', 'Verse 1 (8 Bars):', 'Chorus', 'Pre-Chorus', 'Bridge', 'Outro', 'Section A', etc.
+    const isSectionBreakdownLabel = line.match(/^(?:section\s+breakdown|section\s+structure|song\s+structure)/i)
 
-    if (isSectionHeader) {
-      if (!line.match(/^(?:section\s+breakdown|section\s+structure)/i)) {
+    const isExplicitSectionKeyword = line.match(
+      /^(?:\[?\s*(?:verse\s*\d*|chorus\s*\d*|pre-?chorus\s*\d*|post-?chorus\s*\d*|bridge\s*\d*|intro\s*\d*|outro\s*\d*|solo\s*\d*|interlude\s*\d*|coda\s*\d*|ending\s*\d*|tag\s*\d*|head\s*\d*|hook\s*\d*|refrain\s*\d*|break\s*\d*|part\s*[a-z0-9]+|(?:[a-z0-9]+\s+)?section(?:\s+[a-z0-9]+)?)\s*\]?)(?:\s*\(\d+\s*bars?\))?:?$/i
+    )
+
+    const isGenericColonHeader =
+      line.endsWith(":") &&
+      !line.toLowerCase().startsWith("key:") &&
+      !line.toLowerCase().startsWith("genre:") &&
+      !line.toLowerCase().startsWith("bpm:") &&
+      !line.toLowerCase().startsWith("tempo:") &&
+      !line.toLowerCase().startsWith("time signature:") &&
+      !line.toLowerCase().startsWith("best to test:") &&
+      !line.toLowerCase().startsWith("title:") &&
+      !line.toLowerCase().startsWith("artist:")
+
+    const isBracketHeader = line.match(/^\[[^\]]+\]$/)
+
+    if (isSectionBreakdownLabel || isExplicitSectionKeyword || isGenericColonHeader || isBracketHeader) {
+      if (!isSectionBreakdownLabel) {
         commitSection()
-        currentSectionName = line.replace(/:$/, "").replace(/\s*\(\d+\s*bars?\)/i, "").trim()
+        currentSectionName = line
+          .replace(/^\[\s*/, "")
+          .replace(/\s*\]$/, "")
+          .replace(/:$/, "")
+          .replace(/\s*\(\d+\s*bars?\)/i, "")
+          .trim()
       }
       continue
     }
@@ -160,10 +183,10 @@ export function parseSongFromDescription(text: string): ParsedSongResult {
       line.includes("|") ||
       line.match(/[A-G][#b♭♯]?(?:m|maj|dim|aug|sus|7|9|11|13|b5|#5)?\s*\(\d+/i)
 
-    // Tokenize potential chord sequences
+    // Tokenize potential chord sequences (support single spaces, arrows, pipes, commas, dashes)
     const rawTokens = isExplicitChordLine
-      ? line.split(/(?:→|->|\|)/)
-      : line.split(/(?:,\s*|\s+-\s+|\s{2,}|\t+)/)
+      ? line.split(/(?:→|->|\|)/).flatMap((t) => t.trim().split(/\s+/))
+      : line.split(/(?:,\s*|\s+-\s+|\s+|\t+)/)
 
     const lineChords: ChordEntry[] = []
 
