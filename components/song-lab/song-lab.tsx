@@ -333,23 +333,38 @@ export function SongLab({
   )
 
   const handleAddChord = useCallback(
-    (symbol: string) => {
+    (symbol: string, targetSectionId?: string) => {
       const entry: ChordEntry = { id: createId(), symbol, beats: song.beatsPerBar }
       updateSections((sections) => {
         if (sections.length === 0) {
-          return [{ id: createId(), name: "Verse", chords: [entry] }]
+          return [{ id: createId(), name: "Verse 1", chords: [entry] }]
         }
-        // Add to the last section for now
+
+        // Determine destination section:
+        // 1. Explicit targetSectionId passed (e.g. clicking "+ Add Chord" in Verse 1's header)
+        // 2. Section containing currently selected chord (selectedId)
+        // 3. Fallback to last section
+        let targetIdx = -1
+        if (targetSectionId) {
+          targetIdx = sections.findIndex((s) => s.id === targetSectionId)
+        }
+        if (targetIdx < 0 && selectedId) {
+          targetIdx = sections.findIndex((s) => s.chords.some((c) => c.id === selectedId))
+        }
+        if (targetIdx < 0) {
+          targetIdx = sections.length - 1
+        }
+
         const next = [...sections]
-        next[next.length - 1] = {
-          ...next[next.length - 1],
-          chords: [...next[next.length - 1].chords, entry]
+        next[targetIdx] = {
+          ...next[targetIdx],
+          chords: [...next[targetIdx].chords, entry],
         }
         return next
       })
       setSelectedId(entry.id)
     },
-    [updateSections, song.beatsPerBar],
+    [updateSections, song.beatsPerBar, selectedId],
   )
 
   // ---- Key / transpose -------------------------------------------------------
@@ -573,30 +588,45 @@ export function SongLab({
             </div>
 
             <div className="flex flex-col gap-1.5">
-              {song.sections.map((sec) => (
-                <div
-                  key={sec.id}
-                  className="group flex items-center justify-between rounded-xl border border-border/60 bg-background/50 px-2.5 py-1.5 text-xs font-bold shadow-xs transition-colors hover:border-border hover:bg-muted"
-                >
-                  <span className="truncate flex-1">{sec.name}</span>
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-mono text-[10px] text-muted-foreground">
-                      {sec.chords.length}
-                    </span>
-                    {song.sections.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteSection(sec.id)}
-                        className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 rounded p-1 text-muted-foreground hover:bg-destructive/20 hover:text-destructive transition-all cursor-pointer touch-manipulation"
-                        aria-label={`Delete ${sec.name}`}
-                        title={`Delete ${sec.name}`}
-                      >
-                        <X className="size-3.5" />
-                      </button>
+              {song.sections.map((sec) => {
+                const isActiveSection = sec.chords.some((c) => c.id === selectedId)
+                return (
+                  <div
+                    key={sec.id}
+                    onClick={() => {
+                      const first = sec.chords[0]
+                      if (first) setSelectedId(first.id)
+                    }}
+                    className={cn(
+                      "group flex items-center justify-between rounded-xl border px-2.5 py-1.5 text-xs font-bold shadow-xs transition-all cursor-pointer select-none",
+                      isActiveSection
+                        ? "border-amber-400/80 bg-amber-400/10 text-amber-300 font-extrabold shadow-sm"
+                        : "border-border/60 bg-background/50 text-foreground hover:border-border hover:bg-muted",
                     )}
+                  >
+                    <span className="truncate flex-1">{sec.name}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono text-[10px] text-muted-foreground">
+                        {sec.chords.length}
+                      </span>
+                      {song.sections.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDeleteSection(sec.id)
+                          }}
+                          className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 rounded p-1 text-muted-foreground hover:bg-destructive/20 hover:text-destructive transition-all cursor-pointer touch-manipulation"
+                          aria-label={`Delete ${sec.name}`}
+                          title={`Delete ${sec.name}`}
+                        >
+                          <X className="size-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
 
             {/* Permanent Quick-Add Section Palette (NEVER disappears) */}

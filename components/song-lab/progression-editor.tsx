@@ -60,7 +60,7 @@ interface ProgressionEditorProps {
   onUpdate: (id: string, patch: Partial<ChordEntry>) => void
   onRemove: (id: string) => void
   onMove: (id: string, dir: -1 | 1) => void
-  onAdd: (symbol: string) => void
+  onAdd: (symbol: string, targetSectionId?: string) => void
   onDuplicate?: (id: string) => void
   onDeleteSection?: (sectionId: string) => void
   onRenameSection?: (sectionId: string, name: string) => void
@@ -160,9 +160,9 @@ export function ProgressionEditor({
                 {/* Add Chord to Section Button */}
                 <button
                   type="button"
-                  onClick={() => onAdd(key.tonic)}
+                  onClick={() => onAdd(key.tonic, section.id)}
                   className="flex items-center gap-1 rounded-lg border border-zinc-700/80 bg-zinc-800/90 px-2 sm:px-2.5 py-1 text-[10px] font-bold text-zinc-200 transition-all hover:bg-zinc-700 hover:text-white active:scale-[0.98] cursor-pointer shadow-xs"
-                  title="Add chord to this section"
+                  title={`Add chord to ${section.name}`}
                   aria-label={`Add chord to ${section.name}`}
                 >
                   <Plus className="size-3 text-emerald-400" />
