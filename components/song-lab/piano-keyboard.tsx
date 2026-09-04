@@ -218,12 +218,12 @@ export function PianoKeyboard({
                     {key.label}
                   </span>
                   {isBass ? (
-                    <span className="absolute top-2 left-1/2 -translate-x-1/2 text-[8px] font-mono font-black text-black bg-emerald-300 px-1 rounded-xs uppercase shadow-xs">
-                      Bass
+                    <span className="absolute top-1.5 left-1/2 -translate-x-1/2 text-[7px] font-mono font-black tracking-tighter text-black bg-emerald-300 px-0.5 py-0.2 rounded-xs uppercase shadow-xs">
+                      BASS
                     </span>
                   ) : isRoot ? (
-                    <span className="absolute top-2 left-1/2 -translate-x-1/2 text-[8px] font-mono font-black text-black bg-amber-200 px-1 rounded-xs uppercase">
-                      Root
+                    <span className="absolute top-1.5 left-1/2 -translate-x-1/2 text-[7px] font-mono font-black tracking-tighter text-black bg-amber-200 px-0.5 py-0.2 rounded-xs uppercase shadow-xs">
+                      ROOT
                     </span>
                   ) : null}
                 </button>

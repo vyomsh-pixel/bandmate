@@ -124,7 +124,7 @@ export function ProgressionEditor({
   )
 
   return (
-    <div className="flex flex-col gap-6" ref={scrollRef}>
+    <div className="flex flex-col gap-6 pb-24" ref={scrollRef}>
       {/* Sections & Chord Cards */}
       <div className="flex flex-col gap-6">
         {sections.map((section, sIdx) => {
@@ -560,16 +560,21 @@ export function ProgressionEditor({
       </div>
 
       {/* Palette Groupings: 4-COL ZERO-CLIPPING WRAPPING GRID */}
-      <div className="flex flex-col gap-3 sm:gap-4 rounded-xl sm:rounded-2xl border border-border/80 bg-card/40 p-3 sm:p-5 backdrop-blur-md shadow-xs">
+      <div className="flex flex-col gap-4 sm:gap-5 rounded-xl sm:rounded-2xl border border-border/80 bg-card/60 p-3.5 sm:p-5 backdrop-blur-xl shadow-lg">
         {/* Diatonic quick-add (FIRST) */}
         <div>
-          <div className="mb-1.5 sm:mb-2.5 flex items-center justify-between">
-            <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-zinc-100 font-mono">
-              Diatonic Scale Chords in {key.label}
+          <div className="mb-2 sm:mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="size-2 rounded-full bg-amber-400 animate-pulse" />
+              <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-white font-mono">
+                Diatonic Scale Chords in {key.label}
+              </span>
+            </div>
+            <span className="font-mono text-[10px] sm:text-xs text-amber-400 font-bold bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/30">
+              Click to Append
             </span>
-            <span className="font-mono text-[9px] sm:text-[10px] text-zinc-300 font-bold">Click to append</span>
           </div>
-          <div className="grid grid-cols-4 sm:flex sm:flex-wrap items-center gap-1.5 sm:gap-2 py-0.5">
+          <div className="grid grid-cols-4 sm:flex sm:flex-wrap items-center gap-2 sm:gap-2.5 py-1">
             {diatonic.map((d) => {
               const harm = getHarmonicFunction(d.symbol, key)
               return (
@@ -578,12 +583,12 @@ export function ProgressionEditor({
                   type="button"
                   onClick={() => onAdd(d.symbol)}
                   className={cn(
-                    "flex items-center justify-center gap-1 sm:gap-2 rounded-lg sm:rounded-xl border bg-background/60 px-2 sm:px-3.5 py-1.5 sm:py-2 shadow-xs transition-all hover:scale-[1.03] active:scale-[0.98] cursor-pointer w-full sm:w-auto",
+                    "flex items-center justify-center gap-1.5 sm:gap-2.5 rounded-xl border bg-background/80 px-3 sm:px-4 py-2 sm:py-2.5 shadow-md transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer w-full sm:w-auto",
                     harm.badgeColor,
                   )}
                 >
-                  <span className="font-mono text-[10px] sm:text-xs font-black">{d.roman}</span>
-                  <span className="font-mono text-xs sm:text-sm font-black text-foreground">{d.symbol}</span>
+                  <span className="font-mono text-xs sm:text-sm font-black opacity-80">{d.roman}</span>
+                  <span className="font-mono text-sm sm:text-base font-black text-white">{d.symbol}</span>
                 </button>
               )
             })}
@@ -594,31 +599,33 @@ export function ProgressionEditor({
         {(() => {
           const suggestions = suggestNextChords(chordsInSong, key)
           return (
-            <div className="border-t border-border/50 pt-3">
-              <div className="mb-1.5 sm:mb-2 flex items-center justify-between">
-                <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-amber-400 font-mono flex items-center gap-1.5">
-                  <Sparkles className="size-3.5" />
-                  <span>AI Next Chord Suggestions</span>
-                </span>
-                <span className="font-mono text-[9px] sm:text-[10px] text-zinc-400 font-bold">1-Tap Append</span>
+            <div className="border-t border-border/60 pt-3.5">
+              <div className="mb-2 sm:mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="size-4 text-amber-400" />
+                  <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-amber-400 font-mono">
+                    AI Next Chord Suggestions
+                  </span>
+                </div>
+                <span className="font-mono text-[10px] sm:text-xs text-zinc-400 font-bold">Recommended Flow</span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5 sm:gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2.5">
                 {suggestions.map((s) => (
                   <button
                     key={`${s.symbol}-${s.label}`}
                     type="button"
                     onClick={() => onAdd(s.symbol)}
-                    className="flex flex-col text-left p-2.5 rounded-xl border border-amber-400/30 bg-amber-400/5 hover:bg-amber-400/15 hover:border-amber-400/60 transition-all cursor-pointer group"
+                    className="flex flex-col text-left p-3 rounded-xl border border-amber-400/40 bg-amber-400/10 hover:bg-amber-400/20 hover:border-amber-400/80 transition-all duration-150 hover:-translate-y-0.5 cursor-pointer group shadow-md"
                   >
-                    <div className="flex items-center justify-between gap-1 mb-0.5">
-                      <span className="font-mono text-sm font-black text-white group-hover:text-amber-300">
-                        {s.symbol} <span className="text-xs text-amber-400 font-normal">({s.roman})</span>
+                    <div className="flex items-center justify-between gap-1 mb-1">
+                      <span className="font-mono text-base font-black text-white group-hover:text-amber-300">
+                        {s.symbol} <span className="text-xs text-amber-400/80 font-normal">({s.roman})</span>
                       </span>
-                      <span className="text-[9px] font-mono font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300">
+                      <span className="text-[9.5px] font-mono font-black uppercase px-2 py-0.5 rounded-md bg-amber-400/25 text-amber-300 border border-amber-400/30">
                         {s.label}
                       </span>
                     </div>
-                    <span className="text-[10px] text-zinc-300 line-clamp-1">{s.reason}</span>
+                    <span className="text-[11px] text-zinc-300 font-medium line-clamp-1">{s.reason}</span>
                   </button>
                 ))}
               </div>
