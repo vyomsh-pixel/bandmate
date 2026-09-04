@@ -8,6 +8,8 @@ import { InstrumentLab } from "@/components/instrument-lab/instrument-lab"
 import { SongLibraryBar } from "./song-library-bar"
 import { useSongLibrary } from "@/hooks/use-song-library"
 import { useAuth } from "@/lib/auth/auth-context"
+import { toast } from "sonner"
+import type { ParsedSongResult } from "@/lib/music/song-parser"
 import { transposeSymbol, semitonesBetween } from "@/lib/music/transpose"
 import { keyAccidental } from "@/lib/music/scales"
 
@@ -52,6 +54,22 @@ export function Workspace() {
     [lib, handleTranspose],
   )
 
+  const handleImportSong = useCallback(
+    (data: ParsedSongResult) => {
+      if (!lib.currentSong) return
+      lib.updateSong(lib.currentSong.id, {
+        title: data.title,
+        keyTonic: data.keyTonic,
+        keyMode: data.keyMode,
+        bpm: data.bpm,
+        beatsPerBar: data.beatsPerBar,
+        sections: data.sections,
+      })
+      toast.success(`Loaded "${data.title}" into Song Lab!`)
+    },
+    [lib],
+  )
+
   return (
     <div className="flex h-dvh w-full overflow-hidden bg-background text-foreground">
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden h-full">
@@ -65,6 +83,7 @@ export function Workspace() {
           onKeyChange={handleKeyChange}
           onModeChange={(keyMode) => lib.currentSong && lib.updateSong(lib.currentSong.id, { keyMode })}
           onTranspose={handleTranspose}
+          onImportSong={handleImportSong}
           showPiano={showPiano}
           onTogglePiano={() => setShowPiano((v) => !v)}
           showInspector={showInspector}
@@ -83,6 +102,7 @@ export function Workspace() {
                 redo={lib.redo}
                 canUndo={lib.canUndo}
                 canRedo={lib.canRedo}
+                onImportSong={handleImportSong}
                 showPiano={showPiano}
                 showInspector={showInspector}
                 onToggleInspector={() => setShowInspector((v) => !v)}

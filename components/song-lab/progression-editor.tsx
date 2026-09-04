@@ -50,6 +50,9 @@ function getShortHarmonic(label: string): string {
     .replace("Secondary Dom", "Sec Dom")
 }
 
+import { SongImportModal } from "./song-import-modal"
+import type { ParsedSongResult } from "@/lib/music/song-parser"
+
 interface ProgressionEditorProps {
   sections: Section[]
   keyTonic: string
@@ -66,6 +69,7 @@ interface ProgressionEditorProps {
   onRenameSection?: (sectionId: string, name: string) => void
   onAutoVoice?: (sectionId: string) => void
   onAddSection?: (name: string) => void
+  onImportSong?: (songData: ParsedSongResult) => void
 }
 
 export function ProgressionEditor({
@@ -84,6 +88,7 @@ export function ProgressionEditor({
   onRenameSection,
   onAutoVoice,
   onAddSection,
+  onImportSong,
 }: ProgressionEditorProps) {
   const key = makeKey(keyTonic, keyMode)
   const diatonic = diatonicChords(key)
@@ -448,40 +453,43 @@ export function ProgressionEditor({
           )
         })}
 
-        {/* Add Section Menu Bar */}
-        {onAddSection && (
-          <div className="flex items-center justify-between gap-2 p-2 sm:p-2.5 rounded-xl border border-dashed border-border/80 bg-card/30">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground font-mono px-1 flex items-center gap-1.5">
-              <Plus className="size-3.5 text-primary" />
-              <span>Section Arranger</span>
-            </span>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 gap-1.5 rounded-lg border-primary/40 bg-primary/10 text-xs font-bold text-primary hover:bg-primary/20 cursor-pointer shadow-xs"
-                >
-                  <Plus className="size-3.5" />
-                  <span>+ Add Section</span>
-                  <ChevronDown className="size-3 ml-0.5 opacity-70" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 p-1.5 z-50">
-                {["Verse", "Chorus", "Pre-Chorus", "Bridge", "Intro", "Outro", "Custom"].map((type) => (
-                  <DropdownMenuItem
-                    key={type}
-                    onClick={() => onAddSection(type)}
-                    className="cursor-pointer font-bold text-xs flex items-center justify-between py-2"
+        {/* Add Section & AI Import Menu Bar */}
+        <div className="flex items-center justify-between gap-2 p-2 sm:p-2.5 rounded-xl border border-dashed border-border/80 bg-card/30">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground font-mono px-1 flex items-center gap-1.5">
+            <Plus className="size-3.5 text-primary" />
+            <span>Section Arranger</span>
+          </span>
+          <div className="flex items-center gap-2">
+            {onImportSong && <SongImportModal onImport={onImportSong} />}
+            {onAddSection && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 gap-1.5 rounded-lg border-primary/40 bg-primary/10 text-xs font-bold text-primary hover:bg-primary/20 cursor-pointer shadow-xs"
                   >
-                    <span>+ {type}</span>
-                    <span className="text-[10px] font-mono text-muted-foreground">Section</span>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                    <Plus className="size-3.5" />
+                    <span>+ Add Section</span>
+                    <ChevronDown className="size-3 ml-0.5 opacity-70" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 p-1.5 z-50">
+                  {["Verse", "Chorus", "Pre-Chorus", "Bridge", "Intro", "Outro", "Custom"].map((type) => (
+                    <DropdownMenuItem
+                      key={type}
+                      onClick={() => onAddSection(type)}
+                      className="cursor-pointer font-bold text-xs flex items-center justify-between py-2"
+                    >
+                      <span>+ {type}</span>
+                      <span className="text-[10px] font-mono text-muted-foreground">Section</span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
-        )}
+        </div>
 
         {/* Mobile Contextual Selected Chord Action Bar (< md) — 44px HIG Touch Targets */}
         {selectedChord && (

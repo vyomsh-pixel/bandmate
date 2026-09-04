@@ -26,6 +26,9 @@ import { downloadLeadSheetText } from "@/lib/export/lead-sheet"
 import { UserProfileButton } from "@/components/auth/user-profile-button"
 import { MODULES } from "./modules"
 
+import { SongImportModal } from "@/components/song-lab/song-import-modal"
+import type { ParsedSongResult } from "@/lib/music/song-parser"
+
 export interface SongLibraryBarProps {
   songs: Song[]
   currentId: string | null
@@ -36,6 +39,7 @@ export interface SongLibraryBarProps {
   onKeyChange?: (tonic: string) => void
   onModeChange?: (mode: "major" | "minor") => void
   onTranspose?: (semitones: number) => void
+  onImportSong?: (songData: ParsedSongResult) => void
   showPiano?: boolean
   onTogglePiano?: () => void
   showInspector?: boolean
@@ -54,6 +58,7 @@ export function SongLibraryBar({
   onKeyChange,
   onModeChange,
   onTranspose,
+  onImportSong,
   showPiano,
   onTogglePiano,
   showInspector,
@@ -557,9 +562,10 @@ export function SongLibraryBar({
           </div>
         )}
 
-        {/* Desktop Right: User Profile + Export + Piano + Inspector + Autosaved */}
+        {/* Desktop Right: User Profile + AI Import + Export + Piano + Inspector + Autosaved */}
         <div className="flex items-center gap-2">
           <UserProfileButton savedSongsCount={songs.length} />
+          {onImportSong && <SongImportModal onImport={onImportSong} />}
           {currentSong && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

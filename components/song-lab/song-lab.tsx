@@ -33,6 +33,8 @@ import { X } from "lucide-react"
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts"
 import { cn } from "@/lib/utils"
 
+import type { ParsedSongResult } from "@/lib/music/song-parser"
+
 interface SongLabProps {
   song: Song
   onUpdate: (id: string, patch: Partial<Song> | ((s: Song) => Partial<Song>)) => void
@@ -40,6 +42,7 @@ interface SongLabProps {
   redo: () => void
   canUndo: boolean
   canRedo: boolean
+  onImportSong?: (songData: ParsedSongResult) => void
   showPiano?: boolean
   showInspector?: boolean
   onToggleInspector?: () => void
@@ -59,6 +62,7 @@ export function SongLab({
   redo,
   canUndo,
   canRedo,
+  onImportSong,
   showPiano = true,
   showInspector = true,
   onToggleInspector,
@@ -788,6 +792,7 @@ export function SongLab({
               onRenameSection={handleRenameSection}
               onAutoVoice={handleAutoVoiceSection}
               onAddSection={handleAddSection}
+              onImportSong={onImportSong}
             />
           </div>
 
