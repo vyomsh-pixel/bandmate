@@ -485,77 +485,74 @@ export function SongLibraryBar({
           </Button>
         </div>
 
-        {/* Desktop Center: Key & Transpose Controls */}
+        {/* Desktop Center: Unified Key, Scale Mode & Transpose Capsule */}
         {currentSong && onKeyChange && onModeChange && onTranspose && (
-          <div className="flex items-center gap-2 shrink-0">
-            {/* Key Tonic Selector */}
-            <div className="flex items-center gap-1.5 rounded-xl border border-border/80 bg-background/50 p-1 shadow-xs">
-              <span className="px-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                Key
-              </span>
-              <Select value={currentSong.keyTonic} onValueChange={(v) => v && onKeyChange(v)}>
-                <SelectTrigger className="h-7 w-14 border-0 bg-muted/60 font-mono text-xs font-black hover:bg-muted rounded-lg px-1.5" aria-label="Key tonic">
-                  <span>{currentSong.keyTonic}</span>
-                </SelectTrigger>
-                <SelectContent className="max-h-72 font-mono">
-                  {tonics.map((t) => (
-                    <SelectItem key={t} value={t} className="font-mono text-xs">
-                      {t}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <div className="flex items-center gap-1.5 rounded-xl border border-zinc-700/80 bg-zinc-900/90 p-1 shadow-md shrink-0">
+            {/* Key Tonic Dropdown */}
+            <Select value={currentSong.keyTonic} onValueChange={(v) => v && onKeyChange(v)}>
+              <SelectTrigger
+                className="h-7 border-0 bg-zinc-800/90 font-mono text-xs font-black text-amber-400 hover:bg-zinc-700/90 rounded-lg px-2 gap-1 cursor-pointer transition-colors"
+                aria-label="Select Key Tonic"
+              >
+                <span className="text-[10px] text-zinc-400 font-bold uppercase">KEY</span>
+                <span className="text-amber-400 font-black">{currentSong.keyTonic}</span>
+              </SelectTrigger>
+              <SelectContent className="max-h-72 font-mono z-50">
+                {tonics.map((t) => (
+                  <SelectItem key={t} value={t} className="font-mono text-xs cursor-pointer">
+                    {t}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-              {/* Mode Toggle (maj / min) */}
-              <div className="flex h-7 overflow-hidden rounded-lg bg-muted/40 p-0.5" role="radiogroup" aria-label="Key mode">
-                {(["major", "minor"] as const).map((m) => {
-                  const active = currentSong.keyMode === m
-                  return (
-                    <button
-                      key={m}
-                      type="button"
-                      role="radio"
-                      aria-checked={active}
-                      onClick={() => onModeChange(m)}
-                      className={cn(
-                        "rounded px-2 text-[11px] font-extrabold uppercase tracking-wider transition-all cursor-pointer touch-manipulation",
-                        active
-                          ? "bg-primary text-primary-foreground shadow-xs"
-                          : "text-muted-foreground hover:text-foreground",
-                      )}
-                    >
-                      {m === "major" ? "maj" : "min"}
-                    </button>
-                  )
-                })}
-              </div>
+            {/* Mode Toggle (MAJ / MIN) */}
+            <div className="flex h-7 rounded-lg bg-zinc-800/80 p-0.5" role="radiogroup" aria-label="Key Mode">
+              {(["major", "minor"] as const).map((m) => {
+                const active = currentSong.keyMode === m
+                return (
+                  <button
+                    key={m}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => onModeChange(m)}
+                    className={cn(
+                      "rounded px-2 text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer touch-manipulation",
+                      active
+                        ? "bg-amber-400 text-zinc-950 font-extrabold shadow-xs"
+                        : "text-zinc-400 hover:text-white",
+                    )}
+                  >
+                    {m === "major" ? "MAJ" : "MIN"}
+                  </button>
+                )
+              })}
             </div>
 
-            {/* Quick Transpose Steppers */}
-            <div className="flex items-center gap-1 rounded-xl border border-border/80 bg-background/50 p-1 shadow-xs">
-              <span className="px-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                Transpose
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-7 rounded-lg hover:bg-muted cursor-pointer touch-manipulation"
+            <div className="h-4 w-px bg-zinc-700/80" />
+
+            {/* Transpose Stepper */}
+            <div className="flex items-center gap-0.5">
+              <button
+                type="button"
                 onClick={() => onTranspose(-1)}
+                className="size-7 flex items-center justify-center rounded-lg bg-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-700 cursor-pointer transition-colors"
+                title="Transpose down 1 semitone (-1)"
                 aria-label="Transpose down 1 semitone"
-                title="Transpose down 1 semitone"
               >
                 <ChevronDown className="size-3.5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-7 rounded-lg hover:bg-muted cursor-pointer touch-manipulation"
+              </button>
+              <span className="font-mono text-[9px] font-bold text-zinc-400 px-1 uppercase tracking-tight">Transpose</span>
+              <button
+                type="button"
                 onClick={() => onTranspose(1)}
+                className="size-7 flex items-center justify-center rounded-lg bg-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-700 cursor-pointer transition-colors"
+                title="Transpose up 1 semitone (+1)"
                 aria-label="Transpose up 1 semitone"
-                title="Transpose up 1 semitone"
               >
                 <ChevronUp className="size-3.5" />
-              </Button>
+              </button>
             </div>
           </div>
         )}
