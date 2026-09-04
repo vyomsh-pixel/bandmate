@@ -582,7 +582,7 @@ export function ProgressionEditor({
               Click to Append
             </span>
           </div>
-          <div className="grid grid-cols-4 sm:flex sm:flex-wrap items-center gap-2 sm:gap-2.5 py-1">
+          <div className="grid grid-cols-4 sm:grid-cols-7 gap-2 sm:gap-3 py-1">
             {diatonic.map((d) => {
               const harm = getHarmonicFunction(d.symbol, key)
               return (
@@ -591,12 +591,12 @@ export function ProgressionEditor({
                   type="button"
                   onClick={() => onAdd(d.symbol)}
                   className={cn(
-                    "flex items-center justify-center gap-1.5 sm:gap-2.5 rounded-xl border bg-background/80 px-3 sm:px-4 py-2 sm:py-2.5 shadow-md transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer w-full sm:w-auto",
+                    "flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-xl border bg-background/80 shadow-md transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer text-center",
                     harm.badgeColor,
                   )}
                 >
-                  <span className="font-mono text-xs sm:text-sm font-black opacity-80">{d.roman}</span>
-                  <span className="font-mono text-sm sm:text-base font-black text-white">{d.symbol}</span>
+                  <span className="font-mono text-[10px] sm:text-xs font-black opacity-80">{d.roman}</span>
+                  <span className="font-mono text-sm sm:text-lg font-black text-white">{d.symbol}</span>
                 </button>
               )
             })}
@@ -617,23 +617,23 @@ export function ProgressionEditor({
                 </div>
                 <span className="font-mono text-[10px] sm:text-xs text-zinc-400 font-bold">Recommended Flow</span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {suggestions.map((s) => (
                   <button
                     key={`${s.symbol}-${s.label}`}
                     type="button"
                     onClick={() => onAdd(s.symbol)}
-                    className="flex flex-col text-left p-3 rounded-xl border border-amber-400/40 bg-amber-400/10 hover:bg-amber-400/20 hover:border-amber-400/80 transition-all duration-150 hover:-translate-y-0.5 cursor-pointer group shadow-md"
+                    className="flex flex-col text-left p-3.5 rounded-xl border border-amber-400/40 bg-amber-400/10 hover:bg-amber-400/20 hover:border-amber-400/80 transition-all duration-150 hover:-translate-y-0.5 cursor-pointer group shadow-md"
                   >
-                    <div className="flex items-center justify-between gap-1 mb-1">
+                    <div className="flex items-center justify-between gap-1 mb-1.5">
                       <span className="font-mono text-base font-black text-white group-hover:text-amber-300">
                         {s.symbol} <span className="text-xs text-amber-400/80 font-normal">({s.roman})</span>
                       </span>
-                      <span className="text-[9.5px] font-mono font-black uppercase px-2 py-0.5 rounded-md bg-amber-400/25 text-amber-300 border border-amber-400/30">
+                      <span className="text-[9.5px] font-mono font-black uppercase px-2 py-0.5 rounded-md bg-amber-400/25 text-amber-300 border border-amber-400/30 shrink-0">
                         {s.label}
                       </span>
                     </div>
-                    <span className="text-[11px] text-zinc-300 font-medium line-clamp-1">{s.reason}</span>
+                    <span className="text-xs text-zinc-300 font-medium line-clamp-2 leading-relaxed">{s.reason}</span>
                   </button>
                 ))}
               </div>

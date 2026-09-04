@@ -73,7 +73,7 @@ export function SongLibraryBar({
   const upcomingModules = MODULES.filter((m) => !m.available)
 
   return (
-    <header className="flex h-12 md:h-14 shrink-0 items-center justify-between border-b border-border/80 bg-card/70 px-2.5 sm:px-4 backdrop-blur-md overflow-x-auto no-scrollbar">
+    <header className="flex h-12 md:h-14 shrink-0 items-center justify-between border-b border-border/80 bg-card/70 px-2.5 sm:px-4 backdrop-blur-md overflow-x-auto md:overflow-visible no-scrollbar">
       {/* ========================================================================= */}
       {/* MOBILE-ONLY HEADER (< md) — ZERO CLUTTER, SPACIOUS, 100% VISIBLE          */}
       {/* ========================================================================= */}
