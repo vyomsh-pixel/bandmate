@@ -563,7 +563,7 @@ export function SongLibraryBar({
         )}
 
         {/* Desktop Right: User Profile + AI Import + Export + Piano + Inspector + Autosaved */}
-        <div className="flex items-center gap-1 lg:gap-1.5 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0">
           <UserProfileButton savedSongsCount={songs.length} />
           {onImportSong && <SongImportModal onImport={onImportSong} />}
           {currentSong && (
@@ -572,11 +572,11 @@ export function SongLibraryBar({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 gap-1 rounded-xl border-amber-400/40 bg-amber-400/10 text-amber-400 hover:bg-amber-400/20 text-xs font-bold shadow-xs cursor-pointer px-2"
+                  className="h-8 gap-1 rounded-xl border-amber-400/40 bg-amber-400/10 text-amber-400 hover:bg-amber-400/20 text-xs font-bold shadow-xs cursor-pointer px-2.5"
                   title="Export song progression to MIDI or Lead Sheet"
                 >
                   <Download className="size-3.5" />
-                  <span className="hidden xl:inline">Export</span>
+                  <span>Export</span>
                   <ChevronDown className="size-3 opacity-70" />
                 </Button>
               </DropdownMenuTrigger>
@@ -614,13 +614,13 @@ export function SongLibraryBar({
               size="sm"
               onClick={onTogglePiano}
               className={cn(
-                "h-8 gap-1 rounded-xl px-2 text-xs font-semibold shadow-xs cursor-pointer",
+                "h-8 gap-1.5 rounded-xl px-2.5 text-xs font-semibold shadow-xs cursor-pointer",
                 !showPiano && "border-border/80 bg-background/50 text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
               title="Toggle Virtual Piano Keyboard (P)"
             >
               <Piano className="size-3.5" aria-hidden="true" />
-              <span className="hidden xl:inline">Piano</span>
+              <span>Piano</span>
             </Button>
           )}
 
@@ -630,30 +630,26 @@ export function SongLibraryBar({
               size="sm"
               onClick={onToggleInspector}
               className={cn(
-                "h-8 gap-1 rounded-xl px-2 text-xs font-semibold shadow-xs cursor-pointer transition-all",
+                "h-8 gap-1.5 rounded-xl px-2.5 text-xs font-semibold shadow-xs cursor-pointer transition-all",
                 !showInspector && "border-border/80 bg-background/50 text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
               title="Toggle Chord Inspector Panel (I)"
               aria-label="Toggle Chord Inspector Panel"
             >
               <PanelRight className="size-3.5" aria-hidden="true" />
-              <span className="hidden xl:inline">Inspector</span>
+              <span>Inspector</span>
             </Button>
           )}
 
           <div
-            className="flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/5 px-2 py-1 text-[10px] font-mono font-medium text-emerald-400 select-none shadow-xs shrink-0"
+            className="flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-mono font-bold text-emerald-400 select-none shadow-xs shrink-0"
             title={currentSong?.updatedAt ? `Saved ${new Date(currentSong.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : "Saved just now"}
           >
-            <span className="relative flex size-2">
+            <span className="relative flex size-2 shrink-0">
               <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60"></span>
               <span className="relative inline-flex size-2 rounded-full bg-emerald-500"></span>
             </span>
-            <span className="hidden xl:inline">
-              {currentSong?.updatedAt
-                ? `Saved ${new Date(currentSong.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                : "Saved just now"}
-            </span>
+            <span>Saved</span>
           </div>
 
           {currentId && songs.length > 1 && (
