@@ -54,13 +54,21 @@ export function saveUserSongs(uid: string, songs: Song[]): void {
 /** Get / set current active song ID per user. */
 export function loadUserCurrentSongId(uid: string): string | null {
   if (!isBrowser()) return null
-  return window.localStorage.getItem(getUserCurrentSongKey(uid))
+  try {
+    return window.localStorage.getItem(getUserCurrentSongKey(uid))
+  } catch {
+    return null
+  }
 }
 
 export function saveUserCurrentSongId(uid: string, id: string | null): void {
   if (!isBrowser()) return
-  if (id) window.localStorage.setItem(getUserCurrentSongKey(uid), id)
-  else window.localStorage.removeItem(getUserCurrentSongKey(uid))
+  try {
+    if (id) window.localStorage.setItem(getUserCurrentSongKey(uid), id)
+    else window.localStorage.removeItem(getUserCurrentSongKey(uid))
+  } catch {
+    // Ignore storage restrictions
+  }
 }
 
 /**

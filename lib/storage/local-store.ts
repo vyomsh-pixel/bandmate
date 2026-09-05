@@ -44,13 +44,21 @@ export function saveSongs(songs: Song[]): void {
 /** Get / set the last-open song id so reloads restore the workspace. */
 export function loadCurrentSongId(): string | null {
   if (!isBrowser()) return null
-  return window.localStorage.getItem(CURRENT_KEY)
+  try {
+    return window.localStorage.getItem(CURRENT_KEY)
+  } catch {
+    return null
+  }
 }
 
 export function saveCurrentSongId(id: string | null): void {
   if (!isBrowser()) return
-  if (id) window.localStorage.setItem(CURRENT_KEY, id)
-  else window.localStorage.removeItem(CURRENT_KEY)
+  try {
+    if (id) window.localStorage.setItem(CURRENT_KEY, id)
+    else window.localStorage.removeItem(CURRENT_KEY)
+  } catch {
+    // Ignore storage restrictions
+  }
 }
 
 /** Generate a reasonably unique id without extra dependencies. */

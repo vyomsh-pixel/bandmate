@@ -215,11 +215,15 @@ const STORE_NAME = "soundfont_raw"
 
 function getIDB(): Promise<IDBDatabase | null> {
   return new Promise((resolve) => {
-    if (typeof window === "undefined" || !window.indexedDB) {
+    if (typeof window === "undefined") {
       resolve(null)
       return
     }
     try {
+      if (!("indexedDB" in window) || !window.indexedDB) {
+        resolve(null)
+        return
+      }
       const req = indexedDB.open(DB_NAME, 1)
       req.onupgradeneeded = () => {
         const db = req.result
