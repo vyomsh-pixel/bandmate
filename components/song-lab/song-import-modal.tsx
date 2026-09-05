@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
-import { Sparkles, Check, ArrowRight, Wand2, X } from "lucide-react"
+import { AlertTriangle, Check, ArrowRight, Wand2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { parseSongFromDescription, type ParsedSongResult } from "@/lib/music/song-parser"
 import { cn } from "@/lib/utils"
@@ -59,6 +59,7 @@ export function SongImportModal({ onImport, triggerClassName }: SongImportModalP
   const parsed = parseSongFromDescription(inputText)
 
   const handleApply = () => {
+    if (!parsed.valid || parsed.chordsExtracted === 0) return
     onImport(parsed)
     setOpen(false)
   }
@@ -74,10 +75,10 @@ export function SongImportModal({ onImport, triggerClassName }: SongImportModalP
             </div>
             <div>
               <h3 className="font-mono text-base font-black tracking-tight text-white">
-                Instant AI Song Prompt Setup
+                Smart Song Import
               </h3>
               <p className="text-xs text-zinc-400">
-                Paste any song description, lead sheet notation, or AI prompt to auto-configure Song Lab.
+                Paste any chord sheet, lead sheet notation, or song description to extract chords and auto-configure Song Lab.
               </p>
             </div>
           </div>
@@ -93,7 +94,7 @@ export function SongImportModal({ onImport, triggerClassName }: SongImportModalP
         {/* Quick Example Presets */}
         <div className="space-y-2">
           <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400">
-            Preset Song Prompts
+            Preset Lead Sheets
           </span>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             {EXAMPLE_PROMPTS.map((ex) => (
@@ -119,7 +120,7 @@ export function SongImportModal({ onImport, triggerClassName }: SongImportModalP
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <label htmlFor="song-prompt" className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400">
-              Song Prompt / Lead Sheet Description
+              Chord Sheet / Lead Sheet Text
             </label>
             <button
               type="button"
@@ -138,7 +139,7 @@ export function SongImportModal({ onImport, triggerClassName }: SongImportModalP
             placeholder="Paste song details e.g. Key: C Major | BPM: 120 | Chords: Am7 -> Dm7 -> G7 -> Cmaj7..."
           />
           <div className="flex items-center justify-between text-[10px] font-mono text-zinc-400 pt-1">
-            <span>✨ Live real-time parsing active as you type or paste</span>
+            <span>⚡ Real-time chord extraction active as you type or paste</span>
             <Button
               type="button"
               size="sm"
@@ -156,57 +157,69 @@ export function SongImportModal({ onImport, triggerClassName }: SongImportModalP
           </div>
         </div>
 
-        {/* Live Parsed Preview Box */}
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-3 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
-              <Check className="size-3 text-emerald-400" />
-              <span>Parsed Song Preview</span>
-            </span>
-            <span className="text-[10px] font-mono text-zinc-400 font-bold">
-              {parsed.sections.reduce((acc, s) => acc + s.chords.length, 0)} Chords Extracted
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono">
-            <div className="p-2 rounded-lg bg-zinc-900 border border-zinc-800">
-              <span className="text-[9px] text-zinc-400 block uppercase">Title</span>
-              <span className="font-bold text-white truncate block">{parsed.title}</span>
-            </div>
-            <div className="p-2 rounded-lg bg-zinc-900 border border-zinc-800">
-              <span className="text-[9px] text-zinc-400 block uppercase">Key Signature</span>
-              <span className="font-bold text-amber-400 block">
-                {parsed.keyTonic} {parsed.keyMode}
-              </span>
-            </div>
-            <div className="p-2 rounded-lg bg-zinc-900 border border-zinc-800">
-              <span className="text-[9px] text-zinc-400 block uppercase">Tempo & Meter</span>
-              <span className="font-bold text-white block">
-                {parsed.bpm} BPM ({parsed.beatsPerBar}/4)
-              </span>
-            </div>
-            <div className="p-2 rounded-lg bg-zinc-900 border border-zinc-800">
-              <span className="text-[9px] text-zinc-400 block uppercase">Sections</span>
-              <span className="font-bold text-white block">{parsed.sections.length} Section(s)</span>
+        {/* Live Parsed Preview Box vs Error Box */}
+        {!parsed.valid || parsed.chordsExtracted === 0 ? (
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 flex items-start gap-3">
+            <AlertTriangle className="size-5 text-amber-400 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <h4 className="font-mono text-xs font-bold text-amber-300">No Chords Detected in Input</h4>
+              <p className="text-xs text-amber-200/80 leading-relaxed">
+                BandMate couldn't extract any valid chord symbols (e.g. Am7, Dm7, G7, Cmaj7) from your text. Please paste a chord chart or select one of the presets above.
+              </p>
             </div>
           </div>
+        ) : (
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+                <Check className="size-3 text-emerald-400" />
+                <span>Parsed Song Preview</span>
+              </span>
+              <span className="text-[10px] font-mono text-zinc-400 font-bold">
+                {parsed.chordsExtracted} Chords Extracted
+              </span>
+            </div>
 
-          {/* Section Chords Summary */}
-          <div className="max-h-24 overflow-y-auto space-y-1 text-xs font-mono">
-            {parsed.sections.map((sec) => (
-              <div key={sec.name} className="flex items-center gap-2 p-1.5 rounded bg-zinc-900/80 border border-zinc-800/80">
-                <span className="font-bold text-amber-300 text-[11px] min-w-[80px] shrink-0">{sec.name}:</span>
-                <div className="flex flex-wrap gap-1">
-                  {sec.chords.map((c, idx) => (
-                    <span key={idx} className="px-1.5 py-0.5 rounded bg-zinc-800 text-white font-bold text-[10px]">
-                      {c.symbol} ({c.beats}b)
-                    </span>
-                  ))}
-                </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono">
+              <div className="p-2 rounded-lg bg-zinc-900 border border-zinc-800">
+                <span className="text-[9px] text-zinc-400 block uppercase">Title</span>
+                <span className="font-bold text-white truncate block">{parsed.title}</span>
               </div>
-            ))}
+              <div className="p-2 rounded-lg bg-zinc-900 border border-zinc-800">
+                <span className="text-[9px] text-zinc-400 block uppercase">Key Signature</span>
+                <span className="font-bold text-amber-400 block">
+                  {parsed.keyTonic} {parsed.keyMode}
+                </span>
+              </div>
+              <div className="p-2 rounded-lg bg-zinc-900 border border-zinc-800">
+                <span className="text-[9px] text-zinc-400 block uppercase">Tempo & Meter</span>
+                <span className="font-bold text-white block">
+                  {parsed.bpm} BPM ({parsed.beatsPerBar}/4)
+                </span>
+              </div>
+              <div className="p-2 rounded-lg bg-zinc-900 border border-zinc-800">
+                <span className="text-[9px] text-zinc-400 block uppercase">Sections</span>
+                <span className="font-bold text-white block">{parsed.sections.length} Section(s)</span>
+              </div>
+            </div>
+
+            {/* Section Chords Summary */}
+            <div className="max-h-24 overflow-y-auto space-y-1 text-xs font-mono">
+              {parsed.sections.map((sec) => (
+                <div key={sec.name} className="flex items-center gap-2 p-1.5 rounded bg-zinc-900/80 border border-zinc-800/80">
+                  <span className="font-bold text-amber-300 text-[11px] min-w-[80px] shrink-0">{sec.name}:</span>
+                  <div className="flex flex-wrap gap-1">
+                    {sec.chords.map((c, idx) => (
+                      <span key={idx} className="px-1.5 py-0.5 rounded bg-zinc-800 text-white font-bold text-[10px]">
+                        {c.symbol} ({c.beats}b)
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Modal Actions */}
         <div className="flex items-center justify-end gap-2 pt-2">
@@ -219,8 +232,8 @@ export function SongImportModal({ onImport, triggerClassName }: SongImportModalP
           </Button>
           <Button
             onClick={handleApply}
-            disabled={parsed.sections.every((s) => s.chords.length === 0)}
-            className="h-9 px-5 gap-2 rounded-xl bg-amber-400 text-zinc-950 font-mono text-xs font-black hover:bg-amber-300 shadow-lg cursor-pointer"
+            disabled={!parsed.valid || parsed.chordsExtracted === 0}
+            className="h-9 px-5 gap-2 rounded-xl bg-amber-400 text-zinc-950 font-mono text-xs font-black hover:bg-amber-300 shadow-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-amber-400"
           >
             <span>Set Up Song Lab</span>
             <ArrowRight className="size-4" />
@@ -239,14 +252,15 @@ export function SongImportModal({ onImport, triggerClassName }: SongImportModalP
           "gap-1.5 rounded-xl border border-amber-400/50 bg-gradient-to-r from-amber-500/20 to-amber-600/20 font-mono text-xs font-black text-amber-300 hover:from-amber-500/30 hover:to-amber-600/30 hover:border-amber-400 shadow-md transition-all cursor-pointer shrink-0",
           triggerClassName,
         )}
-        title="Paste any song description or prompt to set up Song Lab automatically"
+        title="Paste any chord chart or lead sheet to set up Song Lab automatically"
       >
-        <Sparkles className="size-3.5 text-amber-400 animate-pulse" />
-        <span>AI Prompt / Import</span>
+        <Wand2 className="size-3.5 text-amber-400" />
+        <span>Smart Import</span>
       </Button>
 
       {mounted && modalContent && createPortal(modalContent, document.body)}
     </>
   )
 }
+
 

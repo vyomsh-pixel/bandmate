@@ -1,8 +1,8 @@
 /**
- * BandMate — Per-User Song Storage & Data Persistence Driver.
+ * BandMate — Namespaced Per-User Local Storage Driver.
  *
- * Keeps song projects isolated per-user account, with automatic migration
- * of guest songs into a user's library when they create an account.
+ * Persists user song projects locally in window.localStorage using per-user account keys,
+ * with automatic migration of guest songs into a user's local store upon sign-in.
  */
 
 import type { Song } from "../music/types"

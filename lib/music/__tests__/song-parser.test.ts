@@ -75,4 +75,12 @@ Bm F# A E
     expect(song.sections[3].name).toBe("Outro")
     expect(song.sections[3].chords.map((c) => c.symbol)).toEqual(["Bm", "F#", "A", "E"])
   })
+
+  it("returns valid: false and chordsExtracted: 0 when text contains no chords", () => {
+    const unparseableText = "This is a random sentence with no musical chords whatsoever."
+    const song = parseSongFromDescription(unparseableText)
+    expect(song.valid).toBe(false)
+    expect(song.chordsExtracted).toBe(0)
+    expect(song.sections).toEqual([])
+  })
 })

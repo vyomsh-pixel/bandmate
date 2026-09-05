@@ -96,6 +96,11 @@ export function parseChord(input: string): ParsedChord {
 
   const rest = body.slice(rootMatch[1].length)
 
+  // Single lowercase note letter without accidentals or quality suffix is invalid (e.g. English word "a")
+  if (body.length === 1 && body >= "a" && body <= "z") {
+    return { symbol, ...INVALID }
+  }
+
   // Empty remainder = major triad.
   if (rest === "") {
     return {
