@@ -38,8 +38,8 @@ export function SongHubModal({ song, onSelectAction, triggerClassName }: SongHub
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150">
-          <div className="relative w-full max-w-lg border border-zinc-800 bg-zinc-950/95 p-6 z-50 rounded-2xl shadow-2xl space-y-5">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150">
+          <div className="relative w-full max-w-lg border border-zinc-800 bg-zinc-950/95 p-6 z-[100] rounded-2xl shadow-2xl space-y-5">
             {/* Modal Header: Song Identity */}
             <div className="flex items-start justify-between border-b border-zinc-800/80 pb-4">
               <div className="flex items-center gap-3">

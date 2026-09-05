@@ -82,7 +82,7 @@ export function SongLibraryBar({
   }
 
   return (
-    <header className="flex h-12 md:h-14 shrink-0 items-center justify-between border-b border-border/80 bg-card/95 px-2.5 sm:px-4 backdrop-blur-md overflow-x-auto md:overflow-visible no-scrollbar">
+    <header className="flex h-12 md:h-14 shrink-0 items-center justify-between border-b border-border/80 bg-card/95 px-2.5 sm:px-4 backdrop-blur-md overflow-hidden min-w-0">
       {/* ========================================================================= */}
       {/* MOBILE-ONLY HEADER (< md) — ZERO CLUTTER, SPACIOUS, 100% VISIBLE          */}
       {/* ========================================================================= */}
@@ -356,9 +356,9 @@ export function SongLibraryBar({
       {/* ========================================================================= */}
       {/* DESKTOP-ONLY HEADER (>= md) — POWERFUL FULL STUDIO WORKSPACE               */}
       {/* ========================================================================= */}
-      <div className="hidden md:flex items-center justify-between w-full gap-1.5 lg:gap-2 min-w-0">
+      <div className="hidden md:flex items-center justify-between w-full gap-1 lg:gap-2 min-w-0 flex-nowrap">
         {/* Left: Studio Module Menu + Project Selector + Title Edit */}
-        <div className="flex items-center gap-1.5 lg:gap-2 shrink-0 min-w-0">
+        <div className="flex items-center gap-1 lg:gap-1.5 shrink-0 min-w-0">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
@@ -370,7 +370,7 @@ export function SongLibraryBar({
                 <div className="flex h-6.5 w-6.5 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 text-black shadow-xs group-hover:scale-105 transition-transform">
                   <TrebleClefIcon className="size-4 fill-current" />
                 </div>
-                <div className="flex flex-col text-left leading-tight">
+                <div className="flex flex-col text-left leading-tight hidden lg:flex">
                   <span className="font-mono text-xs font-black tracking-tight text-foreground flex items-center gap-1">
                     BandMate
                   </span>
@@ -455,7 +455,7 @@ export function SongLibraryBar({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <div className="h-5 w-px bg-border/60 shrink-0" />
+          <div className="h-5 w-px bg-border/60 shrink-0 hidden lg:block" />
 
           <Select value={currentId ?? ""} onValueChange={(v) => v && onSelect(v)}>
             <SelectTrigger
@@ -464,7 +464,7 @@ export function SongLibraryBar({
             >
               <Music className="size-3 text-primary shrink-0" aria-hidden="true" />
               <span className="font-mono text-[11px] text-muted-foreground">
-                <span className="hidden xl:inline">Tracks </span>
+                <span className="hidden 2xl:inline">Tracks </span>
                 <span className="text-foreground font-bold">({songs.length})</span>
               </span>
             </SelectTrigger>
@@ -486,7 +486,7 @@ export function SongLibraryBar({
             <Input
               value={currentSong.title}
               onChange={(e) => onTitleChange(e.target.value)}
-              className="h-8 w-28 sm:w-36 lg:w-44 border-border/60 bg-background/50 px-2 text-xs font-black text-foreground focus-visible:ring-1 focus-visible:ring-primary rounded-xl shrink-0 truncate"
+              className="h-8 w-24 sm:w-28 lg:w-36 border-border/60 bg-background/50 px-2 text-xs font-black text-foreground focus-visible:ring-1 focus-visible:ring-primary rounded-xl shrink-0 truncate"
               placeholder="Track title..."
               aria-label="Rename song track"
             />
@@ -501,7 +501,7 @@ export function SongLibraryBar({
             title="Create new song track"
           >
             <Plus className="size-3.5 text-primary" aria-hidden="true" />
-            <span className="hidden lg:inline">New</span>
+            <span className="hidden 2xl:inline">New</span>
           </Button>
 
           {currentSong && (
@@ -510,12 +510,12 @@ export function SongLibraryBar({
         </div>
 
         {/* Desktop Center: Core 3-Choice Workflow Action Strip (Edit | Play Part | Rehearse) */}
-        <div className="flex items-center gap-1 rounded-xl border border-zinc-800 bg-zinc-950/90 p-0.5 shadow-xs shrink-0 font-mono">
+        <div className="flex items-center gap-0.5 lg:gap-1 rounded-xl border border-zinc-800 bg-zinc-950/90 p-0.5 shadow-xs shrink-0 font-mono">
           <button
             type="button"
             onClick={() => onSelectModule?.("song-lab")}
             className={cn(
-              "flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer",
+              "flex items-center gap-1.5 rounded-lg px-2 lg:px-2.5 py-1 text-xs font-bold transition-all cursor-pointer",
               activeModule === "song-lab"
                 ? "bg-amber-400 text-zinc-950 shadow-xs font-black"
                 : "text-zinc-400 hover:text-white hover:bg-zinc-800/60"
@@ -523,7 +523,6 @@ export function SongLibraryBar({
             title="Edit chords, sections, key & tempo in Song Lab"
           >
             <Music className="size-3.5" />
-            <span className="hidden xl:inline">1. </span>
             <span>Edit Song</span>
           </button>
 
@@ -531,7 +530,7 @@ export function SongLibraryBar({
             type="button"
             onClick={() => onSelectModule?.("instrument-lab")}
             className={cn(
-              "flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer",
+              "flex items-center gap-1.5 rounded-lg px-2 lg:px-2.5 py-1 text-xs font-bold transition-all cursor-pointer",
               activeModule === "instrument-lab"
                 ? "bg-amber-400 text-zinc-950 shadow-xs font-black"
                 : "text-zinc-400 hover:text-white hover:bg-zinc-800/60"
@@ -539,18 +538,16 @@ export function SongLibraryBar({
             title="Practice fretboard, capo positions & virtual piano in Instrument Lab"
           >
             <Guitar className="size-3.5" />
-            <span className="hidden xl:inline">2. </span>
             <span>Play Your Part</span>
           </button>
 
           <button
             type="button"
             onClick={onToggleRehearsal}
-            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold text-emerald-400 hover:bg-emerald-500/20 transition-all cursor-pointer border border-emerald-500/30 bg-emerald-500/10"
+            className="flex items-center gap-1.5 rounded-lg px-2 lg:px-2.5 py-1 text-xs font-bold text-emerald-400 hover:bg-emerald-500/20 transition-all cursor-pointer border border-emerald-500/30 bg-emerald-500/10"
             title="Open Fullscreen Practice & Stage Rehearsal Mode"
           >
             <Presentation className="size-3.5" />
-            <span className="hidden xl:inline">3. </span>
             <span>Rehearse</span>
           </button>
         </div>
@@ -564,7 +561,7 @@ export function SongLibraryBar({
                 className="h-6.5 border-0 bg-zinc-800/90 font-mono text-xs font-black text-amber-400 hover:bg-zinc-700/90 rounded-lg px-1.5 gap-1 cursor-pointer transition-colors"
                 aria-label="Select Key Tonic"
               >
-                <span className="text-[9px] text-zinc-400 font-bold uppercase">KEY</span>
+                <span className="text-[9px] text-zinc-400 font-bold uppercase hidden lg:inline">KEY</span>
                 <span className="text-amber-400 font-black">{currentSong.keyTonic}</span>
               </SelectTrigger>
               <SelectContent className="max-h-72 font-mono z-50">
@@ -613,7 +610,6 @@ export function SongLibraryBar({
               >
                 <ChevronDown className="size-3" />
               </button>
-              <span className="font-mono text-[8.5px] font-bold text-zinc-400 px-0.5 uppercase tracking-tight hidden lg:inline">Transpose</span>
               <button
                 type="button"
                 onClick={() => onTranspose(1)}
@@ -628,7 +624,7 @@ export function SongLibraryBar({
         )}
 
         {/* Desktop Right: User Profile + AI Import + Export + Piano + Inspector + Autosaved */}
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-1 lg:gap-1.5 shrink-0">
           <UserProfileButton savedSongsCount={songs.length} />
           {onImportSong && <SongImportModal onImport={onImportSong} />}
           {currentSong && (
@@ -637,11 +633,11 @@ export function SongLibraryBar({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 gap-1 rounded-xl border-amber-400/40 bg-amber-400/10 text-amber-400 hover:bg-amber-400/20 text-xs font-bold shadow-xs cursor-pointer px-2.5"
+                  className="h-8 gap-1 rounded-xl border-amber-400/40 bg-amber-400/10 text-amber-400 hover:bg-amber-400/20 text-xs font-bold shadow-xs cursor-pointer px-2"
                   title="Export song progression to MIDI or Lead Sheet"
                 >
                   <Download className="size-3.5" />
-                  <span>Export</span>
+                  <span className="hidden xl:inline">Export</span>
                   <ChevronDown className="size-3 opacity-70" />
                 </Button>
               </DropdownMenuTrigger>
@@ -679,13 +675,13 @@ export function SongLibraryBar({
               size="sm"
               onClick={onTogglePiano}
               className={cn(
-                "h-8 gap-1.5 rounded-xl px-2.5 text-xs font-semibold shadow-xs cursor-pointer",
+                "h-8 gap-1 rounded-xl px-2 text-xs font-semibold shadow-xs cursor-pointer",
                 !showPiano && "border-border/80 bg-background/50 text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
               title="Toggle Virtual Piano Keyboard (P)"
             >
               <Piano className="size-3.5" aria-hidden="true" />
-              <span>Piano</span>
+              <span className="hidden xl:inline">Piano</span>
             </Button>
           )}
 
@@ -695,26 +691,26 @@ export function SongLibraryBar({
               size="sm"
               onClick={onToggleInspector}
               className={cn(
-                "h-8 gap-1.5 rounded-xl px-2.5 text-xs font-semibold shadow-xs cursor-pointer transition-all",
+                "h-8 gap-1 rounded-xl px-2 text-xs font-semibold shadow-xs cursor-pointer transition-all",
                 !showInspector && "border-border/80 bg-background/50 text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
               title="Toggle Chord Inspector Panel (I)"
               aria-label="Toggle Chord Inspector Panel"
             >
               <PanelRight className="size-3.5" aria-hidden="true" />
-              <span>Inspector</span>
+              <span className="hidden xl:inline">Inspector</span>
             </Button>
           )}
 
           <div
-            className="flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-mono font-bold text-emerald-400 select-none shadow-xs shrink-0"
+            className="flex items-center gap-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[11px] font-mono font-bold text-emerald-400 select-none shadow-xs shrink-0"
             title={currentSong?.updatedAt ? `Saved ${new Date(currentSong.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : "Saved just now"}
           >
             <span className="relative flex size-2 shrink-0">
               <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60"></span>
               <span className="relative inline-flex size-2 rounded-full bg-emerald-500"></span>
             </span>
-            <span>Saved</span>
+            <span className="hidden xl:inline">Saved</span>
           </div>
 
           {currentId && songs.length > 1 && (
