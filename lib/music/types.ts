@@ -56,6 +56,12 @@ export type ChordQuality =
   | "7#5"
   | "7b5"
   | "mM7"
+  | "7alt"
+  | "maj7#11"
+  | "13b9"
+  | "7b13"
+  | "7#11"
+  | "m(add9)"
 
 /** A fully parsed chord symbol. */
 export interface ParsedChord {

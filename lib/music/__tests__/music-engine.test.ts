@@ -184,5 +184,32 @@ describe("Music Engine: Scales & Slash Chords", () => {
     expect(bassNote.octave).toBe(3)
     expect(bassNote.midi).toBe(59) // B3 is 59 (48 + 11)
   })
+
+  it("parses new extended altered chords", () => {
+    const alt = parseChord("G7alt")
+    expect(alt.valid).toBe(true)
+    expect(alt.quality).toBe("7alt")
+
+    const majSharp11 = parseChord("Cmaj7#11")
+    expect(majSharp11.valid).toBe(true)
+    expect(majSharp11.quality).toBe("maj7#11")
+
+    const flat13 = parseChord("G7b13")
+    expect(flat13.valid).toBe(true)
+    expect(flat13.quality).toBe("7b13")
+
+    const mAdd9 = parseChord("Am(add9)")
+    expect(mAdd9.valid).toBe(true)
+    expect(mAdd9.quality).toBe("m(add9)")
+  })
+
+  it("identifies secondary dominants and tritone subs", () => {
+    const key = makeKey("C", "major")
+    expect(getRomanNumeral("D7", key)).toBe("V7/V")
+    expect(getRomanNumeral("E7", key)).toBe("V7/vi")
+    expect(getRomanNumeral("A7", key)).toBe("V7/ii")
+    expect(getRomanNumeral("C7", key)).toBe("V7/IV")
+    expect(getRomanNumeral("Db7", key)).toBe("subV7")
+  })
 })
 

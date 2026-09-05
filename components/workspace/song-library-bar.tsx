@@ -66,11 +66,17 @@ export function SongLibraryBar({
   activeModule = "song-lab",
   onSelectModule,
 }: SongLibraryBarProps) {
+  const [searchQuery, setSearchQuery] = useState("")
   const currentSong = songs.find((s) => s.id === currentId) ?? songs[0]
   const tonics = currentSong?.keyMode === "minor" ? MINOR_TONICS : MAJOR_TONICS
   const currentModule = MODULES.find((m) => m.id === activeModule) ?? MODULES[0]
   const activeModules = MODULES.filter((m) => m.available)
   const upcomingModules = MODULES.filter((m) => !m.available)
+
+  const filteredSongs = songs.filter((s) =>
+    (s.title || "Untitled Song").toLowerCase().includes(searchQuery.toLowerCase()) ||
+    s.keyTonic.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   return (
     <header className="flex h-12 md:h-14 shrink-0 items-center justify-between border-b border-border/80 bg-card/95 px-2.5 sm:px-4 backdrop-blur-md overflow-x-auto md:overflow-visible no-scrollbar">
@@ -98,7 +104,7 @@ export function SongLibraryBar({
           <DropdownMenuContent align="start" className="w-64 p-2 space-y-2 z-50">
             <div className="flex items-center justify-between px-1">
               <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
-                Song Tracks ({songs.length})
+                Song Tracks ({filteredSongs.length})
               </span>
               <Button
                 size="sm"
@@ -111,19 +117,17 @@ export function SongLibraryBar({
               </Button>
             </div>
 
-            {onTitleChange && currentSong && (
-              <div className="px-1">
-                <Input
-                  value={currentSong.title}
-                  onChange={(e) => onTitleChange(e.target.value)}
-                  className="h-7 border-border/60 bg-background/50 px-2 text-xs font-bold text-foreground"
-                  placeholder="Rename song..."
-                />
-              </div>
-            )}
+            <div className="px-1">
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-7 border-border/60 bg-background/50 px-2 text-xs text-foreground"
+                placeholder="Search tracks..."
+              />
+            </div>
 
             <div className="max-h-48 overflow-y-auto space-y-0.5">
-              {songs.map((s) => (
+              {filteredSongs.map((s) => (
                 <button
                   key={s.id}
                   type="button"

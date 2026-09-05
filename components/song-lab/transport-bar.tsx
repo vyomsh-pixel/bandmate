@@ -57,6 +57,7 @@ interface TransportBarProps {
 
 function BpmInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const [local, setLocal] = useState(value.toString())
+  const tapTimesRef = useRef<number[]>([])
 
   useEffect(() => {
     setLocal(value.toString())
@@ -66,6 +67,27 @@ function BpmInput({ value, onChange }: { value: number; onChange: (v: number) =>
     const clamped = Math.max(30, Math.min(300, val))
     onChange(clamped)
     setLocal(clamped.toString())
+  }
+
+  const handleTap = () => {
+    const now = performance.now()
+    const times = tapTimesRef.current
+    if (times.length > 0 && now - times[times.length - 1] > 2500) {
+      tapTimesRef.current = [now]
+      return
+    }
+    times.push(now)
+    if (times.length > 4) times.shift()
+
+    if (times.length >= 2) {
+      const intervals = []
+      for (let i = 1; i < times.length; i++) {
+        intervals.push(times[i] - times[i - 1])
+      }
+      const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length
+      const calculatedBpm = Math.round(60000 / avgInterval)
+      commit(calculatedBpm)
+    }
   }
 
   return (
@@ -112,6 +134,16 @@ function BpmInput({ value, onChange }: { value: number; onChange: (v: number) =>
         aria-label="Increase tempo by 5 BPM"
       >
         <Plus className="size-3" />
+      </button>
+
+      {/* Tap Tempo Button */}
+      <button
+        type="button"
+        onClick={handleTap}
+        className="h-7 px-2 rounded border border-amber-500/40 bg-amber-500/10 font-mono text-[10px] font-bold text-amber-300 hover:bg-amber-500/20 active:scale-95 transition-all cursor-pointer select-none"
+        title="Click rhythmically to set BPM"
+      >
+        TAP
       </button>
     </div>
   )

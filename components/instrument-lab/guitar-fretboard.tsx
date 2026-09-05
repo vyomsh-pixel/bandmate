@@ -14,17 +14,21 @@ interface GuitarFretboardProps {
   concertSymbol?: string
 }
 
-// Standard tuning: E2, A2, D3, G3, B3, E4
-const STRINGS = [
-  { note: "e", midi: 64 },
-  { note: "B", midi: 59 },
-  { note: "G", midi: 55 },
-  { note: "D", midi: 50 },
-  { note: "A", midi: 45 },
-  { note: "E", midi: 40 },
+export const GUITAR_TUNINGS = [
+  { id: "standard", name: "Standard (EADGBE)", strings: [{ note: "e", midi: 64 }, { note: "B", midi: 59 }, { note: "G", midi: 55 }, { note: "D", midi: 50 }, { note: "A", midi: 45 }, { note: "E", midi: 40 }] },
+  { id: "drop_d", name: "Drop D (DADGBE)", strings: [{ note: "e", midi: 64 }, { note: "B", midi: 59 }, { note: "G", midi: 55 }, { note: "D", midi: 50 }, { note: "A", midi: 45 }, { note: "D", midi: 38 }] },
+  { id: "dadgad", name: "DADGAD", strings: [{ note: "d", midi: 62 }, { note: "A", midi: 57 }, { note: "G", midi: 55 }, { note: "D", midi: 50 }, { note: "A", midi: 45 }, { note: "D", midi: 38 }] },
+  { id: "half_step", name: "Half-Step Down (Eb)", strings: [{ note: "eb", midi: 63 }, { note: "Bb", midi: 58 }, { note: "Gb", midi: 54 }, { note: "Db", midi: 49 }, { note: "Ab", midi: 44 }, { note: "Eb", midi: 39 }] },
+  { id: "open_d", name: "Open D (DADF#AD)", strings: [{ note: "d", midi: 62 }, { note: "A", midi: 57 }, { note: "F#", midi: 54 }, { note: "D", midi: 50 }, { note: "A", midi: 45 }, { note: "D", midi: 38 }] },
 ]
 
-export function GuitarFretboard({ chord, frets = 15, capoFret = 0, concertSymbol }: GuitarFretboardProps) {
+export function GuitarFretboard({ chord, frets = 15, capoFret: initialCapo = 0, concertSymbol }: GuitarFretboardProps) {
+  const [tuningId, setTuningId] = useState("standard")
+  const [capoFret, setCapoFret] = useState(initialCapo)
+
+  const currentTuning = GUITAR_TUNINGS.find((t) => t.id === tuningId) ?? GUITAR_TUNINGS[0]
+  const strings = currentTuning.strings
+
   const voicings = useMemo(() => {
     if (!chord || !chord.valid) return []
     return generateGuitarVoicings(chord)
@@ -54,9 +58,9 @@ export function GuitarFretboard({ chord, frets = 15, capoFret = 0, concertSymbol
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Top Header: Voicing Label, Position Badge & Mode Toggle */}
+      {/* Top Header: Voicing Label, Position Badge, Tuning Selector & Mode Toggle */}
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs uppercase tracking-wider text-foreground font-bold">
             {activeVoicing.label}
           </span>
@@ -67,6 +71,42 @@ export function GuitarFretboard({ chord, frets = 15, capoFret = 0, concertSymbol
                 ? `Fret ${baseFret} (Barre)`
                 : "Nut (Open Chord)"}
           </span>
+
+          {/* Tuning Preset Selector */}
+          <select
+            value={tuningId}
+            onChange={(e) => setTuningId(e.target.value)}
+            className="h-7 rounded-md border border-border bg-background/80 px-2 font-mono text-[10px] font-bold text-amber-300 cursor-pointer outline-hidden"
+            aria-label="Guitar Tuning"
+          >
+            {GUITAR_TUNINGS.map((t) => (
+              <option key={t.id} value={t.id} className="bg-popover text-foreground">
+                {t.name}
+              </option>
+            ))}
+          </select>
+
+          {/* Capo Stepper */}
+          <div className="flex items-center rounded-md border border-border bg-background/80 px-1.5 h-7">
+            <span className="font-mono text-[10px] font-bold text-muted-foreground mr-1">CAPO</span>
+            <button
+              type="button"
+              onClick={() => setCapoFret((c) => Math.max(0, c - 1))}
+              className="px-1 text-xs font-bold text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              -
+            </button>
+            <span className="font-mono text-[10px] font-black text-amber-400 px-1 min-w-[14px] text-center">
+              {capoFret}
+            </span>
+            <button
+              type="button"
+              onClick={() => setCapoFret((c) => Math.min(12, c + 1))}
+              className="px-1 text-xs font-bold text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              +
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -111,11 +151,11 @@ export function GuitarFretboard({ chord, frets = 15, capoFret = 0, concertSymbol
       {/* Fretboard Canvas */}
       <div className={cn("relative w-full pb-2", !isCompact && "overflow-x-auto")}>
         <div className={cn(
-          "flex flex-col gap-[2px] bg-zinc-800 p-[2px] rounded-lg select-none border border-zinc-700 shadow-md",
+          "flex flex-col gap-[2px] bg-zinc-800 p-[2px] rounded-lg select-none border border-zinc-700 shadow-md relative",
           isCompact ? "w-full min-w-0" : "min-w-[620px]",
         )}>
           {/* 6 Guitar Strings */}
-          {STRINGS.map((string, stringIdx) => {
+          {strings.map((string, stringIdx) => {
             const fretValue = activeVoicing.frets[5 - stringIdx] // 0 is low E in generator, reverse
             const isOpen = fretValue === 0
             const isMuted = fretValue === "X"

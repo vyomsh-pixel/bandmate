@@ -209,6 +209,58 @@ export function midiToSampleName(midi: number): string {
 
 const SOUNDFONT_CDN_BASE = "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM"
 
+// Native zero-dependency IndexedDB cache for soundfont payloads
+const DB_NAME = "BandMateSoundfonts"
+const STORE_NAME = "soundfont_raw"
+
+function getIDB(): Promise<IDBDatabase | null> {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined" || !window.indexedDB) {
+      resolve(null)
+      return
+    }
+    try {
+      const req = indexedDB.open(DB_NAME, 1)
+      req.onupgradeneeded = () => {
+        const db = req.result
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          db.createObjectStore(STORE_NAME)
+        }
+      }
+      req.onsuccess = () => resolve(req.result)
+      req.onerror = () => resolve(null)
+    } catch (e) {
+      resolve(null)
+    }
+  })
+}
+
+async function getCachedRawData(id: string): Promise<Record<string, string> | null> {
+  const db = await getIDB()
+  if (!db) return null
+  return new Promise((resolve) => {
+    try {
+      const tx = db.transaction(STORE_NAME, "readonly")
+      const store = tx.objectStore(STORE_NAME)
+      const req = store.get(id)
+      req.onsuccess = () => resolve(req.result ?? null)
+      req.onerror = () => resolve(null)
+    } catch (e) {
+      resolve(null)
+    }
+  })
+}
+
+async function setCachedRawData(id: string, data: Record<string, string>): Promise<void> {
+  const db = await getIDB()
+  if (!db) return
+  try {
+    const tx = db.transaction(STORE_NAME, "readwrite")
+    const store = tx.objectStore(STORE_NAME)
+    store.put(data, id)
+  } catch (e) {}
+}
+
 interface SoundfontCache {
   loading: boolean
   loaded: boolean
@@ -275,6 +327,15 @@ class SoundfontEngine {
     try {
       let rawData = this.rawDataCache.get(id)
       if (!rawData) {
+        // Try IndexedDB first
+        const cached = await getCachedRawData(id)
+        if (cached) {
+          rawData = cached
+          this.rawDataCache.set(id, rawData)
+        }
+      }
+
+      if (!rawData) {
         const url = `${SOUNDFONT_CDN_BASE}/${id}-mp3.js`
         const res = await fetch(url)
         if (!res.ok) throw new Error(`HTTP ${res.status} fetching soundfont: ${url}`)
@@ -290,6 +351,8 @@ class SoundfontEngine {
         }
         rawData = result.Soundfont[id]
         this.rawDataCache.set(id, rawData)
+        // Store in IndexedDB asynchronously
+        setCachedRawData(id, rawData).catch(() => {})
       }
 
       // Mark instrument usable immediately once sample table is ready

@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useRef } from "react"
-import { X, Play, Square, Volume2, Volume1, VolumeX } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
+import { X, Play, Square, Volume2, Volume1, VolumeX, Moon, Sun } from "lucide-react"
 import { Slider } from "@/components/ui/slider"
 import { cn } from "@/lib/utils"
 import type { Song } from "@/lib/music/types"
@@ -26,6 +26,7 @@ export function RehearsalMode({
   onClose,
 }: RehearsalModeProps) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const [oledMode, setOledMode] = useState(false)
 
   // Calculate flat chords array for mapping activeIndex
   const allChords = song.sections.flatMap(s => s.chords)
@@ -57,14 +58,24 @@ export function RehearsalMode({
   let globalIdx = 0
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-background text-foreground">
+    <div className={cn("fixed inset-0 z-50 flex flex-col transition-colors duration-200", oledMode ? "bg-black text-white" : "bg-background text-foreground")}>
       {/* Header */}
-      <div className="flex items-center justify-between border-b bg-card/80 px-3 sm:px-6 py-2.5 sm:py-4 backdrop-blur gap-2">
+      <div className={cn("flex items-center justify-between border-b px-3 sm:px-6 py-2.5 sm:py-4 backdrop-blur gap-2", oledMode ? "bg-black/90 border-zinc-800" : "bg-card/80 border-border")}>
         <div className="min-w-0">
            <h2 className="text-base sm:text-xl font-bold truncate">{song.title}</h2>
            <div className="text-xs sm:text-sm text-muted-foreground">{song.keyTonic} {song.keyMode} · {song.bpm} BPM</div>
         </div>
         <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+          {/* OLED Mode Toggle */}
+          <button
+            type="button"
+            onClick={() => setOledMode((v) => !v)}
+            className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-colors cursor-pointer", oledMode ? "border-amber-400 text-amber-300 bg-amber-400/10" : "border-border text-muted-foreground hover:text-foreground")}
+            title="Toggle OLED Pure Black Stage Mode"
+          >
+            {oledMode ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
+            <span className="hidden sm:inline">{oledMode ? "OLED Stage ON" : "OLED Stage"}</span>
+          </button>
           {onVolumeChange !== undefined && volume !== undefined && (
             <div className="hidden sm:flex items-center gap-2 rounded-full border border-border/80 bg-background/60 px-3 py-1.5 shadow-xs">
               <button

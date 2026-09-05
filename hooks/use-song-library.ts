@@ -139,6 +139,8 @@ export function useSongLibrary(userId: string = "guest-user") {
     [],
   )
 
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
+
   const updateSong = useCallback(
     (id: string, patch: Partial<Song> | ((song: Song) => Partial<Song>)) => {
       setSongs((prev) => {
@@ -146,10 +148,16 @@ export function useSongLibrary(userId: string = "guest-user") {
           if (s.id !== id) return s
           
           if (s.id === currentSongRef.current?.id) {
-             undoStack.current = [...undoStack.current, s].slice(-50)
-             redoStack.current = []
-             setUndoCount(undoStack.current.length)
-             setRedoCount(0)
+             if (!debounceTimerRef.current) {
+                undoStack.current = [...undoStack.current, s].slice(-50)
+                redoStack.current = []
+                setUndoCount(undoStack.current.length)
+                setRedoCount(0)
+             }
+             if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
+             debounceTimerRef.current = setTimeout(() => {
+                debounceTimerRef.current = null
+             }, 500)
           }
 
           const changes = typeof patch === "function" ? patch(s) : patch

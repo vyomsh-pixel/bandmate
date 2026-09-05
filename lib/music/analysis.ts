@@ -34,6 +34,34 @@ export function getRomanNumeral(chordSymbol: string, key: Key): string | null {
     parsed.quality === "dim7" ||
     parsed.quality === "m7b5"
 
+  const isDomQuality =
+    parsed.quality === "7" ||
+    parsed.quality === "9" ||
+    parsed.quality === "13" ||
+    parsed.quality === "7alt" ||
+    parsed.quality === "7b9" ||
+    parsed.quality === "7#9" ||
+    parsed.quality === "7#5" ||
+    parsed.quality === "7b5" ||
+    parsed.quality === "7sus4"
+
+  // Check for Secondary Dominants in Major/Minor keys
+  if (isDomQuality) {
+    if (key.mode === "major") {
+      if (semitones === 2) return "V7/V"
+      if (semitones === 4) return "V7/vi"
+      if (semitones === 9) return "V7/ii"
+      if (semitones === 11) return "V7/iii"
+      if (semitones === 0) return "V7/IV"
+      if (semitones === 1) return "subV7"
+      if (semitones === 8) return "subV7/V"
+    } else {
+      if (semitones === 7) return "V7"
+      if (semitones === 4) return "V7/iv"
+      if (semitones === 11) return "V7/V"
+    }
+  }
+
   if (degreeIndex !== -1) {
     baseRoman = isMinorQuality ? numeralsMinor[degreeIndex] : numeralsMajor[degreeIndex]
   } else {
@@ -59,9 +87,9 @@ export function getRomanNumeral(chordSymbol: string, key: Key): string | null {
     return baseRoman + "°"
   } else if (parsed.quality === "aug") {
     return baseRoman + "+"
-  } else if (parsed.quality === "maj7" || parsed.quality === "maj9" || parsed.quality === "maj11" || parsed.quality === "maj13") {
+  } else if (parsed.quality === "maj7" || parsed.quality === "maj9" || parsed.quality === "maj11" || parsed.quality === "maj13" || parsed.quality === "maj7#11") {
     return baseRoman + "maj7"
-  } else if (parsed.quality === "7" || parsed.quality === "9" || parsed.quality === "13" || parsed.quality === "m7" || parsed.quality === "m9" || parsed.quality === "m11" || parsed.quality === "m13") {
+  } else if (parsed.quality === "7" || parsed.quality === "9" || parsed.quality === "13" || parsed.quality === "m7" || parsed.quality === "m9" || parsed.quality === "m11" || parsed.quality === "m13" || parsed.quality === "7alt") {
     return baseRoman + "7"
   } else if (parsed.quality === "sus4") {
     return baseRoman + "sus4"

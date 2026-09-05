@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Plus, X, ChevronLeft, ChevronRight, ChevronDown, Minus, Sparkles, Copy, Home, ArrowRightLeft, Zap, Shield } from "lucide-react"
+import { Plus, X, ChevronLeft, ChevronRight, ChevronDown, Minus, Sparkles, Copy, Home, ArrowRightLeft, Zap, Shield, Volume2, GripVertical } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -23,6 +23,8 @@ import { diatonicChords, makeKey } from "@/lib/music/scales"
 import { getHarmonicFunction, type HarmonicRole } from "@/lib/music/analysis"
 import { suggestNextChords } from "@/lib/music/chord-suggester"
 import type { ChordEntry, Section } from "@/lib/music/types"
+import { getAudioEngine } from "@/lib/audio/audio-engine"
+import { playableVoicing } from "@/lib/music/chords"
 
 function getShortQuality(label: string): string {
   if (!label) return ""
@@ -132,6 +134,15 @@ export function ProgressionEditor({
   const diatonic = diatonicChords(key)
   const scrollRef = useRef<HTMLDivElement>(null)
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set())
+  const [draggedId, setDraggedId] = useState<string | null>(null)
+  const [dragOverId, setDragOverId] = useState<string | null>(null)
+
+  const handlePreviewChord = (symbol: string) => {
+    const p = parseChord(symbol)
+    if (!p.valid) return
+    const midis = playableVoicing(p, { octave: 4 }).map((n) => n.midi)
+    getAudioEngine().playChord(midis, { duration: 1.2 })
+  }
 
   const toggleSectionCollapse = (sectionId: string) => {
     setCollapsedSections((prev) => {
@@ -284,19 +295,56 @@ export function ProgressionEditor({
                     const active = activeIndex === globalIdx
                     const harm = getHarmonicFunction(entry.symbol, key)
 
+                    const roleGlow = {
+                      tonic: "border-amber-500/30 hover:border-amber-500/60 shadow-[0_0_15px_rgba(251,191,36,0.12)]",
+                      subdominant: "border-emerald-500/30 hover:border-emerald-500/60 shadow-[0_0_15px_rgba(16,185,129,0.12)]",
+                      dominant: "border-rose-500/30 hover:border-rose-500/60 shadow-[0_0_15px_rgba(244,63,94,0.12)]",
+                      chromatic: "border-purple-500/30 hover:border-purple-500/60 shadow-[0_0_15px_rgba(168,85,247,0.12)]",
+                    }[harm.role]
+
+                    const isBeingDragged = draggedId === entry.id
+                    const isDragTarget = dragOverId === entry.id
+
                     return (
                       <div
                         key={entry.id}
                         data-index={globalIdx}
+                        draggable
+                        onDragStart={(e) => {
+                          setDraggedId(entry.id)
+                          e.dataTransfer.setData("text/plain", entry.id)
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault()
+                          setDragOverId(entry.id)
+                        }}
+                        onDragLeave={() => setDragOverId(null)}
+                        onDrop={(e) => {
+                          e.preventDefault()
+                          setDragOverId(null)
+                          const srcId = e.dataTransfer.getData("text/plain") || draggedId
+                          if (srcId && srcId !== entry.id) {
+                            const srcIdx = section.chords.findIndex((c) => c.id === srcId)
+                            const targetIdx = idxWithinSection
+                            if (srcIdx !== -1) {
+                              const diff = targetIdx - srcIdx
+                              if (diff !== 0) onMove(srcId, diff > 0 ? 1 : -1)
+                            }
+                          }
+                          setDraggedId(null)
+                        }}
                         onClick={() => onSelect(entry.id)}
                         className={cn(
                           "group relative flex flex-col justify-between rounded-xl sm:rounded-2xl border transition-all duration-150 cursor-pointer select-none",
                           "w-full p-2.5 sm:p-3.5 min-h-[85px] sm:min-h-[140px]",
                           "bg-secondary/90 backdrop-blur-md shadow-sm",
+                          roleGlow,
+                          isBeingDragged && "opacity-40 scale-95 border-dashed",
+                          isDragTarget && "ring-2 ring-amber-400 border-amber-400 scale-105",
                           selected
-                            ? "border-amber-400 bg-amber-500/10 ring-2 ring-amber-400/60 shadow-md shadow-amber-500/10 -translate-y-0.5"
-                            : "border-border hover:border-amber-500/40 hover:bg-secondary hover:-translate-y-0.5",
-                          active && "border-emerald-400 bg-emerald-500/15 ring-2 ring-emerald-400/60 shadow-[0_0_16px_rgba(52,211,153,0.35)] scale-[1.02]",
+                            ? "border-amber-400 bg-amber-500/10 ring-2 ring-amber-400/60 shadow-md shadow-amber-500/20 -translate-y-0.5"
+                            : "hover:-translate-y-0.5",
+                          active && "border-emerald-400 bg-emerald-500/15 ring-2 ring-emerald-400/60 shadow-[0_0_18px_rgba(52,211,153,0.4)] scale-[1.02]",
                         )}
                       >
                         {/* Top Header: Index, Harmonic Role, Beats & Actions */}
@@ -338,6 +386,18 @@ export function ProgressionEditor({
                               selected ? "opacity-100" : "opacity-0 group-hover:opacity-100 focus-within:opacity-100",
                             )}
                           >
+                            <button
+                              type="button"
+                              aria-label={`Preview ${entry.symbol} chord audio`}
+                              title="Audition / Preview Chord"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handlePreviewChord(entry.symbol)
+                              }}
+                              className="rounded p-1 text-amber-400 hover:bg-amber-500/20 transition-colors touch-manipulation cursor-pointer"
+                            >
+                              <Volume2 className="size-3.5" />
+                            </button>
                             <button
                               type="button"
                               aria-label={`Move chord ${globalIdx + 1} left`}

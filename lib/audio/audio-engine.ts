@@ -91,13 +91,19 @@ class AudioEngine {
       compressor.connect(makeupGain)
       makeupGain.connect(this.ctx.destination)
 
-      // Listen for window focus to keep WebAudio engine alive on laptops
+      // Listen for window focus & statechange to keep WebAudio engine alive on mobile/desktop
       if (typeof window !== "undefined") {
         window.addEventListener("focus", () => {
-          if (this.ctx && this.ctx.state === "suspended") {
+          if (this.ctx && (this.ctx.state === "suspended" || (this.ctx.state as string) === "interrupted")) {
             this.ctx.resume().catch(() => {})
           }
         })
+      }
+
+      this.ctx.onstatechange = () => {
+        if (this.ctx && this.ctx.state === "suspended" && this.running) {
+          this.ctx.resume().catch(() => {})
+        }
       }
     }
 
@@ -113,6 +119,14 @@ class AudioEngine {
     sf.loadInstrument("string_ensemble_1", this.ctx).catch(() => {})
 
     return this.ctx
+  }
+
+  dispose() {
+    this.stop()
+    if (this.ctx && this.ctx.state !== "closed") {
+      this.ctx.close().catch(() => {})
+      this.ctx = null
+    }
   }
 
   get currentTime(): number {
@@ -156,8 +170,12 @@ class AudioEngine {
     const currentInst = options.instrument ?? this.getInstrument()
     const { when = this.ctx.currentTime, duration = 1.6, velocity = 0.95, wave = "triangle" } = options
     
+    // Humanized velocity jitter (+-5%)
+    const jitter = (Math.random() * 0.1 - 0.05)
+    const finalVelocity = Math.max(0.1, Math.min(1, velocity + jitter))
+
     // Increased base loudness multiplier
-    const peak = (1.75 / Math.pow(Math.max(1, midis.length), 0.28)) * velocity
+    const peak = (1.75 / Math.pow(Math.max(1, midis.length), 0.28)) * finalVelocity
     const minMidi = midis.length > 0 ? Math.min(...midis) : -1
 
     // Acoustic Strum Humanization (16ms micro-offsets per note to simulate realistic fingerpicking/strumming)
