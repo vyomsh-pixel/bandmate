@@ -7,7 +7,7 @@
  * volume, and show a live beat indicator. Drives the shared audio engine.
  */
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useRef } from "react"
 import { Play, Square, Repeat, Volume2, Volume1, VolumeX, Timer, Presentation, Plus, Minus, Sparkles, Activity, Sliders } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
@@ -174,7 +174,7 @@ export function TransportBar({
   const handleToggleMute = useCallback(() => {
     if (volume > 0) {
       setPrevVolume(volume)
-      onVolumeChange(0)
+      onVolumeChange?.(0)
     } else {
       onVolumeChange?.(prevVolume > 0 ? prevVolume : 0.85)
     }
