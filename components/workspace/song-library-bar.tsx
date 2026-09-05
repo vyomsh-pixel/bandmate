@@ -15,7 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Plus, MoreVertical, Trash2, Music, ChevronDown, ChevronUp, Piano, Sparkles, PanelRight, Settings, Download, FileText } from "lucide-react"
+import { Plus, MoreVertical, Trash2, Music, ChevronDown, ChevronUp, Piano, Sparkles, PanelRight, Settings, Download, FileText, Guitar, Presentation } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { MAJOR_TONICS, MINOR_TONICS } from "@/lib/music/scales"
@@ -27,6 +27,7 @@ import { UserProfileButton } from "@/components/auth/user-profile-button"
 import { MODULES } from "./modules"
 
 import { SongImportModal } from "@/components/song-lab/song-import-modal"
+import { SongHubModal } from "@/components/workspace/song-hub-modal"
 import type { ParsedSongResult } from "@/lib/music/song-parser"
 
 export interface SongLibraryBarProps {
@@ -46,6 +47,7 @@ export interface SongLibraryBarProps {
   onToggleInspector?: () => void
   activeModule?: string
   onSelectModule?: (id: string) => void
+  onToggleRehearsal?: () => void
 }
 
 export function SongLibraryBar({
@@ -65,12 +67,19 @@ export function SongLibraryBar({
   onToggleInspector,
   activeModule = "song-lab",
   onSelectModule,
+  onToggleRehearsal,
 }: SongLibraryBarProps) {
   const currentSong = songs.find((s) => s.id === currentId) ?? songs[0]
   const tonics = currentSong?.keyMode === "minor" ? MINOR_TONICS : MAJOR_TONICS
   const currentModule = MODULES.find((m) => m.id === activeModule) ?? MODULES[0]
   const activeModules = MODULES.filter((m) => m.available)
   const upcomingModules = MODULES.filter((m) => !m.available)
+
+  const handleHubAction = (action: "edit" | "play-part" | "rehearse") => {
+    if (action === "edit") onSelectModule?.("song-lab")
+    else if (action === "play-part") onSelectModule?.("instrument-lab")
+    else if (action === "rehearse") onToggleRehearsal?.()
+  }
 
   return (
     <header className="flex h-12 md:h-14 shrink-0 items-center justify-between border-b border-border/80 bg-card/95 px-2.5 sm:px-4 backdrop-blur-md overflow-x-auto md:overflow-visible no-scrollbar">
@@ -79,71 +88,77 @@ export function SongLibraryBar({
       {/* ========================================================================= */}
       <div className="flex md:hidden items-center justify-between w-full gap-2 min-w-0">
         {/* Brand + Current Song Dropdown Picker */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              className="flex items-center gap-1.5 rounded-xl border border-border/80 bg-background/60 px-2.5 py-1 text-xs font-bold shadow-xs hover:border-primary/50 transition-all cursor-pointer min-w-0 max-w-[200px]"
-              aria-label="Select song track"
-            >
-              <div className="size-6 shrink-0 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 text-black flex items-center justify-center shadow-xs">
-                <TrebleClefIcon className="size-3.5 fill-current" />
-              </div>
-              <span className="font-mono text-xs font-black truncate text-foreground">
-                {currentSong?.title || "Untitled Song"}
-              </span>
-              <ChevronDown className="size-3 text-muted-foreground shrink-0" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-64 p-2 space-y-2 z-50">
-            <div className="flex items-center justify-between px-1">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
-                Song Tracks ({songs.length})
-              </span>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={onCreate}
-                className="h-6 px-2 text-[10px] font-bold text-primary hover:bg-primary/10 gap-1 cursor-pointer"
+        <div className="flex items-center gap-1 min-w-0">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="flex items-center gap-1.5 rounded-xl border border-border/80 bg-background/60 px-2 py-1 text-xs font-bold shadow-xs hover:border-primary/50 transition-all cursor-pointer min-w-0 max-w-[170px]"
+                aria-label="Select song track"
               >
-                <Plus className="size-3" />
-                New
-              </Button>
-            </div>
-
-            {onTitleChange && currentSong && (
-              <div className="px-1">
-                <Input
-                  value={currentSong.title}
-                  onChange={(e) => onTitleChange(e.target.value)}
-                  className="h-7 border-border/60 bg-background/50 px-2 text-xs font-bold text-foreground"
-                  placeholder="Rename song..."
-                />
-              </div>
-            )}
-
-            <div className="max-h-48 overflow-y-auto space-y-0.5">
-              {songs.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => onSelect(s.id)}
-                  className={cn(
-                    "w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors text-left",
-                    s.id === currentId
-                      ? "bg-primary/15 text-primary font-bold"
-                      : "hover:bg-muted text-foreground",
-                  )}
+                <div className="size-6 shrink-0 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 text-black flex items-center justify-center shadow-xs">
+                  <TrebleClefIcon className="size-3.5 fill-current" />
+                </div>
+                <span className="font-mono text-xs font-black truncate text-foreground">
+                  {currentSong?.title || "Untitled Song"}
+                </span>
+                <ChevronDown className="size-3 text-muted-foreground shrink-0" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-64 p-2 space-y-2 z-50">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
+                  Song Tracks ({songs.length})
+                </span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={onCreate}
+                  className="h-6 px-2 text-[10px] font-bold text-primary hover:bg-primary/10 gap-1 cursor-pointer"
                 >
-                  <span className="truncate flex-1">{s.title || "Untitled Song"}</span>
-                  <Badge variant="outline" className="text-[9px] font-mono shrink-0 ml-1.5">
-                    {s.keyTonic} {s.keyMode === "major" ? "maj" : "min"}
-                  </Badge>
-                </button>
-              ))}
-            </div>
-          </DropdownMenuContent>
-        </DropdownMenu>
+                  <Plus className="size-3" />
+                  New
+                </Button>
+              </div>
+
+              {onTitleChange && currentSong && (
+                <div className="px-1">
+                  <Input
+                    value={currentSong.title}
+                    onChange={(e) => onTitleChange(e.target.value)}
+                    className="h-7 border-border/60 bg-background/50 px-2 text-xs font-bold text-foreground"
+                    placeholder="Rename song..."
+                  />
+                </div>
+              )}
+
+              <div className="max-h-48 overflow-y-auto space-y-0.5">
+                {songs.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => onSelect(s.id)}
+                    className={cn(
+                      "w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors text-left",
+                      s.id === currentId
+                        ? "bg-primary/15 text-primary font-bold"
+                        : "hover:bg-muted text-foreground",
+                    )}
+                  >
+                    <span className="truncate flex-1">{s.title || "Untitled Song"}</span>
+                    <Badge variant="outline" className="text-[9px] font-mono shrink-0 ml-1.5">
+                      {s.keyTonic} {s.keyMode === "major" ? "maj" : "min"}
+                    </Badge>
+                  </button>
+                ))}
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {currentSong && (
+            <SongHubModal song={currentSong} onSelectAction={handleHubAction} />
+          )}
+        </div>
 
         {/* Right: Key Pill + User Profile + Settings Menu */}
         <div className="flex items-center gap-1.5 shrink-0">
@@ -488,9 +503,59 @@ export function SongLibraryBar({
             <Plus className="size-3.5 text-primary" aria-hidden="true" />
             <span className="hidden lg:inline">New</span>
           </Button>
+
+          {currentSong && (
+            <SongHubModal song={currentSong} onSelectAction={handleHubAction} />
+          )}
         </div>
 
-        {/* Desktop Center: Unified Key, Scale Mode & Transpose Capsule */}
+        {/* Desktop Center: Core 3-Choice Workflow Action Strip (Edit | Play Part | Rehearse) */}
+        <div className="flex items-center gap-1 rounded-xl border border-zinc-800 bg-zinc-950/90 p-0.5 shadow-xs shrink-0 font-mono">
+          <button
+            type="button"
+            onClick={() => onSelectModule?.("song-lab")}
+            className={cn(
+              "flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer",
+              activeModule === "song-lab"
+                ? "bg-amber-400 text-zinc-950 shadow-xs font-black"
+                : "text-zinc-400 hover:text-white hover:bg-zinc-800/60"
+            )}
+            title="Edit chords, sections, key & tempo in Song Lab"
+          >
+            <Music className="size-3.5" />
+            <span className="hidden xl:inline">1. </span>
+            <span>Edit Song</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onSelectModule?.("instrument-lab")}
+            className={cn(
+              "flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-all cursor-pointer",
+              activeModule === "instrument-lab"
+                ? "bg-amber-400 text-zinc-950 shadow-xs font-black"
+                : "text-zinc-400 hover:text-white hover:bg-zinc-800/60"
+            )}
+            title="Practice fretboard, capo positions & virtual piano in Instrument Lab"
+          >
+            <Guitar className="size-3.5" />
+            <span className="hidden xl:inline">2. </span>
+            <span>Play Your Part</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onToggleRehearsal}
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold text-emerald-400 hover:bg-emerald-500/20 transition-all cursor-pointer border border-emerald-500/30 bg-emerald-500/10"
+            title="Open Fullscreen Practice & Stage Rehearsal Mode"
+          >
+            <Presentation className="size-3.5" />
+            <span className="hidden xl:inline">3. </span>
+            <span>Rehearse</span>
+          </button>
+        </div>
+
+        {/* Unified Key, Scale Mode & Transpose Capsule */}
         {currentSong && onKeyChange && onModeChange && onTranspose && (
           <div className="flex items-center gap-1 rounded-xl border border-zinc-700/80 bg-zinc-900/90 p-0.5 shadow-md shrink-0">
             {/* Key Tonic Dropdown */}
