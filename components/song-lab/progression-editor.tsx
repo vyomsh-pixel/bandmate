@@ -143,11 +143,21 @@ export function ProgressionEditor({
   }
 
   useEffect(() => {
-    if (selectedId && scrollRef.current) {
-      const el = scrollRef.current.querySelector(`[data-index="${activeIndex}"]`)
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" })
+    if (activeIndex !== null && scrollRef.current) {
+      const el = scrollRef.current.querySelector(`[data-index="${activeIndex}"]`) as HTMLElement | null
+      if (el) {
+        const container = scrollRef.current.parentElement
+        if (container) {
+          const containerRect = container.getBoundingClientRect()
+          const elRect = el.getBoundingClientRect()
+          if (elRect.top < containerRect.top || elRect.bottom > containerRect.bottom) {
+            const topOffset = el.offsetTop - container.offsetTop
+            container.scrollTo({ top: Math.max(0, topOffset - 20), behavior: "smooth" })
+          }
+        }
+      }
     }
-  }, [selectedId, activeIndex])
+  }, [activeIndex])
 
   // Extract unique valid chords used in the song for quick access
   const chordsInSong = useMemo(() => {
@@ -444,36 +454,6 @@ export function ProgressionEditor({
                       </div>
                     )
                   })}
-
-                  {/* Duplicate Selected Shortcut Button */}
-                  {selectedChord && (
-                    <button
-                      type="button"
-                      onClick={() => onDuplicate?.(selectedChord.id)}
-                      className="hidden sm:flex w-full min-h-[85px] sm:min-h-[140px] flex-col items-center justify-center gap-1 rounded-xl sm:rounded-2xl border border-dashed border-amber-500/40 bg-amber-500/5 text-amber-300 transition-all hover:bg-amber-500/15 hover:border-amber-400 hover:scale-[1.02] cursor-pointer p-2"
-                      aria-label={`Duplicate selected chord ${selectedChord.symbol}`}
-                      title="Repeat / Duplicate selected chord (D)"
-                    >
-                      <div className="flex size-6 items-center justify-center rounded-lg bg-amber-500/20">
-                        <Copy className="size-3 text-amber-400" />
-                      </div>
-                      <span className="text-xs font-bold truncate max-w-[90%]">Repeat {selectedChord.symbol}</span>
-                      <span className="font-mono text-[9px] text-muted-foreground">Press D</span>
-                    </button>
-                  )}
-
-                  {/* Add Slot Button */}
-                  <button
-                    type="button"
-                    onClick={() => onAdd(key.tonic)}
-                    className="flex w-full min-h-[85px] sm:min-h-[140px] flex-col items-center justify-center gap-2 rounded-xl sm:rounded-2xl border-2 border-dashed border-border bg-background/40 text-muted-foreground transition-all hover:border-amber-500/60 hover:bg-amber-500/5 hover:text-amber-300 hover:scale-[1.02] cursor-pointer p-2"
-                    aria-label="Add chord to section"
-                  >
-                    <div className="flex size-8 items-center justify-center rounded-xl bg-muted">
-                      <Plus className="size-4" />
-                    </div>
-                    <span className="text-xs font-bold">Add Chord</span>
-                  </button>
                 </div>
               )}
             </div>
