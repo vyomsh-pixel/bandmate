@@ -6,26 +6,17 @@ import { ModulePlaceholder } from "./module-placeholder"
 import { SongLab } from "@/components/song-lab/song-lab"
 import { InstrumentLab } from "@/components/instrument-lab/instrument-lab"
 import { SongLibraryBar } from "./song-library-bar"
-import { RehearsalMode } from "@/components/song-lab/rehearsal-mode"
 import { useSongLibrary } from "@/hooks/use-song-library"
 import { useAuth } from "@/lib/auth/auth-context"
 import { toast } from "sonner"
 import type { ParsedSongResult } from "@/lib/music/song-parser"
 import { transposeSymbol, semitonesBetween } from "@/lib/music/transpose"
 import { keyAccidental } from "@/lib/music/scales"
-import { getAudioEngine } from "@/lib/audio/audio-engine"
-import { parseChord } from "@/lib/music/chord-parser"
-import { voiceChord, playableVoicing } from "@/lib/music/chords"
 
 export function Workspace() {
   const [activeModule, setActiveModule] = useState("song-lab")
   const [showPiano, setShowPiano] = useState(false)
   const [showInspector, setShowInspector] = useState(true)
-  const [isRehearsing, setIsRehearsing] = useState(false)
-  const [isPlayingRehearsal, setIsPlayingRehearsal] = useState(false)
-  const [rehearsalActiveIndex, setRehearsalActiveIndex] = useState<number | null>(null)
-  const [rehearsalVolume, setRehearsalVolume] = useState(0.85)
-
   const { user } = useAuth()
   const lib = useSongLibrary(user?.uid ?? "guest-user")
 
@@ -78,54 +69,6 @@ export function Workspace() {
     [lib],
   )
 
-  const handleToggleRehearsalPlay = useCallback(() => {
-    const engine = getAudioEngine()
-    if (isPlayingRehearsal) {
-      engine.stop()
-      setIsPlayingRehearsal(false)
-      setRehearsalActiveIndex(null)
-      return
-    }
-
-    if (!lib.currentSong) return
-
-    const flatChords = lib.currentSong.sections.flatMap((sec) =>
-      sec.chords.map((c) => {
-        const parsed = parseChord(c.symbol)
-        const voiced = parsed ? voiceChord(parsed) : null
-        const playable = voiced ? playableVoicing(voiced) : [60, 64, 67]
-        return { midis: playable, beats: c.beats }
-      })
-    )
-
-    engine.setMasterVolume(rehearsalVolume)
-    engine.start(
-      {
-        bpm: lib.currentSong.bpm,
-        beatsPerBar: lib.currentSong.beatsPerBar,
-        chords: flatChords,
-        loop: true,
-        metronome: true,
-        rhythm: "pulse",
-      },
-      ({ chordIndex }) => {
-        setRehearsalActiveIndex(chordIndex)
-      },
-      () => {
-        setIsPlayingRehearsal(false)
-        setRehearsalActiveIndex(null)
-      }
-    )
-    setIsPlayingRehearsal(true)
-  }, [isPlayingRehearsal, lib.currentSong, rehearsalVolume])
-
-  const handleCloseRehearsal = useCallback(() => {
-    getAudioEngine().stop()
-    setIsPlayingRehearsal(false)
-    setRehearsalActiveIndex(null)
-    setIsRehearsing(false)
-  }, [])
-
   return (
     <div className="flex h-dvh w-full overflow-hidden bg-background text-foreground">
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden h-full">
@@ -146,7 +89,6 @@ export function Workspace() {
           onToggleInspector={() => setShowInspector((v) => !v)}
           activeModule={activeModule}
           onSelectModule={setActiveModule}
-          onToggleRehearsal={() => setIsRehearsing(true)}
         />
 
         <div className="min-h-0 flex-1 overflow-hidden">
@@ -176,21 +118,6 @@ export function Workspace() {
           )}
         </div>
       </main>
-
-      {isRehearsing && lib.currentSong && (
-        <RehearsalMode
-          song={lib.currentSong}
-          isPlaying={isPlayingRehearsal}
-          activeIndex={rehearsalActiveIndex}
-          volume={rehearsalVolume}
-          onVolumeChange={(v) => {
-            setRehearsalVolume(v)
-            getAudioEngine().setMasterVolume(v)
-          }}
-          onTogglePlay={handleToggleRehearsalPlay}
-          onClose={handleCloseRehearsal}
-        />
-      )}
     </div>
   )
 }
