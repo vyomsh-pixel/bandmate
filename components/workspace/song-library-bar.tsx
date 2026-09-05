@@ -641,12 +641,16 @@ export function SongLibraryBar({
             </Button>
           )}
 
-          <div className="flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/5 px-2.5 py-1 text-[11px] font-medium text-emerald-400 select-none shadow-xs">
+          <div className="flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/5 px-2.5 py-1 text-[11px] font-mono font-medium text-emerald-400 select-none shadow-xs">
             <span className="relative flex size-2">
               <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60"></span>
               <span className="relative inline-flex size-2 rounded-full bg-emerald-500"></span>
             </span>
-            <span>Autosaved</span>
+            <span>
+              {currentSong?.updatedAt
+                ? `Saved ${new Date(currentSong.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                : "Saved just now"}
+            </span>
           </div>
 
           {currentId && songs.length > 1 && (

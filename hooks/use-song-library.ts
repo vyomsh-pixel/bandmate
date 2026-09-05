@@ -45,6 +45,15 @@ function makeDefaultSong(): Song {
   }
 }
 
+function dedupeSongs(songs: Song[]): Song[] {
+  const seen = new Set<string>()
+  return songs.filter((s) => {
+    if (!s || !s.id || seen.has(s.id)) return false
+    seen.add(s.id)
+    return true
+  })
+}
+
 export function useSongLibrary(userId: string = "guest-user") {
   const [songs, setSongs] = useState<Song[]>([])
   const [currentId, setCurrentId] = useState<string | null>(null)
@@ -66,11 +75,11 @@ export function useSongLibrary(userId: string = "guest-user") {
   // Hydrate per-user songs from storage & migrate guest songs if logging in.
   useEffect(() => {
     setLoaded(false)
-    let stored = loadUserSongs(userId)
+    let stored = dedupeSongs(loadUserSongs(userId))
 
     if (userId !== "guest-user" && userId !== "guest") {
-      const migrated = migrateGuestSongsToUser(userId)
-      if (migrated.length > 0) stored = migrated
+      const migrated = dedupeSongs(migrateGuestSongsToUser(userId))
+      if (migrated.length > 0) stored = dedupeSongs([...migrated, ...stored])
     }
 
     if (stored.length === 0) {
