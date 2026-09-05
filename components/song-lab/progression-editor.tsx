@@ -51,44 +51,39 @@ function getShortHarmonic(label: string): string {
 }
 
 function HarmonicBadge({ role, roman, label }: { role: HarmonicRole; roman: string | null; label: string }) {
-  if (!roman) return null
-
   const config = {
     tonic: {
-      icon: Home,
+      text: "T",
       aria: "Tonic Function",
-      cls: "text-amber-300 bg-amber-500/15 border-amber-500/35",
+      cls: "bg-amber-400 text-zinc-950 font-black border-amber-300",
     },
     subdominant: {
-      icon: ArrowRightLeft,
+      text: "SD",
       aria: "Subdominant Function",
-      cls: "text-orange-300 bg-orange-500/15 border-orange-500/35",
+      cls: "bg-orange-500 text-zinc-950 font-black border-orange-400",
     },
     dominant: {
-      icon: Zap,
+      text: "D",
       aria: "Dominant Function",
-      cls: "text-rose-300 bg-rose-500/15 border-rose-500/35",
+      cls: "bg-rose-500 text-white font-black border-rose-400",
     },
     chromatic: {
-      icon: Sparkles,
+      text: "C",
       aria: "Chromatic Function",
-      cls: "text-cyan-300 bg-cyan-500/15 border-cyan-500/35",
+      cls: "bg-cyan-400 text-zinc-950 font-black border-cyan-300",
     },
   }[role]
-
-  const Icon = config.icon
 
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-tight border shrink-0 select-none",
+        "inline-flex items-center justify-center rounded-full px-1.5 min-w-[20px] h-5 font-mono text-[9.5px] tracking-tight border shadow-xs shrink-0 select-none",
         config.cls
       )}
-      aria-label={`${config.aria}: ${roman} (${label})`}
-      title={`${label}: ${roman}`}
+      aria-label={`${config.aria}: ${roman ?? ""} (${label})`}
+      title={`${label}${roman ? `: ${roman}` : ""}`}
     >
-      <Icon className="size-2.5 shrink-0" aria-hidden="true" />
-      <span>{roman}</span>
+      <span>{config.text}</span>
     </span>
   )
 }

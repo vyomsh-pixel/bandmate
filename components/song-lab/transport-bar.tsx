@@ -362,18 +362,18 @@ export function TransportBar({
             onClick={onTogglePlay}
             size="sm"
             className={cn(
-              "size-8.5 rounded-lg p-0 shadow-md transition-all duration-150 cursor-pointer",
+              "size-10 rounded-full p-0 shadow-lg transition-all duration-150 cursor-pointer shrink-0",
               isPlaying
                 ? "bg-rose-600 text-white hover:bg-rose-500 shadow-rose-950/40 animate-pulse"
-                : "bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black shadow-md shadow-emerald-950/30",
+                : "bg-amber-400 hover:bg-amber-300 text-black font-extrabold shadow-amber-500/20 hover:scale-105 active:scale-95",
             )}
             aria-label={isPlaying ? "Stop playback (Space)" : "Start playback (Space)"}
             title={isPlaying ? "Stop (Space)" : "Play (Space)"}
           >
             {isPlaying ? (
-              <Square className="size-3.5 fill-current" />
+              <Square className="size-4 fill-current" />
             ) : (
-              <Play className="size-3.5 fill-current ml-0.5" />
+              <Play className="size-4 fill-current ml-0.5" />
             )}
           </Button>
 

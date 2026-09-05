@@ -633,33 +633,16 @@ export function SongLab({
               })}
             </div>
 
-            {/* Permanent Quick-Add Section Palette (NEVER disappears) */}
-            <div className="mt-2.5">
-              <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 font-mono">
-                + Add Section
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {["Verse", "Chorus", "Pre-Chorus", "Bridge", "Intro", "Outro"].map((type) => (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => handleAddSection(type)}
-                    className="rounded-lg border border-dashed border-border/80 bg-card/60 px-2 py-1 font-mono text-[10px] font-semibold text-muted-foreground transition-all hover:border-primary/60 hover:bg-primary/10 hover:text-primary cursor-pointer active:scale-95 shadow-xs"
-                    title={`Add another ${type} section`}
-                  >
-                    + {type}
-                  </button>
-                ))}
-                {/* Custom Section */}
-                <button
-                  type="button"
-                  onClick={() => handleAddSection("Custom")}
-                  className="rounded-lg border border-dashed border-primary/40 bg-primary/5 px-2 py-1 font-mono text-[10px] font-semibold text-primary/80 transition-all hover:border-primary hover:bg-primary/15 hover:text-primary cursor-pointer active:scale-95 shadow-xs"
-                  title="Add a custom named section"
-                >
-                  + Custom
-                </button>
-              </div>
+            {/* Clean Single + Add Section Row */}
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={() => handleAddSection("Verse")}
+                className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-border bg-secondary/50 px-2.5 py-1.5 font-mono text-xs font-bold text-muted-foreground transition-all hover:border-amber-500/50 hover:bg-secondary hover:text-amber-300 cursor-pointer shadow-xs"
+                title="Add a new section to the song"
+              >
+                <span>+ Add Section</span>
+              </button>
             </div>
           </div>
 
@@ -797,16 +780,29 @@ export function SongLab({
           </div>
 
           {/* Virtual Piano Dock (Desktop Collapsible) */}
-          {showPiano && (
-            <div className="hidden lg:block shrink-0 border-t border-border/80 bg-card/40 px-2 sm:px-3 py-1.5 sm:py-2 backdrop-blur-md">
-              <PianoKeyboard
-                activeMidis={activeMidis}
-                rootMidi={rootMidi}
-                bassMidi={bassMidi}
-                accidental={accidental}
-              />
+          {/* Virtual Piano Drawer (Desktop Bottom Collapsible) */}
+          <div className="hidden lg:block shrink-0 border-t border-border/80 bg-card/60 backdrop-blur-md transition-all duration-200">
+            <div className="flex items-center justify-between px-3 py-1 bg-secondary/80 border-b border-border/40">
+              <button
+                type="button"
+                onClick={() => onToggleInspector?.()}
+                className="flex items-center gap-1.5 font-mono text-xs font-bold text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <span>🎹 Virtual Piano</span>
+                <span className="text-[10px] text-amber-400 font-normal">({showPiano ? "Expanded" : "Collapsed"})</span>
+              </button>
             </div>
-          )}
+            {showPiano && (
+              <div className="p-2">
+                <PianoKeyboard
+                  activeMidis={activeMidis}
+                  rootMidi={rootMidi}
+                  bassMidi={bassMidi}
+                  accidental={accidental}
+                />
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Right Draggable Resizer */}
