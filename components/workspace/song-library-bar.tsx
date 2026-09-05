@@ -341,29 +341,29 @@ export function SongLibraryBar({
       {/* ========================================================================= */}
       {/* DESKTOP-ONLY HEADER (>= md) — POWERFUL FULL STUDIO WORKSPACE               */}
       {/* ========================================================================= */}
-      <div className="hidden md:flex items-center justify-between w-full gap-4 min-w-max">
+      <div className="hidden md:flex items-center justify-between w-full gap-1.5 lg:gap-2 min-w-0">
         {/* Left: Studio Module Menu + Project Selector + Title Edit */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 lg:gap-2 shrink-0 min-w-0">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="flex items-center gap-2 rounded-xl border border-border/80 bg-background/70 px-2.5 py-1 text-xs font-bold shadow-xs hover:border-primary/50 hover:bg-muted/80 transition-all cursor-pointer shrink-0 group focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-primary"
+                className="flex items-center gap-1.5 rounded-xl border border-border/80 bg-background/70 px-2 py-1 text-xs font-bold shadow-xs hover:border-primary/50 hover:bg-muted/80 transition-all cursor-pointer shrink-0 group focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-primary"
                 aria-label="Open Workspace Modules Menu"
                 title="Switch Studio Module or View Roadmap"
               >
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 text-black shadow-xs group-hover:scale-105 transition-transform">
-                  <TrebleClefIcon className="size-4.5 fill-current" />
+                <div className="flex h-6.5 w-6.5 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 text-black shadow-xs group-hover:scale-105 transition-transform">
+                  <TrebleClefIcon className="size-4 fill-current" />
                 </div>
                 <div className="flex flex-col text-left leading-tight">
                   <span className="font-mono text-xs font-black tracking-tight text-foreground flex items-center gap-1">
                     BandMate
                   </span>
-                  <span className="text-[10px] font-semibold text-primary font-mono uppercase">
+                  <span className="text-[9px] font-semibold text-primary font-mono uppercase">
                     {currentModule.name}
                   </span>
                 </div>
-                <ChevronDown className="size-3.5 text-muted-foreground group-hover:text-foreground transition-colors ml-0.5" />
+                <ChevronDown className="size-3 text-muted-foreground group-hover:text-foreground transition-colors ml-0.5" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-64 p-2 z-50">
@@ -440,16 +440,16 @@ export function SongLibraryBar({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <div className="h-6 w-px bg-border/60 shrink-0" />
+          <div className="h-5 w-px bg-border/60 shrink-0" />
 
           <Select value={currentId ?? ""} onValueChange={(v) => v && onSelect(v)}>
             <SelectTrigger
-              className="h-8.5 w-auto px-2 sm:px-3 border-border/80 bg-background/60 font-semibold text-xs text-foreground hover:border-border transition-colors rounded-xl gap-1.5 sm:gap-2 cursor-pointer shrink-0"
+              className="h-8 w-auto px-2 border-border/80 bg-background/60 font-semibold text-xs text-foreground hover:border-border transition-colors rounded-xl gap-1 cursor-pointer shrink-0"
               aria-label="Select active song"
             >
-              <Music className="size-3.5 text-primary shrink-0" aria-hidden="true" />
+              <Music className="size-3 text-primary shrink-0" aria-hidden="true" />
               <span className="font-mono text-[11px] text-muted-foreground">
-                <span>Tracks </span>
+                <span className="hidden xl:inline">Tracks </span>
                 <span className="text-foreground font-bold">({songs.length})</span>
               </span>
             </SelectTrigger>
@@ -471,7 +471,7 @@ export function SongLibraryBar({
             <Input
               value={currentSong.title}
               onChange={(e) => onTitleChange(e.target.value)}
-              className="h-8.5 w-36 sm:w-44 md:w-56 border-border/60 bg-background/50 px-2 sm:px-3 text-xs font-black text-foreground focus-visible:ring-1 focus-visible:ring-primary rounded-xl shrink-0"
+              className="h-8 w-28 sm:w-36 lg:w-44 border-border/60 bg-background/50 px-2 text-xs font-black text-foreground focus-visible:ring-1 focus-visible:ring-primary rounded-xl shrink-0 truncate"
               placeholder="Track title..."
               aria-label="Rename song track"
             />
@@ -481,25 +481,25 @@ export function SongLibraryBar({
             variant="outline"
             size="sm"
             onClick={onCreate}
-            className="h-8.5 px-2.5 gap-1.5 border-border/80 bg-background/50 text-xs font-semibold shadow-xs hover:border-primary/50 hover:bg-primary/5 rounded-xl cursor-pointer shrink-0"
+            className="h-8 px-2 gap-1 border-border/80 bg-background/50 text-xs font-semibold shadow-xs hover:border-primary/50 hover:bg-primary/5 rounded-xl cursor-pointer shrink-0"
             aria-label="Create new song"
             title="Create new song track"
           >
             <Plus className="size-3.5 text-primary" aria-hidden="true" />
-            <span>New</span>
+            <span className="hidden lg:inline">New</span>
           </Button>
         </div>
 
         {/* Desktop Center: Unified Key, Scale Mode & Transpose Capsule */}
         {currentSong && onKeyChange && onModeChange && onTranspose && (
-          <div className="flex items-center gap-1.5 rounded-xl border border-zinc-700/80 bg-zinc-900/90 p-1 shadow-md shrink-0">
+          <div className="flex items-center gap-1 rounded-xl border border-zinc-700/80 bg-zinc-900/90 p-0.5 shadow-md shrink-0">
             {/* Key Tonic Dropdown */}
             <Select value={currentSong.keyTonic} onValueChange={(v) => v && onKeyChange(v)}>
               <SelectTrigger
-                className="h-7 border-0 bg-zinc-800/90 font-mono text-xs font-black text-amber-400 hover:bg-zinc-700/90 rounded-lg px-2 gap-1 cursor-pointer transition-colors"
+                className="h-6.5 border-0 bg-zinc-800/90 font-mono text-xs font-black text-amber-400 hover:bg-zinc-700/90 rounded-lg px-1.5 gap-1 cursor-pointer transition-colors"
                 aria-label="Select Key Tonic"
               >
-                <span className="text-[10px] text-zinc-400 font-bold uppercase">KEY</span>
+                <span className="text-[9px] text-zinc-400 font-bold uppercase">KEY</span>
                 <span className="text-amber-400 font-black">{currentSong.keyTonic}</span>
               </SelectTrigger>
               <SelectContent className="max-h-72 font-mono z-50">
@@ -512,7 +512,7 @@ export function SongLibraryBar({
             </Select>
 
             {/* Mode Toggle (MAJ / MIN) */}
-            <div className="flex h-7 rounded-lg bg-zinc-800/80 p-0.5" role="radiogroup" aria-label="Key Mode">
+            <div className="flex h-6.5 rounded-lg bg-zinc-800/80 p-0.5" role="radiogroup" aria-label="Key Mode">
               {(["major", "minor"] as const).map((m) => {
                 const active = currentSong.keyMode === m
                 return (
@@ -523,7 +523,7 @@ export function SongLibraryBar({
                     aria-checked={active}
                     onClick={() => onModeChange(m)}
                     className={cn(
-                      "rounded px-2 text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer touch-manipulation",
+                      "rounded px-1.5 text-[9.5px] font-black uppercase tracking-wider transition-all cursor-pointer touch-manipulation",
                       active
                         ? "bg-amber-400 text-zinc-950 font-extrabold shadow-xs"
                         : "text-zinc-400 hover:text-white",
@@ -535,35 +535,35 @@ export function SongLibraryBar({
               })}
             </div>
 
-            <div className="h-4 w-px bg-zinc-700/80" />
+            <div className="h-3.5 w-px bg-zinc-700/80" />
 
             {/* Transpose Stepper */}
             <div className="flex items-center gap-0.5">
               <button
                 type="button"
                 onClick={() => onTranspose(-1)}
-                className="size-7 flex items-center justify-center rounded-lg bg-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-700 cursor-pointer transition-colors"
+                className="size-6 flex items-center justify-center rounded-md bg-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-700 cursor-pointer transition-colors"
                 title="Transpose down 1 semitone (-1)"
                 aria-label="Transpose down 1 semitone"
               >
-                <ChevronDown className="size-3.5" />
+                <ChevronDown className="size-3" />
               </button>
-              <span className="font-mono text-[9px] font-bold text-zinc-400 px-1 uppercase tracking-tight">Transpose</span>
+              <span className="font-mono text-[8.5px] font-bold text-zinc-400 px-0.5 uppercase tracking-tight hidden lg:inline">Transpose</span>
               <button
                 type="button"
                 onClick={() => onTranspose(1)}
-                className="size-7 flex items-center justify-center rounded-lg bg-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-700 cursor-pointer transition-colors"
+                className="size-6 flex items-center justify-center rounded-md bg-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-700 cursor-pointer transition-colors"
                 title="Transpose up 1 semitone (+1)"
                 aria-label="Transpose up 1 semitone"
               >
-                <ChevronUp className="size-3.5" />
+                <ChevronUp className="size-3" />
               </button>
             </div>
           </div>
         )}
 
         {/* Desktop Right: User Profile + AI Import + Export + Piano + Inspector + Autosaved */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 lg:gap-1.5 shrink-0">
           <UserProfileButton savedSongsCount={songs.length} />
           {onImportSong && <SongImportModal onImport={onImportSong} />}
           {currentSong && (
@@ -572,11 +572,11 @@ export function SongLibraryBar({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8.5 gap-1.5 rounded-xl border-amber-400/40 bg-amber-400/10 text-amber-400 hover:bg-amber-400/20 text-xs font-bold shadow-xs cursor-pointer"
+                  className="h-8 gap-1 rounded-xl border-amber-400/40 bg-amber-400/10 text-amber-400 hover:bg-amber-400/20 text-xs font-bold shadow-xs cursor-pointer px-2"
                   title="Export song progression to MIDI or Lead Sheet"
                 >
                   <Download className="size-3.5" />
-                  <span>Export</span>
+                  <span className="hidden xl:inline">Export</span>
                   <ChevronDown className="size-3 opacity-70" />
                 </Button>
               </DropdownMenuTrigger>
@@ -614,13 +614,13 @@ export function SongLibraryBar({
               size="sm"
               onClick={onTogglePiano}
               className={cn(
-                "h-8.5 gap-1.5 rounded-xl px-2.5 text-xs font-semibold shadow-xs cursor-pointer",
+                "h-8 gap-1 rounded-xl px-2 text-xs font-semibold shadow-xs cursor-pointer",
                 !showPiano && "border-border/80 bg-background/50 text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
               title="Toggle Virtual Piano Keyboard (P)"
             >
               <Piano className="size-3.5" aria-hidden="true" />
-              <span>Piano</span>
+              <span className="hidden xl:inline">Piano</span>
             </Button>
           )}
 
@@ -630,23 +630,26 @@ export function SongLibraryBar({
               size="sm"
               onClick={onToggleInspector}
               className={cn(
-                "h-8.5 gap-1.5 rounded-xl px-2.5 text-xs font-semibold shadow-xs cursor-pointer transition-all",
+                "h-8 gap-1 rounded-xl px-2 text-xs font-semibold shadow-xs cursor-pointer transition-all",
                 !showInspector && "border-border/80 bg-background/50 text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
               title="Toggle Chord Inspector Panel (I)"
               aria-label="Toggle Chord Inspector Panel"
             >
               <PanelRight className="size-3.5" aria-hidden="true" />
-              <span>Inspector</span>
+              <span className="hidden xl:inline">Inspector</span>
             </Button>
           )}
 
-          <div className="flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/5 px-2.5 py-1 text-[11px] font-mono font-medium text-emerald-400 select-none shadow-xs">
+          <div
+            className="flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/5 px-2 py-1 text-[10px] font-mono font-medium text-emerald-400 select-none shadow-xs shrink-0"
+            title={currentSong?.updatedAt ? `Saved ${new Date(currentSong.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : "Saved just now"}
+          >
             <span className="relative flex size-2">
               <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60"></span>
               <span className="relative inline-flex size-2 rounded-full bg-emerald-500"></span>
             </span>
-            <span>
+            <span className="hidden xl:inline">
               {currentSong?.updatedAt
                 ? `Saved ${new Date(currentSong.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
                 : "Saved just now"}
@@ -657,9 +660,9 @@ export function SongLibraryBar({
             <DropdownMenu>
               <DropdownMenuTrigger
                 aria-label="Song options menu"
-                className="inline-flex size-8.5 items-center justify-center rounded-xl border border-border/60 bg-background/40 text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+                className="inline-flex size-8 items-center justify-center rounded-xl border border-border/60 bg-background/40 text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
               >
-                <MoreVertical className="size-4" aria-hidden="true" />
+                <MoreVertical className="size-3.5" aria-hidden="true" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
