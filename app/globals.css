@@ -62,40 +62,48 @@
  */
 :root {
   color-scheme: dark;
-  --background: oklch(0.09 0.005 265);
-  --foreground: oklch(0.97 0.002 265);
-  --card: oklch(0.13 0.006 265);
-  --card-foreground: oklch(0.97 0.002 265);
-  --popover: oklch(0.14 0.006 265);
-  --popover-foreground: oklch(0.97 0.002 265);
-  --primary: oklch(0.78 0.17 65);
+  --background: oklch(0.10 0.008 50);
+  --foreground: oklch(0.98 0.005 65);
+  --card: oklch(0.14 0.010 50);
+  --card-foreground: oklch(0.98 0.005 65);
+  --popover: oklch(0.15 0.010 50);
+  --popover-foreground: oklch(0.98 0.005 65);
+  --primary: oklch(0.85 0.17 65);
   --primary-foreground: oklch(0.10 0.02 65);
-  --secondary: oklch(0.20 0.008 265);
-  --secondary-foreground: oklch(0.97 0.002 265);
-  --muted: oklch(0.18 0.007 265);
-  --muted-foreground: oklch(0.65 0.006 265);
-  --accent: oklch(0.78 0.17 65);
+  --secondary: oklch(0.20 0.012 50);
+  --secondary-foreground: oklch(0.98 0.005 65);
+  --muted: oklch(0.18 0.010 50);
+  --muted-foreground: oklch(0.72 0.015 65);
+  --accent: oklch(0.85 0.17 65);
   --accent-foreground: oklch(0.10 0.02 65);
-  --destructive: oklch(0.62 0.22 25);
-  --border: oklch(1 0 0 / 9%);
-  --input: oklch(1 0 0 / 11%);
-  --ring: oklch(0.78 0.17 65);
-  --radius: 0.75rem;
+  --destructive: oklch(0.65 0.22 25);
+  --border: oklch(0.35 0.035 65 / 30%);
+  --input: oklch(0.35 0.035 65 / 35%);
+  --ring: oklch(0.85 0.17 65);
+  --radius: 0.5rem;
 
-  --sidebar: oklch(0.11 0.005 265);
-  --sidebar-foreground: oklch(0.97 0.002 265);
-  --sidebar-primary: oklch(0.78 0.17 65);
+  --sidebar: oklch(0.12 0.008 50);
+  --sidebar-foreground: oklch(0.98 0.005 65);
+  --sidebar-primary: oklch(0.85 0.17 65);
   --sidebar-primary-foreground: oklch(0.10 0.02 65);
-  --sidebar-accent: oklch(0.18 0.007 265);
-  --sidebar-accent-foreground: oklch(0.97 0.002 265);
-  --sidebar-border: oklch(1 0 0 / 9%);
-  --sidebar-ring: oklch(0.78 0.17 65);
+  --sidebar-accent: oklch(0.18 0.010 50);
+  --sidebar-accent-foreground: oklch(0.98 0.005 65);
+  --sidebar-border: oklch(0.35 0.035 65 / 30%);
+  --sidebar-ring: oklch(0.85 0.17 65);
 
-  /* Harmonic Function Tokens (Musical Semantic Coding) */
-  --func-tonic: oklch(0.78 0.17 65);
-  --func-subdominant: oklch(0.72 0.16 155);
-  --func-dominant: oklch(0.68 0.20 25);
-  --func-chromatic: oklch(0.65 0.18 290);
+  /* Cyber-Acoustic Harmonic Tokens (All >7:1 contrast on dark ground) */
+  --func-tonic: oklch(0.85 0.17 65);
+  --func-subdominant: oklch(0.80 0.16 45);
+  --func-dominant: oklch(0.78 0.20 25);
+  --func-chromatic: oklch(0.82 0.14 200);
+
+  /* Section accent colors */
+  --section-intro: oklch(0.82 0.14 200);
+  --section-verse: oklch(0.85 0.17 65);
+  --section-chorus: oklch(0.78 0.20 25);
+  --section-bridge: oklch(0.80 0.16 45);
+  --section-solo: oklch(0.82 0.18 310);
+  --section-outro: oklch(0.72 0.14 150);
 }
 
 @layer base {

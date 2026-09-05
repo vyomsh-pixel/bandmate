@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Plus, X, ChevronLeft, ChevronRight, ChevronDown, Minus, Sparkles, Copy } from "lucide-react"
+import { Plus, X, ChevronLeft, ChevronRight, ChevronDown, Minus, Sparkles, Copy, Home, ArrowRightLeft, Zap, Shield } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -20,7 +20,7 @@ import {
 import { cn } from "@/lib/utils"
 import { parseChord } from "@/lib/music/chord-parser"
 import { diatonicChords, makeKey } from "@/lib/music/scales"
-import { getHarmonicFunction } from "@/lib/music/analysis"
+import { getHarmonicFunction, type HarmonicRole } from "@/lib/music/analysis"
 import { suggestNextChords } from "@/lib/music/chord-suggester"
 import type { ChordEntry, Section } from "@/lib/music/types"
 
@@ -48,6 +48,49 @@ function getShortHarmonic(label: string): string {
     .replace("Dominant", "Dom")
     .replace("Tonic Rel", "Tonic")
     .replace("Secondary Dom", "Sec Dom")
+}
+
+function HarmonicBadge({ role, roman, label }: { role: HarmonicRole; roman: string | null; label: string }) {
+  if (!roman) return null
+
+  const config = {
+    tonic: {
+      icon: Home,
+      aria: "Tonic Function",
+      cls: "text-amber-300 bg-amber-500/15 border-amber-500/35",
+    },
+    subdominant: {
+      icon: ArrowRightLeft,
+      aria: "Subdominant Function",
+      cls: "text-orange-300 bg-orange-500/15 border-orange-500/35",
+    },
+    dominant: {
+      icon: Zap,
+      aria: "Dominant Function",
+      cls: "text-rose-300 bg-rose-500/15 border-rose-500/35",
+    },
+    chromatic: {
+      icon: Sparkles,
+      aria: "Chromatic Function",
+      cls: "text-cyan-300 bg-cyan-500/15 border-cyan-500/35",
+    },
+  }[role]
+
+  const Icon = config.icon
+
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-mono text-[9px] font-bold tracking-tight border shrink-0 select-none",
+        config.cls
+      )}
+      aria-label={`${config.aria}: ${roman} (${label})`}
+      title={`${label}: ${roman}`}
+    >
+      <Icon className="size-2.5 shrink-0" aria-hidden="true" />
+      <span>{roman}</span>
+    </span>
+  )
 }
 
 import { SongImportModal } from "./song-import-modal"
@@ -139,26 +182,26 @@ export function ProgressionEditor({
           }
 
           return (
-            <div key={section.id} className="flex flex-col gap-3">
+            <div key={section.id} className="flex flex-col gap-3 rounded-2xl border border-border/80 bg-card/60 p-3 sm:p-4 backdrop-blur-md shadow-md">
               {/* Section Header with Collapse Chevron */}
               <div className="flex items-center gap-2 sm:gap-3">
                 <button
                   type="button"
                   onClick={() => toggleSectionCollapse(section.id)}
-                  className="flex items-center gap-1.5 sm:gap-2 rounded-full border border-zinc-700/80 bg-zinc-800/80 px-2.5 sm:px-3 py-1 font-mono text-xs font-bold tracking-wider text-zinc-100 shadow-xs uppercase hover:bg-zinc-700/80 transition-all cursor-pointer"
+                  className="flex items-center gap-1.5 sm:gap-2 rounded-lg border border-amber-500/30 bg-secondary/80 px-2.5 sm:px-3 py-1 font-mono text-xs font-bold tracking-wider text-foreground shadow-xs uppercase hover:bg-secondary transition-all cursor-pointer"
                   title={collapsedSections.has(section.id) ? "Expand section" : "Collapse section"}
                 >
-                  <ChevronDown className={cn("size-3.5 text-zinc-400 transition-transform duration-200", collapsedSections.has(section.id) && "-rotate-90")} />
+                  <ChevronDown className={cn("size-3.5 text-amber-400 transition-transform duration-200", collapsedSections.has(section.id) && "-rotate-90")} />
                   <input
                     type="text"
                     value={section.name}
                     onClick={(e) => e.stopPropagation()}
                     onChange={(e) => onRenameSection?.(section.id, e.target.value)}
-                    className="bg-transparent outline-hidden w-auto min-w-[3ch] max-w-[20ch] text-zinc-100 font-mono text-xs font-bold uppercase tracking-wider cursor-text"
+                    className="bg-transparent outline-hidden w-auto min-w-[3ch] max-w-[20ch] text-foreground font-mono text-xs font-bold uppercase tracking-wider cursor-text"
                     spellCheck={false}
                     aria-label={`Section name: ${section.name}`}
                   />
-                  <span className="text-[10px] text-zinc-400 font-bold">({section.chords.length})</span>
+                  <span className="text-[10px] text-muted-foreground font-bold tabular-nums">({section.chords.length})</span>
                 </button>
                 <div className="h-px flex-1 bg-border/60" />
 
@@ -166,11 +209,11 @@ export function ProgressionEditor({
                 <button
                   type="button"
                   onClick={() => onAdd(key.tonic, section.id)}
-                  className="flex items-center gap-1 rounded-lg border border-zinc-700/80 bg-zinc-800/90 px-2 sm:px-2.5 py-1 text-[10px] font-bold text-zinc-200 transition-all hover:bg-zinc-700 hover:text-white active:scale-[0.98] cursor-pointer shadow-xs"
+                  className="flex items-center gap-1.5 rounded-lg border border-amber-500/40 bg-amber-500/10 px-2.5 sm:px-3 py-1 text-xs font-bold text-amber-300 transition-all hover:bg-amber-500/20 active:scale-[0.98] cursor-pointer shadow-xs"
                   title={`Add chord to ${section.name}`}
                   aria-label={`Add chord to ${section.name}`}
                 >
-                  <Plus className="size-3 text-emerald-400" />
+                  <Plus className="size-3.5 text-amber-400" />
                   <span className="sm:hidden">Chord</span>
                   <span className="hidden sm:inline">Add Chord</span>
                 </button>
@@ -180,12 +223,12 @@ export function ProgressionEditor({
                   <button
                     type="button"
                     onClick={() => onAutoVoice(section.id)}
-                    className="flex items-center gap-1.5 rounded-lg border border-zinc-700/80 bg-zinc-800/90 px-2 sm:px-2.5 py-1 text-[10px] font-bold text-zinc-200 transition-all hover:bg-zinc-700 hover:text-white hover:border-zinc-600 active:scale-[0.98] cursor-pointer shadow-xs"
+                    className="flex items-center gap-1.5 rounded-lg border border-border bg-secondary/80 px-2.5 sm:px-3 py-1 text-xs font-bold text-foreground transition-all hover:bg-secondary active:scale-[0.98] cursor-pointer shadow-xs"
                     title="Automatically optimize inversions for smooth voice leading"
                     aria-label={`Auto-voice ${section.name} section`}
                   >
-                    <Sparkles className="size-3 text-amber-400" />
-                    <span>Auto-Voice</span>
+                    <Sparkles className="size-3.5 text-amber-400" />
+                    <span className="hidden sm:inline">Auto-Voice</span>
                   </button>
                 )}
 
@@ -194,21 +237,21 @@ export function ProgressionEditor({
                   <button
                     type="button"
                     onClick={() => onDeleteSection?.(section.id)}
-                    className="flex items-center gap-1 rounded-lg border border-zinc-700/80 bg-zinc-800/80 px-2 py-1 text-[10px] font-semibold text-zinc-400 transition-colors hover:border-destructive/60 hover:bg-destructive/10 hover:text-destructive cursor-pointer"
+                    className="flex items-center gap-1 rounded-lg border border-border bg-secondary/60 px-2 py-1 text-xs font-semibold text-muted-foreground transition-colors hover:border-destructive/60 hover:bg-destructive/10 hover:text-destructive cursor-pointer"
                     aria-label={`Delete ${section.name} section`}
                     title={`Delete ${section.name} section`}
                   >
-                    <X className="size-3" />
+                    <X className="size-3.5" />
                     <span className="hidden sm:inline">Delete</span>
                   </button>
                 )}
               </div>
 
-              {/* If Collapsed: Render Compact Single-Line Roman Numeral Summary Ribbon */}
+              {/* If Collapsed: Render Compact Single-Line Summary Ribbon */}
               {collapsedSections.has(section.id) ? (
                 <div
                   onClick={() => toggleSectionCollapse(section.id)}
-                  className="flex items-center gap-1.5 p-2 rounded-xl border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800/60 cursor-pointer transition-colors overflow-x-auto no-scrollbar select-none"
+                  className="flex items-center gap-1.5 p-2 rounded-xl border border-border/80 bg-background/60 hover:bg-background/80 cursor-pointer transition-colors overflow-x-auto no-scrollbar select-none"
                   title="Click to expand section"
                 >
                   {section.chords.map((c, i) => {
@@ -216,16 +259,14 @@ export function ProgressionEditor({
                     return (
                       <span
                         key={c.id}
-                        className="flex items-center gap-1 px-2 py-1 rounded-lg bg-zinc-800/80 border border-zinc-700/60 text-xs font-mono font-bold shrink-0"
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-secondary/80 border border-border text-xs font-mono font-bold shrink-0"
                       >
-                        <span className={cn("text-[9px] font-black", harm.badgeColor ? "text-amber-400" : "text-zinc-400")}>
-                          {harm.roman || `${i + 1}`}
-                        </span>
-                        <span className="text-zinc-100">{c.symbol}</span>
+                        <HarmonicBadge role={harm.role} roman={harm.roman} label={harm.label} />
+                        <span className="text-foreground font-bold">{c.symbol}</span>
                       </span>
                     )
                   })}
-                  <span className="text-[10px] font-mono text-zinc-400 ml-auto shrink-0 pr-1">Tap to expand ▾</span>
+                  <span className="text-xs font-mono text-muted-foreground ml-auto shrink-0 pr-1">Tap to expand ▾</span>
                 </div>
               ) : (
                 /* Grid / Timeline of Chord Cards: 4-COL GRID ON MOBILE, ZERO CUTOFF */
@@ -245,12 +286,12 @@ export function ProgressionEditor({
                         onClick={() => onSelect(entry.id)}
                         className={cn(
                           "group relative flex flex-col justify-between rounded-xl sm:rounded-2xl border transition-all duration-150 cursor-pointer select-none",
-                          "w-full sm:w-36 md:w-40 sm:shrink-0 p-1.5 sm:p-3 min-h-[76px] sm:min-h-[140px]",
-                          "bg-card/90 backdrop-blur-md shadow-xs",
+                          "w-full sm:w-36 md:w-40 sm:shrink-0 p-2 sm:p-3.5 min-h-[85px] sm:min-h-[145px]",
+                          "bg-secondary/90 backdrop-blur-md shadow-sm",
                           selected
-                            ? "border-amber-400 bg-amber-400/10 ring-2 ring-amber-400/60 shadow-md shadow-amber-400/10 -translate-y-0.5"
-                            : "border-border/80 hover:border-border hover:bg-card hover:-translate-y-0.5",
-                          active && "border-emerald-400 bg-emerald-400/15 ring-2 ring-emerald-400/60 shadow-[0_0_16px_rgba(52,211,153,0.35)] scale-[1.02]",
+                            ? "border-amber-400 bg-amber-500/10 ring-2 ring-amber-400/60 shadow-md shadow-amber-500/10 -translate-y-0.5"
+                            : "border-border hover:border-amber-500/40 hover:bg-secondary hover:-translate-y-0.5",
+                          active && "border-emerald-400 bg-emerald-500/15 ring-2 ring-emerald-400/60 shadow-[0_0_16px_rgba(52,211,153,0.35)] scale-[1.02]",
                         )}
                       >
                         {/* Top Header: Index, Harmonic Role, Beats & Actions */}
@@ -258,43 +299,34 @@ export function ProgressionEditor({
                           <div className="flex items-center gap-1 min-w-0">
                             <span
                               className={cn(
-                                "flex size-4 sm:size-4.5 items-center justify-center rounded-full font-mono text-[8px] sm:text-[9px] font-black shrink-0",
+                                "flex size-4 sm:size-5 items-center justify-center rounded-full font-mono text-[9px] sm:text-xs font-bold tabular-nums shrink-0",
                                 active
                                   ? "bg-emerald-400 text-black font-extrabold"
                                   : selected
                                     ? "bg-amber-400 text-black font-extrabold"
-                                    : "bg-muted text-zinc-300",
+                                    : "bg-muted text-muted-foreground",
                               )}
                             >
                               {globalIdx + 1}
                             </span>
 
-                            {/* Harmonic Function Badge */}
-                            {harm.roman && (
-                              <span
-                                className={cn(
-                                  "rounded px-1 sm:px-1.5 py-0.2 sm:py-0.5 font-mono text-[8px] sm:text-[9px] font-black tracking-tight shrink-0 border",
-                                  harm.badgeColor,
-                                )}
-                              >
-                                {harm.roman}
-                              </span>
-                            )}
+                            {/* Accessible Dual-Coded Harmonic Badge */}
+                            <HarmonicBadge role={harm.role} roman={harm.roman} label={harm.label} />
 
                             {/* Inversion Badge */}
                             {entry.inversion !== undefined && entry.inversion > 0 && (
-                              <span className="rounded border border-primary/40 bg-primary/15 px-0.5 sm:px-1 py-0.2 font-mono text-[7.5px] sm:text-[8.5px] font-black text-primary shrink-0">
+                              <span className="rounded border border-amber-500/40 bg-amber-500/15 px-1 py-0.2 font-mono text-[9px] font-bold text-amber-300 shrink-0">
                                 i{entry.inversion}
                               </span>
                             )}
                           </div>
 
                           {/* Mobile Beat Badge (< sm) */}
-                          <div className="sm:hidden font-mono text-[8.5px] font-bold text-zinc-200 bg-zinc-800/80 px-1 py-0.2 rounded border border-zinc-700/80 shrink-0">
+                          <div className="sm:hidden font-mono text-[9px] font-bold tabular-nums text-amber-300 bg-background/80 px-1 py-0.2 rounded border border-border shrink-0">
                             {entry.beats}b
                           </div>
 
-                          {/* Card Actions (Desktop hover, mobile uses dedicated contextual toolbar) */}
+                          {/* Card Actions (Desktop hover) */}
                           <div
                             className={cn(
                               "hidden sm:flex items-center gap-0.5 transition-opacity",
@@ -335,7 +367,7 @@ export function ProgressionEditor({
                                 e.stopPropagation()
                                 onDuplicate?.(entry.id)
                               }}
-                              className="rounded p-1 text-muted-foreground hover:bg-primary/20 hover:text-primary transition-colors touch-manipulation cursor-pointer"
+                              className="rounded p-1 text-muted-foreground hover:bg-amber-500/20 hover:text-amber-300 transition-colors touch-manipulation cursor-pointer"
                             >
                               <Copy className="size-3.5" />
                             </button>
@@ -355,7 +387,7 @@ export function ProgressionEditor({
                         </div>
 
                         {/* Large Hero Chord Symbol */}
-                        <div className="my-0.5 sm:my-2">
+                        <div className="my-1 sm:my-2">
                           <input
                             value={entry.symbol}
                             onChange={(e) => onUpdate(entry.id, { symbol: e.target.value })}
@@ -363,30 +395,30 @@ export function ProgressionEditor({
                             aria-label={`Chord ${globalIdx + 1} symbol`}
                             spellCheck={false}
                             className={cn(
-                              "w-full bg-transparent font-mono text-base sm:text-2xl md:text-3xl font-black tracking-tight outline-hidden transition-colors truncate",
+                              "w-full bg-transparent font-mono text-base sm:text-2xl md:text-3xl font-extrabold tracking-tight outline-hidden transition-colors truncate",
                               invalid
                                 ? "text-destructive"
                                 : active
                                   ? "text-emerald-400 drop-shadow-[0_0_12px_rgba(52,211,153,0.6)]"
-                                  : "text-white",
+                                  : "text-foreground",
                             )}
                           />
-                          <div className="flex items-center justify-between gap-1 text-[8px] sm:text-[10px] font-bold mt-0.2 sm:mt-0.5">
-                            <span className="truncate flex-1 min-w-0 text-zinc-200">
+                          <div className="flex items-center justify-between gap-1 text-[9px] sm:text-xs font-semibold mt-0.5">
+                            <span className="truncate flex-1 min-w-0 text-muted-foreground">
                               {parsed.valid ? getShortQuality(parsed.qualityLabel) : invalid ? "Unknown" : "Triad"}
                             </span>
-                            <span className="font-mono text-zinc-300 shrink-0">
+                            <span className="font-mono text-muted-foreground shrink-0 font-bold">
                               {getShortHarmonic(harm.label)}
                             </span>
                           </div>
                         </div>
 
-                        {/* Beats Stepper (Desktop Only — Mobile uses the dedicated thumb action bar) */}
-                        <div className="hidden sm:flex items-center justify-between rounded-lg sm:rounded-xl bg-background/60 px-1.5 sm:px-2 py-0.5 sm:py-1 border border-border/50 shadow-inner">
-                          <span className="text-[8px] sm:text-[9px] font-bold uppercase tracking-wider text-zinc-300">
+                        {/* Beats Stepper (Desktop Only) */}
+                        <div className="hidden sm:flex items-center justify-between rounded-xl bg-background/80 px-2 py-1 border border-border shadow-inner">
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground font-mono">
                             Beats
                           </span>
-                          <div className="flex items-center gap-0.5 sm:gap-1">
+                          <div className="flex items-center gap-1">
                             <button
                               type="button"
                               aria-label="Decrease beats"
@@ -394,11 +426,11 @@ export function ProgressionEditor({
                                 e.stopPropagation()
                                 onUpdate(entry.id, { beats: Math.max(1, entry.beats - 1) })
                               }}
-                              className="flex size-5 sm:size-6 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground touch-manipulation cursor-pointer"
+                              className="flex size-6 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground touch-manipulation cursor-pointer"
                             >
-                              <Minus className="size-2.5 sm:size-3" />
+                              <Minus className="size-3" />
                             </button>
-                            <span className="w-3.5 sm:w-4 text-center font-mono text-xs font-bold tabular-nums text-foreground">
+                            <span className="w-4 text-center font-mono text-xs font-bold tabular-nums text-foreground">
                               {entry.beats}
                             </span>
                             <button
@@ -408,9 +440,9 @@ export function ProgressionEditor({
                                 e.stopPropagation()
                                 onUpdate(entry.id, { beats: Math.min(16, entry.beats + 1) })
                               }}
-                              className="flex size-5 sm:size-6 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground touch-manipulation cursor-pointer"
+                              className="flex size-6 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground touch-manipulation cursor-pointer"
                             >
-                              <Plus className="size-2.5 sm:size-3" />
+                              <Plus className="size-3" />
                             </button>
                           </div>
                         </div>
@@ -423,29 +455,29 @@ export function ProgressionEditor({
                     <button
                       type="button"
                       onClick={() => onDuplicate?.(selectedChord.id)}
-                      className="hidden sm:flex w-24 sm:w-32 md:w-36 shrink-0 flex-col items-center justify-center gap-1 rounded-xl sm:rounded-2xl border border-dashed border-primary/40 bg-primary/5 text-primary transition-all hover:bg-primary/15 hover:border-primary hover:scale-[1.02] cursor-pointer p-2"
+                      className="hidden sm:flex w-24 sm:w-32 md:w-36 shrink-0 flex-col items-center justify-center gap-1 rounded-xl sm:rounded-2xl border border-dashed border-amber-500/40 bg-amber-500/5 text-amber-300 transition-all hover:bg-amber-500/15 hover:border-amber-400 hover:scale-[1.02] cursor-pointer p-2"
                       aria-label={`Duplicate selected chord ${selectedChord.symbol}`}
                       title="Repeat / Duplicate selected chord (D)"
                     >
-                      <div className="flex size-5 sm:size-6 items-center justify-center rounded-lg bg-primary/20">
-                        <Copy className="size-2.5 sm:size-3" />
+                      <div className="flex size-6 items-center justify-center rounded-lg bg-amber-500/20">
+                        <Copy className="size-3 text-amber-400" />
                       </div>
-                      <span className="text-[10px] sm:text-[11px] font-extrabold truncate max-w-[90%]">Repeat {selectedChord.symbol}</span>
-                      <span className="font-mono text-[8px] sm:text-[9px] text-muted-foreground">Press D</span>
+                      <span className="text-xs font-bold truncate max-w-[90%]">Repeat {selectedChord.symbol}</span>
+                      <span className="font-mono text-[9px] text-muted-foreground">Press D</span>
                     </button>
                   )}
 
-                  {/* Add Slot Button (Desktop Only — Mobile uses the Header Add button) */}
+                  {/* Add Slot Button (Desktop Only) */}
                   <button
                     type="button"
                     onClick={() => onAdd(key.tonic)}
-                    className="hidden sm:flex w-24 sm:w-32 md:w-36 shrink-0 flex-col items-center justify-center gap-1.5 sm:gap-2 rounded-xl sm:rounded-2xl border-2 border-dashed border-border/80 bg-card/20 text-muted-foreground transition-all hover:border-primary/60 hover:bg-primary/5 hover:text-primary hover:scale-[1.02] cursor-pointer p-2"
+                    className="hidden sm:flex w-24 sm:w-32 md:w-36 shrink-0 flex-col items-center justify-center gap-2 rounded-xl sm:rounded-2xl border-2 border-dashed border-border bg-background/40 text-muted-foreground transition-all hover:border-amber-500/60 hover:bg-amber-500/5 hover:text-amber-300 hover:scale-[1.02] cursor-pointer p-2"
                     aria-label="Add chord to section"
                   >
-                    <div className="flex size-6 sm:size-8 items-center justify-center rounded-xl bg-muted/60">
-                      <Plus className="size-3.5 sm:size-4" />
+                    <div className="flex size-8 items-center justify-center rounded-xl bg-muted">
+                      <Plus className="size-4" />
                     </div>
-                    <span className="text-[11px] sm:text-xs font-bold">Add Chord</span>
+                    <span className="text-xs font-bold">Add Chord</span>
                   </button>
                 </div>
               )}
@@ -454,9 +486,9 @@ export function ProgressionEditor({
         })}
 
         {/* Add Section & AI Import Menu Bar */}
-        <div className="flex items-center justify-between gap-2 p-2 sm:p-2.5 rounded-xl border border-dashed border-border/80 bg-card/30">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground font-mono px-1 flex items-center gap-1.5">
-            <Plus className="size-3.5 text-primary" />
+        <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl border border-dashed border-border bg-card/40">
+          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground font-mono px-1 flex items-center gap-1.5">
+            <Plus className="size-3.5 text-amber-400" />
             <span>Section Arranger</span>
           </span>
           <div className="flex items-center gap-2">
@@ -467,7 +499,7 @@ export function ProgressionEditor({
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-8 gap-1.5 rounded-lg border-primary/40 bg-primary/10 text-xs font-bold text-primary hover:bg-primary/20 cursor-pointer shadow-xs"
+                    className="h-8 gap-1.5 rounded-lg border-amber-500/40 bg-amber-500/10 text-xs font-bold text-amber-300 hover:bg-amber-500/20 cursor-pointer shadow-xs"
                   >
                     <Plus className="size-3.5" />
                     <span>+ Add Section</span>
@@ -491,29 +523,29 @@ export function ProgressionEditor({
           </div>
         </div>
 
-        {/* Mobile Contextual Selected Chord Action Bar (< md) — 44px HIG Touch Targets */}
+        {/* Mobile Contextual Selected Chord Action Bar (< md) */}
         {selectedChord && (
-          <div className="flex md:hidden items-center justify-between gap-1.5 p-2 rounded-xl border border-zinc-700 bg-zinc-900/95 backdrop-blur-md shadow-lg min-h-[50px] animate-in fade-in slide-in-from-bottom-2 duration-150">
+          <div className="flex md:hidden items-center justify-between gap-1.5 p-2 rounded-xl border border-border bg-secondary/95 backdrop-blur-md shadow-lg min-h-[50px] animate-in fade-in slide-in-from-bottom-2 duration-150">
             <div className="flex items-center gap-2">
-              <span className="font-mono text-sm font-black text-amber-400 px-2.5 py-1.5 rounded-lg bg-amber-400/15 border border-amber-400/30">
+              <span className="font-mono text-sm font-bold text-amber-300 px-2.5 py-1.5 rounded-lg bg-amber-500/15 border border-amber-500/30">
                 {selectedChord.symbol}
               </span>
-              <div className="flex items-center gap-1 rounded-lg bg-zinc-800/90 p-0.5 border border-zinc-700">
+              <div className="flex items-center gap-1 rounded-lg bg-background p-0.5 border border-border">
                 <button
                   type="button"
                   onClick={() => onUpdate(selectedChord.id, { beats: Math.max(1, selectedChord.beats - 1) })}
-                  className="size-9 flex items-center justify-center rounded-md text-zinc-300 hover:text-white active:scale-90 touch-manipulation cursor-pointer"
+                  className="size-9 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground active:scale-90 touch-manipulation cursor-pointer"
                   aria-label="Decrease beats"
                 >
                   <Minus className="size-4" />
                 </button>
-                <span className="font-mono text-xs font-bold px-1.5 tabular-nums text-white">
+                <span className="font-mono text-xs font-bold px-1.5 tabular-nums text-foreground">
                   {selectedChord.beats}b
                 </span>
                 <button
                   type="button"
                   onClick={() => onUpdate(selectedChord.id, { beats: Math.min(16, selectedChord.beats + 1) })}
-                  className="size-9 flex items-center justify-center rounded-md text-zinc-300 hover:text-white active:scale-90 touch-manipulation cursor-pointer"
+                  className="size-9 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground active:scale-90 touch-manipulation cursor-pointer"
                   aria-label="Increase beats"
                 >
                   <Plus className="size-4" />
@@ -525,7 +557,7 @@ export function ProgressionEditor({
               <Button
                 size="sm"
                 variant="outline"
-                className="h-9 min-w-[50px] px-2.5 text-xs font-bold gap-1 rounded-lg bg-zinc-800 border-zinc-700 text-zinc-200 hover:text-white touch-manipulation"
+                className="h-9 min-w-[50px] px-2.5 text-xs font-bold gap-1 rounded-lg bg-background border-border text-foreground touch-manipulation"
                 onClick={() => onMove(selectedChord.id, -1)}
                 title="Move chord left"
               >
@@ -535,7 +567,7 @@ export function ProgressionEditor({
               <Button
                 size="sm"
                 variant="outline"
-                className="h-9 min-w-[50px] px-2.5 text-xs font-bold gap-1 rounded-lg bg-zinc-800 border-zinc-700 text-zinc-200 hover:text-white touch-manipulation"
+                className="h-9 min-w-[50px] px-2.5 text-xs font-bold gap-1 rounded-lg bg-background border-border text-foreground touch-manipulation"
                 onClick={() => onMove(selectedChord.id, 1)}
                 title="Move chord right"
               >
@@ -546,7 +578,7 @@ export function ProgressionEditor({
                 <Button
                   size="sm"
                   variant="outline"
-                  className="size-9 p-0 rounded-lg bg-zinc-800 text-amber-400 border-amber-400/30 hover:bg-amber-400/10 touch-manipulation"
+                  className="size-9 p-0 rounded-lg bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20 touch-manipulation"
                   onClick={() => onDuplicate(selectedChord.id)}
                   title="Duplicate chord"
                 >
@@ -556,7 +588,7 @@ export function ProgressionEditor({
               <Button
                 size="sm"
                 variant="ghost"
-                className="size-9 p-0 rounded-lg text-rose-400 hover:bg-rose-950/40 hover:text-rose-300 touch-manipulation"
+                className="size-9 p-0 rounded-lg text-destructive hover:bg-destructive/10 touch-manipulation"
                 onClick={() => onRemove(selectedChord.id)}
                 title="Delete chord"
               >
@@ -567,18 +599,18 @@ export function ProgressionEditor({
         )}
       </div>
 
-      {/* Palette Groupings: 4-COL ZERO-CLIPPING WRAPPING GRID */}
-      <div className="flex flex-col gap-4 sm:gap-5 rounded-xl sm:rounded-2xl border border-border/80 bg-card/60 p-3.5 sm:p-5 backdrop-blur-xl shadow-lg">
-        {/* Diatonic quick-add (FIRST) */}
+      {/* Palette Groupings: Diatonic, AI Suggestions, Song Chords */}
+      <div className="flex flex-col gap-4 sm:gap-5 rounded-2xl border border-border/80 bg-card/60 p-4 sm:p-5 backdrop-blur-xl shadow-lg">
+        {/* Diatonic quick-add */}
         <div>
-          <div className="mb-2 sm:mb-3 flex items-center justify-between">
+          <div className="mb-2.5 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="size-2 rounded-full bg-amber-400 animate-pulse" />
-              <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-white font-mono">
+              <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-foreground font-mono">
                 Diatonic Scale Chords in {key.label}
               </span>
             </div>
-            <span className="font-mono text-[10px] sm:text-xs text-amber-400 font-bold bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/30">
+            <span className="font-mono text-[10px] sm:text-xs text-amber-300 font-bold bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/30">
               Click to Append
             </span>
           </div>
@@ -590,32 +622,29 @@ export function ProgressionEditor({
                   key={`${d.degree}-${d.symbol}`}
                   type="button"
                   onClick={() => onAdd(d.symbol)}
-                  className={cn(
-                    "flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-xl border bg-background/80 shadow-md transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer text-center",
-                    harm.badgeColor,
-                  )}
+                  className="flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-xl border border-border bg-secondary/80 shadow-md transition-all duration-150 hover:scale-105 active:scale-95 cursor-pointer text-center hover:border-amber-500/50"
                 >
-                  <span className="font-mono text-[10px] sm:text-xs font-black opacity-80">{d.roman}</span>
-                  <span className="font-mono text-sm sm:text-lg font-black text-white">{d.symbol}</span>
+                  <HarmonicBadge role={harm.role} roman={d.roman} label={harm.label} />
+                  <span className="font-mono text-sm sm:text-lg font-bold text-foreground mt-1">{d.symbol}</span>
                 </button>
               )
             })}
           </div>
         </div>
 
-        {/* Smart AI Next Chord Recommendations (SECOND) */}
+        {/* Smart AI Next Chord Recommendations */}
         {(() => {
           const suggestions = suggestNextChords(chordsInSong, key)
           return (
             <div className="border-t border-border/60 pt-3.5">
-              <div className="mb-2 sm:mb-3 flex items-center justify-between">
+              <div className="mb-2.5 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Sparkles className="size-4 text-amber-400" />
-                  <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-amber-400 font-mono">
+                  <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-amber-300 font-mono">
                     AI Next Chord Suggestions
                   </span>
                 </div>
-                <span className="font-mono text-[10px] sm:text-xs text-zinc-400 font-bold">Recommended Flow</span>
+                <span className="font-mono text-[10px] sm:text-xs text-muted-foreground font-bold">Recommended Flow</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {suggestions.map((s) => (
@@ -623,17 +652,17 @@ export function ProgressionEditor({
                     key={`${s.symbol}-${s.label}`}
                     type="button"
                     onClick={() => onAdd(s.symbol)}
-                    className="flex flex-col text-left p-3.5 rounded-xl border border-amber-400/40 bg-amber-400/10 hover:bg-amber-400/20 hover:border-amber-400/80 transition-all duration-150 hover:-translate-y-0.5 cursor-pointer group shadow-md"
+                    className="flex flex-col text-left p-3.5 rounded-xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 hover:border-amber-500/60 transition-all duration-150 hover:-translate-y-0.5 cursor-pointer group shadow-md"
                   >
                     <div className="flex items-center justify-between gap-1 mb-1.5">
-                      <span className="font-mono text-base font-black text-white group-hover:text-amber-300">
+                      <span className="font-mono text-base font-bold text-foreground group-hover:text-amber-300">
                         {s.symbol} <span className="text-xs text-amber-400/80 font-normal">({s.roman})</span>
                       </span>
-                      <span className="text-[9.5px] font-mono font-black uppercase px-2 py-0.5 rounded-md bg-amber-400/25 text-amber-300 border border-amber-400/30 shrink-0">
+                      <span className="text-[9.5px] font-mono font-bold uppercase px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
                         {s.label}
                       </span>
                     </div>
-                    <span className="text-xs text-zinc-300 font-medium line-clamp-2 leading-relaxed">{s.reason}</span>
+                    <span className="text-xs text-muted-foreground font-medium line-clamp-2 leading-relaxed">{s.reason}</span>
                   </button>
                 ))}
               </div>
@@ -644,7 +673,7 @@ export function ProgressionEditor({
         {/* Chords in Song (Recently Used) */}
         {chordsInSong.length > 0 && (
           <div className="border-t border-border/50 pt-2 sm:pt-3">
-            <div className="mb-1.5 sm:mb-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-zinc-300">
+            <div className="mb-1.5 sm:mb-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-muted-foreground font-mono">
               Progression Chords
             </div>
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 py-0.5">
@@ -653,7 +682,7 @@ export function ProgressionEditor({
                   key={symbol}
                   type="button"
                   onClick={() => onAdd(symbol)}
-                  className="flex items-center gap-1 rounded-lg border border-border/80 bg-background/60 px-2.5 py-1.5 font-mono text-xs font-bold shadow-xs transition-all hover:border-primary/60 hover:bg-muted cursor-pointer shrink-0"
+                  className="flex items-center gap-1 rounded-lg border border-border bg-secondary/80 px-2.5 py-1.5 font-mono text-xs font-bold shadow-xs transition-all hover:border-amber-500/50 hover:bg-secondary cursor-pointer shrink-0"
                 >
                   <span>{symbol}</span>
                 </button>

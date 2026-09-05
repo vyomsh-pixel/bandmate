@@ -69,14 +69,14 @@ function BpmInput({ value, onChange }: { value: number; onChange: (v: number) =>
   }
 
   return (
-    <div className="flex items-center gap-1 rounded-lg border border-border/80 bg-background/50 p-1">
-      <span className="px-2 font-mono text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+    <div className="flex items-center gap-1 rounded-lg border border-amber-500/30 bg-secondary/80 p-1">
+      <span className="px-2 font-mono text-[11px] font-bold uppercase tracking-wider text-amber-400">
         BPM
       </span>
       <button
         type="button"
         onClick={() => commit(value - 5)}
-        className="flex size-7 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
+        className="flex size-7 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer"
         aria-label="Decrease tempo by 5 BPM"
       >
         <Minus className="size-3" />
@@ -102,13 +102,13 @@ function BpmInput({ value, onChange }: { value: number; onChange: (v: number) =>
             commit(value - (e.shiftKey ? 5 : 1))
           }
         }}
-        className="h-7 w-12 rounded bg-muted/40 text-center font-mono text-xs font-bold text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+        className="h-7 w-12 rounded bg-background/80 border border-border/80 text-center font-mono text-xs font-extrabold text-amber-300 tabular-nums focus:outline-hidden focus:ring-1 focus:ring-amber-400"
         aria-label="Tempo in beats per minute"
       />
       <button
         type="button"
         onClick={() => commit(value + 5)}
-        className="flex size-7 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
+        className="flex size-7 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer"
         aria-label="Increase tempo by 5 BPM"
       >
         <Plus className="size-3" />
