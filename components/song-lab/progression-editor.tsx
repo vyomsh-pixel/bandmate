@@ -264,8 +264,8 @@ export function ProgressionEditor({
                   <span className="text-xs font-mono text-muted-foreground ml-auto shrink-0 pr-1">Tap to expand ▾</span>
                 </div>
               ) : (
-                /* Grid / Timeline of Chord Cards: 4-COL GRID ON MOBILE, ZERO CUTOFF */
-                <div className="grid grid-cols-4 gap-1.5 sm:flex sm:items-stretch sm:gap-3 sm:overflow-x-auto pb-1 sm:pb-2 pt-0.5 no-scrollbar scrollbar-thin">
+                /* 4-COLUMN WRAPPING GRID (4 BARS PER LINE - ZERO HORIZONTAL SCROLL) */
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 py-1">
                   {section.chords.map((entry, idxWithinSection) => {
                     const globalIdx = startIndex + idxWithinSection
                     const parsed = parseChord(entry.symbol)
@@ -281,7 +281,7 @@ export function ProgressionEditor({
                         onClick={() => onSelect(entry.id)}
                         className={cn(
                           "group relative flex flex-col justify-between rounded-xl sm:rounded-2xl border transition-all duration-150 cursor-pointer select-none",
-                          "w-full sm:w-36 md:w-40 sm:shrink-0 p-2 sm:p-3.5 min-h-[85px] sm:min-h-[145px]",
+                          "w-full p-2.5 sm:p-3.5 min-h-[85px] sm:min-h-[140px]",
                           "bg-secondary/90 backdrop-blur-md shadow-sm",
                           selected
                             ? "border-amber-400 bg-amber-500/10 ring-2 ring-amber-400/60 shadow-md shadow-amber-500/10 -translate-y-0.5"
@@ -445,12 +445,12 @@ export function ProgressionEditor({
                     )
                   })}
 
-                  {/* Duplicate Selected Shortcut Button (Desktop Only) */}
+                  {/* Duplicate Selected Shortcut Button */}
                   {selectedChord && (
                     <button
                       type="button"
                       onClick={() => onDuplicate?.(selectedChord.id)}
-                      className="hidden sm:flex w-24 sm:w-32 md:w-36 shrink-0 flex-col items-center justify-center gap-1 rounded-xl sm:rounded-2xl border border-dashed border-amber-500/40 bg-amber-500/5 text-amber-300 transition-all hover:bg-amber-500/15 hover:border-amber-400 hover:scale-[1.02] cursor-pointer p-2"
+                      className="hidden sm:flex w-full min-h-[85px] sm:min-h-[140px] flex-col items-center justify-center gap-1 rounded-xl sm:rounded-2xl border border-dashed border-amber-500/40 bg-amber-500/5 text-amber-300 transition-all hover:bg-amber-500/15 hover:border-amber-400 hover:scale-[1.02] cursor-pointer p-2"
                       aria-label={`Duplicate selected chord ${selectedChord.symbol}`}
                       title="Repeat / Duplicate selected chord (D)"
                     >
@@ -462,11 +462,11 @@ export function ProgressionEditor({
                     </button>
                   )}
 
-                  {/* Add Slot Button (Desktop Only) */}
+                  {/* Add Slot Button */}
                   <button
                     type="button"
                     onClick={() => onAdd(key.tonic)}
-                    className="hidden sm:flex w-24 sm:w-32 md:w-36 shrink-0 flex-col items-center justify-center gap-2 rounded-xl sm:rounded-2xl border-2 border-dashed border-border bg-background/40 text-muted-foreground transition-all hover:border-amber-500/60 hover:bg-amber-500/5 hover:text-amber-300 hover:scale-[1.02] cursor-pointer p-2"
+                    className="flex w-full min-h-[85px] sm:min-h-[140px] flex-col items-center justify-center gap-2 rounded-xl sm:rounded-2xl border-2 border-dashed border-border bg-background/40 text-muted-foreground transition-all hover:border-amber-500/60 hover:bg-amber-500/5 hover:text-amber-300 hover:scale-[1.02] cursor-pointer p-2"
                     aria-label="Add chord to section"
                   >
                     <div className="flex size-8 items-center justify-center rounded-xl bg-muted">
