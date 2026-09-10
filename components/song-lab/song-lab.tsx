@@ -29,7 +29,7 @@ import { AVAILABLE_INSTRUMENTS, type InstrumentId } from "@/lib/audio/soundfont-
 import { createId } from "@/lib/storage/local-store"
 import type { ChordEntry, Section, Song, Note } from "@/lib/music/types"
 import { Button } from "@/components/ui/button"
-import { X } from "lucide-react"
+import { X, Piano, Layers, Music4, Search, ListMusic } from "lucide-react"
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts"
 import { cn } from "@/lib/utils"
 
@@ -44,6 +44,7 @@ interface SongLabProps {
   canRedo: boolean
   onImportSong?: (songData: ParsedSongResult) => void
   showPiano?: boolean
+  onTogglePiano?: () => void
   showInspector?: boolean
   onToggleInspector?: () => void
 }
@@ -64,6 +65,7 @@ export function SongLab({
   canRedo,
   onImportSong,
   showPiano = true,
+  onTogglePiano,
   showInspector = true,
   onToggleInspector,
 }: SongLabProps) {
@@ -99,6 +101,7 @@ export function SongLab({
   const [isInstrumentLoading, setIsInstrumentLoading] = useState(false)
   const [rhythm, setRhythm] = useState<RhythmPattern>("pulse")
   const [isRehearsing, setIsRehearsing] = useState(false)
+  const [twoHanded, setTwoHanded] = useState(false)
 
   // Resizable panel dimensions
   const [leftWidth, setLeftWidth] = useState(210)
@@ -785,11 +788,27 @@ export function SongLab({
             <div className="flex items-center justify-between px-3 py-1 bg-secondary/80 border-b border-border/40">
               <button
                 type="button"
-                onClick={() => onToggleInspector?.()}
+                onClick={() => onTogglePiano?.()}
                 className="flex items-center gap-1.5 font-mono text-xs font-bold text-muted-foreground hover:text-foreground cursor-pointer"
               >
-                <span>🎹 Virtual Piano</span>
+                <Piano className="size-3.5 text-primary" />
+                <span>Virtual Piano</span>
                 <span className="text-[10px] text-amber-400 font-normal">({showPiano ? "Expanded" : "Collapsed"})</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setTwoHanded((v) => !v)}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-lg border px-2.5 py-0.5 font-mono text-[11px] font-bold transition-all cursor-pointer",
+                  twoHanded
+                    ? "border-cyan-400/80 bg-cyan-400/15 text-cyan-300 shadow-xs"
+                    : "border-border/60 bg-background/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+                title="Toggle 2-Handed Mode (adds Left Hand lower register notes C2/C3)"
+              >
+                <Layers className="size-3" />
+                <span>2-Handed Mode ({twoHanded ? "ON" : "OFF"})</span>
               </button>
             </div>
             {showPiano && (
@@ -799,6 +818,7 @@ export function SongLab({
                   rootMidi={rootMidi}
                   bassMidi={bassMidi}
                   accidental={accidental}
+                  twoHanded={twoHanded}
                 />
               </div>
             )}
@@ -829,7 +849,7 @@ export function SongLab({
         >
           <div className="mb-2 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2">
-              <span className="text-lg">🎹</span>
+              <Piano className="size-5 text-primary" />
               <div>
                 <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-zinc-200">
                   Interactive Keyboard
@@ -837,9 +857,19 @@ export function SongLab({
                 <p className="text-[10px] text-zinc-400">Hear voicings and touch keys directly</p>
               </div>
             </div>
-            <span className="font-mono text-xs text-amber-400 font-bold px-2.5 py-1 rounded-full bg-amber-400/10 border border-amber-400/30">
-              {parsedSelected?.symbol ? `Chord: ${parsedSelected.symbol}` : "88-Key Piano"}
-            </span>
+            <button
+              type="button"
+              onClick={() => setTwoHanded((v) => !v)}
+              className={cn(
+                "flex items-center gap-1 rounded-full border px-2.5 py-1 font-mono text-[10px] font-bold transition-all cursor-pointer",
+                twoHanded
+                  ? "border-cyan-400/80 bg-cyan-400/15 text-cyan-300"
+                  : "border-border/60 bg-background/50 text-muted-foreground",
+              )}
+            >
+              <Layers className="size-3" />
+              <span>2-Handed ({twoHanded ? "ON" : "OFF"})</span>
+            </button>
           </div>
           <div className="flex-1 flex flex-col justify-center py-2">
             <PianoKeyboard
@@ -847,6 +877,7 @@ export function SongLab({
               rootMidi={rootMidi}
               bassMidi={bassMidi}
               accidental={accidental}
+              twoHanded={twoHanded}
             />
           </div>
         </div>
@@ -905,7 +936,7 @@ export function SongLab({
               : "text-zinc-400 hover:text-foreground",
           )}
         >
-          <span className="text-base leading-none">🎼</span>
+          <Music4 className="size-4" />
           <span className="font-mono text-[10px] tracking-tight">Chords</span>
         </button>
 
@@ -919,7 +950,7 @@ export function SongLab({
               : "text-zinc-400 hover:text-foreground",
           )}
         >
-          <span className="text-base leading-none">🎹</span>
+          <Piano className="size-4" />
           <span className="font-mono text-[10px] tracking-tight">Piano</span>
         </button>
 
@@ -933,7 +964,7 @@ export function SongLab({
               : "text-zinc-400 hover:text-foreground",
           )}
         >
-          <span className="text-base leading-none">🔍</span>
+          <Search className="size-4" />
           <span className="font-mono text-[10px] tracking-tight">Voice</span>
         </button>
 
@@ -947,7 +978,7 @@ export function SongLab({
               : "text-zinc-400 hover:text-foreground",
           )}
         >
-          <span className="text-base leading-none">📑</span>
+          <ListMusic className="size-4" />
           <span className="font-mono text-[10px] tracking-tight">Song</span>
         </button>
       </nav>

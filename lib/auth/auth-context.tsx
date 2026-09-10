@@ -121,7 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         createdAt: Date.now(),
       }
       persistUser(authenticatedUser)
-      toast.success(`Welcome back, ${authenticatedUser.displayName}! 🎵`)
+      toast.success(`Welcome back, ${authenticatedUser.displayName}!`)
       closeAuthModal()
       return true
     } catch {
@@ -132,7 +132,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const found = accounts[email.toLowerCase().trim()]
         if (found && found.pass === pass) {
           persistUser(found.user)
-          toast.success(`Welcome back, ${found.user.displayName}! 🎵`)
+          toast.success(`Welcome back, ${found.user.displayName}!`)
           closeAuthModal()
           return true
         }
@@ -168,7 +168,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         createdAt: Date.now(),
       }
       persistUser(newUser)
-      toast.success(`Account created! Welcome to BandMate, ${newUser.displayName}! 🎉`)
+      toast.success(`Account created! Welcome to BandMate, ${newUser.displayName}!`)
       closeAuthModal()
       return true
     } catch {
@@ -193,7 +193,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       accounts[cleanEmail] = { pass, user: newUser }
       localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts))
       persistUser(newUser)
-      toast.success(`Account created! Welcome to BandMate, ${newUser.displayName}! 🎉`)
+      toast.success(`Account created! Welcome to BandMate, ${newUser.displayName}!`)
       closeAuthModal()
       return true
     }
@@ -213,7 +213,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       persistUser(googleUser)
-      toast.success(`Signed in with Google as ${googleUser.displayName}! 🚀`)
+      toast.success(`Signed in with Google as ${googleUser.displayName}!`)
       closeAuthModal()
       return true
     } catch (err: any) {

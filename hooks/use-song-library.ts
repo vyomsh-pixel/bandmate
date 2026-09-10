@@ -142,12 +142,16 @@ export function useSongLibrary(userId: string = "guest-user") {
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const updateSong = useCallback(
-    (id: string, patch: Partial<Song> | ((song: Song) => Partial<Song>)) => {
+    (id: string, patch: Partial<Song> | ((song: Song) => Partial<Song>), options: { immediate?: boolean } = {}) => {
       setSongs((prev) => {
         const next = prev.map((s) => {
           if (s.id !== id) return s
           
           if (s.id === currentSongRef.current?.id) {
+             if (options.immediate && debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current)
+                debounceTimerRef.current = null
+             }
              if (!debounceTimerRef.current) {
                 undoStack.current = [...undoStack.current, s].slice(-50)
                 redoStack.current = []
@@ -155,9 +159,11 @@ export function useSongLibrary(userId: string = "guest-user") {
                 setRedoCount(0)
              }
              if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
-             debounceTimerRef.current = setTimeout(() => {
-                debounceTimerRef.current = null
-             }, 500)
+             if (!options.immediate) {
+               debounceTimerRef.current = setTimeout(() => {
+                  debounceTimerRef.current = null
+               }, 500)
+             }
           }
 
           const changes = typeof patch === "function" ? patch(s) : patch
@@ -222,7 +228,7 @@ export function useSongLibrary(userId: string = "guest-user") {
 
   // Convenience helpers for sections editing.
   const setSections = useCallback(
-    (id: string, sections: Section[]) => updateSong(id, { sections }),
+    (id: string, sections: Section[]) => updateSong(id, { sections }, { immediate: true }),
     [updateSong],
   )
 

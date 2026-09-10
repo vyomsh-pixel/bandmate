@@ -40,8 +40,19 @@ export function generateLeadSheetText(song: Song): string {
     section.chords.forEach((c, idx) => {
       const harm = getHarmonicFunction(c.symbol, keyObj)
       const capoShape = capoRec ? ` (${chordShapeForCapo(c.symbol, capoRec.fret, keyObj.accidental)})` : ""
-      const symbolText = `${c.symbol}${capoShape}`.padEnd(14)
-      const romanText = `${harm.roman || "-"}`.padEnd(14)
+
+      const measureStart = Math.floor(idx / 4) * 4
+      const measureChords = section.chords.slice(measureStart, measureStart + 4)
+      const maxLen = Math.max(
+        14,
+        ...measureChords.map((mc) => {
+          const cs = capoRec ? ` (${chordShapeForCapo(mc.symbol, capoRec.fret, keyObj.accidental)})` : ""
+          return `${mc.symbol}${cs}`.length + 3
+        })
+      )
+
+      const symbolText = `${c.symbol}${capoShape}`.padEnd(maxLen)
+      const romanText = `${harm.roman || "-"}`.padEnd(maxLen)
 
       chordRow += symbolText
       romanRow += romanText

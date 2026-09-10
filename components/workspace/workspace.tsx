@@ -103,6 +103,7 @@ export function Workspace() {
                 canRedo={lib.canRedo}
                 onImportSong={handleImportSong}
                 showPiano={showPiano}
+                onTogglePiano={() => setShowPiano((v) => !v)}
                 showInspector={showInspector}
                 onToggleInspector={() => setShowInspector((v) => !v)}
               />

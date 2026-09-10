@@ -258,6 +258,14 @@ class AudioEngine {
       gain.connect(filter)
       filter.connect(this.master)
 
+      osc.onended = () => {
+        try {
+          osc.disconnect()
+          gain.disconnect()
+          filter.disconnect()
+        } catch {}
+      }
+
       osc.start(when)
       osc.stop(end + 0.1)
       return
@@ -302,6 +310,15 @@ class AudioEngine {
     gain.connect(filter)
     filter.connect(this.master)
 
+    osc1.onended = () => {
+      try {
+        osc1.disconnect()
+        osc2.disconnect()
+        gain.disconnect()
+        filter.disconnect()
+      } catch {}
+    }
+
     osc1.start(when)
     osc2.start(when)
     osc1.stop(end + release + 0.05)
@@ -322,6 +339,14 @@ class AudioEngine {
     gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.05)
     osc.connect(gain)
     gain.connect(this.master)
+
+    osc.onended = () => {
+      try {
+        osc.disconnect()
+        gain.disconnect()
+      } catch {}
+    }
+
     osc.start(when)
     osc.stop(when + 0.06)
   }

@@ -40,14 +40,16 @@ export function loadUserSongs(uid: string): Song[] {
   }
 }
 
-/** Persist songs for a specific user ID. */
-export function saveUserSongs(uid: string, songs: Song[]): void {
-  if (!isBrowser()) return
+/** Persist songs for a specific user ID. Returns boolean indicating success. */
+export function saveUserSongs(uid: string, songs: Song[]): boolean {
+  if (!isBrowser()) return false
   try {
     const userKey = getUserSongsKey(uid)
     window.localStorage.setItem(userKey, JSON.stringify(songs))
-  } catch {
-    // Fail silently on quota limit
+    return true
+  } catch (e) {
+    console.warn("[cloud-sync] LocalStorage quota limit or save error:", e)
+    return false
   }
 }
 

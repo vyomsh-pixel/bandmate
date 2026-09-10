@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState, useRef } from "react"
-import { ChevronLeft, ChevronRight, Sparkles, Anchor, RotateCcw } from "lucide-react"
+import { ChevronLeft, ChevronRight, Sparkles, Anchor, RotateCcw, Guitar } from "lucide-react"
 import { GuitarFretboard } from "./guitar-fretboard"
 import { SoloCoach } from "./solo-coach"
 import type { Song } from "@/lib/music/types"
@@ -24,13 +24,13 @@ export function InstrumentLab({ song }: InstrumentLabProps) {
 
   // Ensure selection remains valid when song changes
   const activeEntry = allChords.find((c) => c.id === activeChordId) ?? allChords[0] ?? null
-  const concertChord = activeEntry ? parseChord(activeEntry.symbol) : null
-  const keyObj = makeKey(song.keyTonic, song.keyMode)
 
-  // Auto Capo calculation: find optimal fret to maximize open chords
-  const chordSymbols = useMemo(() => allChords.map((c) => c.symbol), [allChords])
-  const capoSuggestions = useMemo(() => suggestCapo(chordSymbols, keyObj), [chordSymbols, keyObj])
+  const keyObj = useMemo(() => makeKey(song.keyTonic, song.keyMode), [song.keyTonic, song.keyMode])
+  const allSymbols = useMemo(() => allChords.map((c) => c.symbol), [allChords])
+  const capoSuggestions = useMemo(() => suggestCapo(allSymbols, keyObj), [allSymbols, keyObj])
   const bestCapoSuggestion = capoSuggestions.find((s) => s.fret > 0 && s.score > 0) ?? null
+
+  const concertChord = useMemo(() => (activeEntry ? parseChord(activeEntry.symbol) : null), [activeEntry?.symbol])
 
   // Calculate Capo chord shape when capo is active
   const capoSymbol = useMemo(() => {
@@ -108,7 +108,7 @@ export function InstrumentLab({ song }: InstrumentLabProps) {
           {/* Header Bar with Capo Quick Controls */}
           <div className="flex flex-wrap items-center justify-between gap-2 shrink-0">
             <div className="flex items-center gap-2">
-              <span className="text-lg">🎸</span>
+              <Guitar className="size-5 text-amber-400" />
               <h2 className="text-base sm:text-xl font-black tracking-tight text-white">Guitar Workspace</h2>
             </div>
 
@@ -266,7 +266,9 @@ export function InstrumentLab({ song }: InstrumentLabProps) {
 
               {/* Touch Swipe Feedback Hint Bar */}
               <div className="flex items-center justify-center gap-1 text-[9px] font-mono font-bold text-zinc-300 pt-0.5">
-                <span>👈 Swipe left / right to change chord 👉</span>
+                <ChevronLeft className="size-3 text-amber-400" />
+                <span>Swipe left / right to change chord</span>
+                <ChevronRight className="size-3 text-amber-400" />
               </div>
             </div>
 

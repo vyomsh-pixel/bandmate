@@ -27,6 +27,8 @@ interface PianoKeyboardProps {
   /** Optional separate MIDI note for slash bass. */
   bassMidi?: number | null
   accidental?: Accidental
+  /** Optional 2-Handed Mode: doubles bass/root in lower left-hand register (C2/C3). */
+  twoHanded?: boolean
 }
 
 const WHITE_PCS = [0, 2, 4, 5, 7, 9, 11]
@@ -39,8 +41,46 @@ export function PianoKeyboard({
   rootMidi = null,
   bassMidi = null,
   accidental = "sharp",
+  twoHanded = false,
 }: PianoKeyboardProps) {
-  const activeSet = useMemo(() => new Set(activeMidis), [activeMidis])
+  // Compute left-hand lower register notes when twoHanded mode is active
+  const { activeSet, lhBassMidi, lhRootMidi, lhMidisSet } = useMemo(() => {
+    const active = new Set(activeMidis)
+    const lhMidis = new Set<number>()
+    let lhBass: number | null = null
+    let lhRoot: number | null = null
+
+    if (twoHanded) {
+      const targetBass = bassMidi ?? rootMidi ?? (activeMidis.length > 0 ? Math.min(...activeMidis) : null)
+      if (targetBass !== null) {
+        // Compute left-hand bass octave (C2-C3 range: 36-48)
+        let lb = targetBass
+        while (lb >= 48) lb -= 12
+        while (lb < 36 && lb + 12 <= 48) lb += 12
+        lhBass = lb
+        lhMidis.add(lb)
+        active.add(lb)
+
+        const targetRoot = rootMidi ?? targetBass
+        let lr = targetRoot
+        while (lr >= 48) lr -= 12
+        while (lr < 36 && lr + 12 <= 48) lr += 12
+        if (lr !== lb) {
+          lhRoot = lr
+          lhMidis.add(lr)
+          active.add(lr)
+        }
+      }
+    }
+
+    return {
+      activeSet: active,
+      lhBassMidi: lhBass,
+      lhRootMidi: lhRoot,
+      lhMidisSet: lhMidis,
+    }
+  }, [activeMidis, rootMidi, bassMidi, twoHanded])
+
   const scrollRef = useRef<HTMLDivElement>(null)
   
   // Track pressed keys for computer keyboard input / mouse interaction
@@ -155,6 +195,8 @@ export function PianoKeyboard({
           <div className="absolute inset-0 flex gap-0.5">
             {whiteKeys.map((key) => {
               const isActive = activeSet.has(key.midi) || pressedKeys.has(key.midi)
+              const isLhBass = lhBassMidi === key.midi
+              const isLhRoot = !isLhBass && lhRootMidi === key.midi
               const isBass = bassMidi === key.midi
               const isRoot = !isBass && rootMidi === key.midi
 
@@ -200,24 +242,34 @@ export function PianoKeyboard({
                   className={cn(
                     "relative flex-1 rounded-b-md border border-black/30 border-t-0 transition-all duration-75 shadow-xs touch-manipulation",
                     "flex items-end justify-center pb-2 cursor-pointer",
-                    isBass
-                      ? "bg-emerald-400 text-black font-extrabold shadow-[0_0_15px_rgba(52,211,153,0.8)_inset]"
-                      : isRoot
-                        ? "bg-amber-400 text-black font-extrabold shadow-[0_0_15px_rgba(251,191,36,0.8)_inset]"
-                        : isActive
-                          ? "bg-amber-300 text-black font-bold shadow-[0_0_10px_rgba(252,211,77,0.5)_inset]"
-                          : "bg-stone-200 hover:bg-stone-100 active:bg-stone-300 text-stone-700",
+                    isLhBass || isLhRoot
+                      ? "bg-cyan-400 text-black font-extrabold shadow-[0_0_15px_rgba(34,211,238,0.8)_inset]"
+                      : isBass
+                        ? "bg-emerald-400 text-black font-extrabold shadow-[0_0_15px_rgba(52,211,153,0.8)_inset]"
+                        : isRoot
+                          ? "bg-amber-400 text-black font-extrabold shadow-[0_0_15px_rgba(251,191,36,0.8)_inset]"
+                          : isActive
+                            ? "bg-amber-300 text-black font-bold shadow-[0_0_10px_rgba(252,211,77,0.5)_inset]"
+                            : "bg-stone-200 hover:bg-stone-100 active:bg-stone-300 text-stone-700",
                   )}
                 >
                   <span
                     className={cn(
                       "font-mono text-[10px] leading-none pointer-events-none",
-                      isActive || isRoot || isBass ? "opacity-100 font-extrabold" : "opacity-60",
+                      isActive || isRoot || isBass || isLhBass || isLhRoot ? "opacity-100 font-extrabold" : "opacity-60",
                     )}
                   >
                     {key.label}
                   </span>
-                  {isBass ? (
+                  {isLhBass ? (
+                    <span className="absolute top-1.5 left-1/2 -translate-x-1/2 text-[7px] font-mono font-black tracking-tighter text-black bg-cyan-300 px-0.5 py-0.2 rounded-xs uppercase shadow-xs">
+                      LH BASS
+                    </span>
+                  ) : isLhRoot ? (
+                    <span className="absolute top-1.5 left-1/2 -translate-x-1/2 text-[7px] font-mono font-black tracking-tighter text-black bg-cyan-200 px-0.5 py-0.2 rounded-xs uppercase shadow-xs">
+                      LH ROOT
+                    </span>
+                  ) : isBass ? (
                     <span className="absolute top-1.5 left-1/2 -translate-x-1/2 text-[7px] font-mono font-black tracking-tighter text-black bg-emerald-300 px-0.5 py-0.2 rounded-xs uppercase shadow-xs">
                       BASS
                     </span>
@@ -235,6 +287,8 @@ export function PianoKeyboard({
           <div className="pointer-events-none absolute inset-0">
             {blackKeys.map((key) => {
               const isActive = activeSet.has(key.midi) || pressedKeys.has(key.midi)
+              const isLhBass = lhBassMidi === key.midi
+              const isLhRoot = !isLhBass && lhRootMidi === key.midi
               const isBass = bassMidi === key.midi
               const isRoot = !isBass && rootMidi === key.midi
               const leftPct = ((key.leftIndex + 1) / whiteKeys.length) * 100
@@ -281,20 +335,22 @@ export function PianoKeyboard({
                   aria-label={`Play ${pcToName(midiToPc(key.midi), accidental)}`}
                   className={cn(
                     "pointer-events-auto absolute top-0 h-[60%] rounded-b-md border border-black/90 transition-all duration-75 z-10 shadow-md cursor-pointer touch-manipulation",
-                    isBass
-                      ? "bg-emerald-400 text-black font-extrabold shadow-[0_0_12px_rgba(52,211,153,0.9)]"
-                      : isRoot
-                        ? "bg-amber-400 text-black font-extrabold shadow-[0_0_12px_rgba(251,191,36,0.9)]"
-                        : isActive
-                          ? "bg-amber-300 text-black font-bold shadow-[0_0_8px_rgba(252,211,77,0.7)]"
-                          : "bg-stone-900 hover:bg-stone-800 active:bg-black",
+                    isLhBass || isLhRoot
+                      ? "bg-cyan-400 text-black font-extrabold shadow-[0_0_15px_rgba(34,211,238,0.9)]"
+                      : isBass
+                        ? "bg-emerald-400 text-black font-extrabold shadow-[0_0_15px_rgba(52,211,153,0.9)]"
+                        : isRoot
+                          ? "bg-amber-400 text-black font-extrabold shadow-[0_0_15px_rgba(251,191,36,0.9)]"
+                          : isActive
+                            ? "bg-amber-300 text-black font-bold shadow-[0_0_10px_rgba(252,211,77,0.7)]"
+                            : "bg-zinc-900 hover:bg-zinc-800 active:bg-zinc-950 text-zinc-100",
                   )}
                   style={{
-                    width: `${widthPct * 0.65}%`,
-                    left: `${leftPct - widthPct * 0.325}%`,
+                    left: `calc(${leftPct}% - ${widthPct * 0.35}%)`,
+                    width: `${widthPct * 0.7}%`,
                   }}
                 >
-                  {(isActive || isRoot || isBass) && (
+                  {(isActive || isRoot || isBass || isLhBass || isLhRoot) && (
                     <div className="absolute bottom-1 w-full text-center">
                       <span className="text-[9px] font-mono font-black text-black pointer-events-none">
                         {pcToName(midiToPc(key.midi), accidental)}

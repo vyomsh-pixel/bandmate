@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
-import { AlertTriangle, Check, ArrowRight, Wand2, X } from "lucide-react"
+import { AlertTriangle, Check, ArrowRight, Wand2, X, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { parseSongFromDescription, type ParsedSongResult } from "@/lib/music/song-parser"
 import { cn } from "@/lib/utils"
@@ -139,7 +139,10 @@ export function SongImportModal({ onImport, triggerClassName }: SongImportModalP
             placeholder="Paste song details e.g. Key: C Major | BPM: 120 | Chords: Am7 -> Dm7 -> G7 -> Cmaj7..."
           />
           <div className="flex items-center justify-between text-[10px] font-mono text-zinc-400 pt-1">
-            <span>⚡ Real-time chord extraction active as you type or paste</span>
+            <div className="flex items-center gap-1.5">
+              <Zap className="size-3 text-amber-400" />
+              <span>Real-time chord extraction active as you type or paste</span>
+            </div>
             <Button
               type="button"
               size="sm"
@@ -152,7 +155,7 @@ export function SongImportModal({ onImport, triggerClassName }: SongImportModalP
               className="h-6 px-2.5 text-[10px] font-bold border-amber-400/40 bg-amber-400/10 text-amber-300 hover:bg-amber-400/20 cursor-pointer gap-1"
             >
               <Wand2 className="size-3" />
-              <span>⚡ Refresh Parser</span>
+              <span>Refresh Parser</span>
             </Button>
           </div>
         </div>

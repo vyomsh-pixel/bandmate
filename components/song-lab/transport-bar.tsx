@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useState, useCallback, useRef } from "react"
-import { Play, Square, Repeat, Volume2, Volume1, VolumeX, Timer, Presentation, Plus, Minus, Sparkles, Activity, Sliders } from "lucide-react"
+import { Play, Square, Repeat, Volume2, Volume1, VolumeX, Timer, Presentation, Plus, Minus, Sparkles, Activity, Sliders, Piano, Guitar, Zap, Loader2, Music } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import {
@@ -27,11 +27,24 @@ import { AVAILABLE_INSTRUMENTS, type InstrumentId } from "@/lib/audio/soundfont-
 import type { RhythmPattern } from "@/lib/audio/audio-engine"
 import { cn } from "@/lib/utils"
 
+function renderInstIcon(icon: string) {
+  if (icon === "piano") return <Piano className="size-3.5 text-amber-400 shrink-0" />
+  if (icon === "guitar" || icon === "bass") return <Guitar className="size-3.5 text-amber-400 shrink-0" />
+  return <Music className="size-3.5 text-amber-400 shrink-0" />
+}
+
+function renderRhythmIcon(key: string) {
+  if (key === "pulse") return <Zap className="size-3.5 text-amber-400 shrink-0" />
+  if (key === "pop") return <Guitar className="size-3.5 text-amber-400 shrink-0" />
+  if (key === "arpeggio") return <Sparkles className="size-3.5 text-amber-400 shrink-0" />
+  return <Activity className="size-3.5 text-amber-400 shrink-0" />
+}
+
 export const RHYTHM_PATTERNS = [
-  { id: "pulse" as const, name: "Pulse (OneMotion)", icon: "⚡", description: "Rhythmic pulse on every beat" },
-  { id: "sustain" as const, name: "Sustain (Hold)", icon: "〰️", description: "Single sustained chord per bar" },
-  { id: "pop" as const, name: "Bass & Strum", icon: "🎸", description: "Bass on beat 1, chords on offbeats" },
-  { id: "arpeggio" as const, name: "Arpeggiator", icon: "✨", description: "Rolling chord notes in sequence" },
+  { id: "pulse" as const, name: "Pulse (OneMotion)", iconKey: "pulse", description: "Rhythmic pulse on every beat" },
+  { id: "sustain" as const, name: "Sustain (Hold)", iconKey: "sustain", description: "Single sustained chord per bar" },
+  { id: "pop" as const, name: "Bass & Strum", iconKey: "pop", description: "Bass on beat 1, chords on offbeats" },
+  { id: "arpeggio" as const, name: "Arpeggiator", iconKey: "arpeggio", description: "Rolling chord notes in sequence" },
 ]
 
 interface TransportBarProps {
@@ -260,8 +273,8 @@ export function TransportBar({
 
         {/* Compact Instrument Dropdown */}
         <Select value={instrument} onValueChange={(val) => onInstrumentChange?.(val as InstrumentId)}>
-          <SelectTrigger className="h-8 flex-1 min-w-0 max-w-[125px] px-2 gap-1 text-xs font-bold bg-background/50 border-border/60 rounded-lg cursor-pointer">
-            {isInstrumentLoading ? <span className="animate-spin text-xs">⏳</span> : <span>{currentInst.icon}</span>}
+          <SelectTrigger className="h-8 flex-1 min-w-0 max-w-[125px] px-2 gap-1.5 text-xs font-bold bg-background/50 border-border/60 rounded-lg cursor-pointer">
+            {isInstrumentLoading ? <Loader2 className="size-3.5 animate-spin text-amber-400 shrink-0" /> : renderInstIcon(currentInst.icon)}
             <span className="truncate text-[11px] font-medium">
               {currentInst.name.replace("Concert ", "").replace(" Vintage", "")}
             </span>
@@ -270,7 +283,7 @@ export function TransportBar({
             {AVAILABLE_INSTRUMENTS.map((inst) => (
               <SelectItem key={inst.id} value={inst.id} className="cursor-pointer py-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-base">{inst.icon}</span>
+                  {renderInstIcon(inst.icon)}
                   <div className="flex flex-col text-left">
                     <span className="text-xs font-bold">{inst.name}</span>
                     <span className="text-[10px] text-muted-foreground">{inst.description}</span>
@@ -374,7 +387,7 @@ export function TransportBar({
                       rhythm === p.id ? "bg-primary/20 border-primary text-primary font-bold" : "border-border/60 text-muted-foreground hover:bg-muted",
                     )}
                   >
-                    <span>{p.icon}</span>
+                    {renderRhythmIcon(p.iconKey)}
                     <span className="truncate">{p.name.split(" ")[0]}</span>
                   </button>
                 ))}
@@ -476,9 +489,9 @@ export function TransportBar({
               aria-label="Select instrument sound"
             >
               {isInstrumentLoading ? (
-                <span className="animate-spin text-xs">⏳</span>
+                <Loader2 className="size-3.5 animate-spin text-amber-400 shrink-0" />
               ) : (
-                <span>{currentInst.icon}</span>
+                renderInstIcon(currentInst.icon)
               )}
               <span className="hidden sm:inline">{currentInst.name}</span>
               <span className="sm:hidden text-[11px] truncate">{currentInst.name.split(" ")[0]}</span>
@@ -487,7 +500,7 @@ export function TransportBar({
               {AVAILABLE_INSTRUMENTS.map((inst) => (
                 <SelectItem key={inst.id} value={inst.id} className="cursor-pointer py-2">
                   <div className="flex items-center gap-2.5">
-                    <span className="text-base shrink-0">{inst.icon}</span>
+                    {renderInstIcon(inst.icon)}
                     <div className="flex flex-col text-left">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-foreground">{inst.name}</span>
@@ -510,14 +523,14 @@ export function TransportBar({
               aria-label="Select playback rhythm style"
               title="Playback Rhythm Style (OneMotion Pulse, Sustain, etc.)"
             >
-              <span>{currentRhythm.icon}</span>
+              {renderRhythmIcon(currentRhythm.iconKey)}
               <span className="hidden md:inline">{currentRhythm.name}</span>
             </SelectTrigger>
             <SelectContent align="center" className="min-w-[210px] z-50">
               {RHYTHM_PATTERNS.map((p) => (
                 <SelectItem key={p.id} value={p.id} className="cursor-pointer py-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm">{p.icon}</span>
+                    {renderRhythmIcon(p.iconKey)}
                     <div className="flex flex-col text-left">
                       <span className="text-xs font-bold text-foreground">{p.name}</span>
                       <span className="text-[10px] text-muted-foreground">{p.description}</span>

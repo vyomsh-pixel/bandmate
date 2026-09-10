@@ -90,6 +90,8 @@ export function parseChord(input: string): ParsedChord {
     if (pc !== null) {
       bassPc = pc
       bassName = bassRaw
+    } else {
+      return { symbol, ...INVALID }
     }
   }
 
