@@ -19,7 +19,7 @@ import { PianoKeyboard } from "./piano-keyboard"
 import { TransportBar } from "./transport-bar"
 import { RehearsalMode } from "./rehearsal-mode"
 import { parseChord } from "@/lib/music/chord-parser"
-import { voiceChord, invertVoicing, playableVoicing } from "@/lib/music/chords"
+import { voiceChord, invertVoicing, playableVoicing, getVoicingMidis } from "@/lib/music/chords"
 import { suggestSmoothInversion } from "@/lib/music/voice-leading"
 import { keyAccidental, MAJOR_TONICS, MINOR_TONICS } from "@/lib/music/scales"
 import { transposeProgression, transposeSymbol, semitonesBetween } from "@/lib/music/transpose"
@@ -205,13 +205,15 @@ export function SongLab({
       rhythm,
       chords: allChords.map((entry) => {
         const parsed = parseChord(entry.symbol)
-        const midis = parsed.valid
-          ? playableVoicing(parsed, { octave: 4, accidental: acc, inversion: entry.inversion ?? 0 }).map((n) => n.midi)
-          : []
+        const midis = getVoicingMidis(
+          parsed,
+          { octave: 4, accidental: acc, inversion: entry.inversion ?? 0 },
+          twoHanded
+        )
         return { midis, beats: Math.max(1, entry.beats) }
       }),
     }
-  }, [song.bpm, song.beatsPerBar, song.keyTonic, song.keyMode, allChords, loop, metronome, rhythm])
+  }, [song.bpm, song.beatsPerBar, song.keyTonic, song.keyMode, allChords, loop, metronome, rhythm, twoHanded])
 
   const stopPlayback = useCallback(() => {
     getAudioEngine().stop()
@@ -275,10 +277,14 @@ export function SongLab({
     engine.ensureContext().then(() => {
       engine.setMasterVolume(volume)
       const currentInv = selectedEntry?.inversion ?? inversion
-      const midis = playableVoicing(parsedSelected, { octave: 4, accidental, inversion: currentInv }).map((n) => n.midi)
+      const midis = getVoicingMidis(
+        parsedSelected,
+        { octave: 4, accidental, inversion: currentInv },
+        twoHanded
+      )
       engine.playChord(midis, { duration: 1.4 })
     })
-  }, [parsedSelected, accidental, selectedEntry?.inversion, inversion, volume])
+  }, [parsedSelected, accidental, selectedEntry?.inversion, inversion, volume, twoHanded])
 
   // ---- Chord editing ---------------------------------------------------------
   const updateSections = useCallback(

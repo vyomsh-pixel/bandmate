@@ -6,7 +6,7 @@
  * engine, and later by Instrument Lab / Gesture Play.
  */
 
-import { makeNote } from "./notes"
+import { makeNote, midiToPc } from "./notes"
 import type { Accidental, Note, ParsedChord } from "./types"
 
 export interface Voicing {
@@ -96,4 +96,39 @@ export function playableVoicing(
     return [bass, ...filtered]
   }
   return voiced
+}
+
+/**
+ * Return MIDI note numbers for a chord voicing.
+ * If twoHanded is true, appends lower-register left-hand bass/root notes (C2/C3 register, MIDI 36-48).
+ */
+export function getVoicingMidis(
+  parsed: ParsedChord | null,
+  options: { octave?: number; accidental?: Accidental; inversion?: number } = {},
+  twoHanded = false,
+): number[] {
+  if (!parsed?.valid) return []
+  const rhNotes = playableVoicing(parsed, options)
+  const rhMidis = rhNotes.map((n) => n.midi)
+  if (!twoHanded || rhMidis.length === 0) return rhMidis
+
+  const bassMidi = parsed.bassPc !== null ? rhMidis.find((m) => midiToPc(m) === parsed.bassPc) ?? null : null
+  const rootMidi = rhMidis.find((m) => midiToPc(m) === parsed.rootPc) ?? null
+  const targetBass = bassMidi ?? rootMidi ?? Math.min(...rhMidis)
+
+  let lb = targetBass
+  while (lb >= 48) lb -= 12
+  while (lb < 36 && lb + 12 <= 48) lb += 12
+
+  const targetRoot = rootMidi ?? targetBass
+  let lr = targetRoot
+  while (lr >= 48) lr -= 12
+  while (lr < 36 && lr + 12 <= 48) lr += 12
+
+  const lhMidis: number[] = [lb]
+  if (lr !== lb) {
+    lhMidis.push(lr)
+  }
+
+  return Array.from(new Set([...lhMidis, ...rhMidis])).sort((a, b) => a - b)
 }

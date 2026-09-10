@@ -5,7 +5,7 @@ import { detectKey, getRomanNumeral } from "../analysis"
 import { makeKey, diatonicChords } from "../scales"
 import { generateGuitarVoicings } from "../guitar-voicings"
 import { voiceLeadingDistance, suggestSmoothInversion } from "../voice-leading"
-import { voiceChord, playableVoicing } from "../chords"
+import { voiceChord, playableVoicing, getVoicingMidis } from "../chords"
 
 describe("Music Engine: Chord Parser", () => {
   it("parses 11th and 13th chords", () => {
@@ -212,4 +212,30 @@ describe("Music Engine: Scales & Slash Chords", () => {
     expect(getRomanNumeral("Db7", key)).toBe("subV7")
   })
 })
+
+describe("Music Engine: 2-Handed Mode Voicings", () => {
+  it("includes left-hand lower register bass note (C2/C3 range) when twoHanded is true", () => {
+    const am = parseChord("Am")
+    const standardMidis = getVoicingMidis(am, { octave: 4 }, false)
+    const twoHandedMidis = getVoicingMidis(am, { octave: 4 }, true)
+
+    // Standard RH: A4 (69), C5 (72), E5 (76)
+    expect(standardMidis).toEqual([69, 72, 76])
+
+    // 2-Handed: A2 (45) + RH notes
+    expect(twoHandedMidis).toEqual([45, 69, 72, 76])
+    expect(twoHandedMidis[0]).toBeGreaterThanOrEqual(36)
+    expect(twoHandedMidis[0]).toBeLessThanOrEqual(48)
+  })
+
+  it("handles slash chords correctly in 2-Handed mode with bass and root", () => {
+    const gOverB = parseChord("G/B")
+    const twoHandedMidis = getVoicingMidis(gOverB, { octave: 4 }, true)
+
+    // Should include lower register bass B note (47) and root G note (43)
+    expect(twoHandedMidis[0]).toBe(43) // G2
+    expect(twoHandedMidis[1]).toBe(47) // B2
+  })
+})
+
 
