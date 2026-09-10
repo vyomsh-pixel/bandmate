@@ -147,7 +147,7 @@ export function RehearsalMode({
                        className={cn(
                          "flex min-h-[105px] min-w-[105px] sm:min-h-[140px] sm:min-w-[140px] flex-col items-center justify-center rounded-2xl border-2 sm:border-4 p-3 sm:p-4 transition-all duration-300",
                          isCurrent 
-                           ? "border-primary bg-primary/10 shadow-[0_0_30px_rgba(var(--primary),0.3)] scale-105" 
+                           ? "border-primary bg-primary/10 shadow-[0_0_30px_rgba(251,191,36,0.3)] scale-105" 
                            : "border-border/50 bg-card/30"
                        )}
                      >

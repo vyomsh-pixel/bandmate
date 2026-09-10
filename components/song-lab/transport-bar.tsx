@@ -424,7 +424,7 @@ export function TransportBar({
 
           {/* LED Beat Bars */}
           <div
-            className="flex h-8.5 w-14 sm:w-24 items-center gap-0.5 sm:gap-1 rounded-lg border border-border/60 bg-background/50 p-1 sm:p-1.5 shadow-inner"
+            className="flex h-8 w-14 sm:w-24 items-center gap-0.5 sm:gap-1 rounded-lg border border-border/60 bg-background/50 p-1 sm:p-1.5 shadow-inner"
             role="status"
             aria-label={isPlaying ? `Beat ${(currentBeat ?? 0) + 1} of ${beatsPerBar}` : "Playback stopped"}
           >
@@ -464,7 +464,7 @@ export function TransportBar({
             size="sm"
             onClick={onToggleLoop}
             className={cn(
-              "h-8.5 rounded-lg px-2 sm:px-2.5 font-bold text-xs transition-all cursor-pointer",
+              "h-8 rounded-lg px-2 sm:px-2.5 font-bold text-xs transition-all cursor-pointer",
               !loop && "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
             )}
             aria-pressed={loop}
@@ -485,7 +485,7 @@ export function TransportBar({
           {/* Instrument Dropdown */}
           <Select value={instrument} onValueChange={(val) => onInstrumentChange?.(val as InstrumentId)}>
             <SelectTrigger
-              className="h-8.5 w-auto max-w-[125px] sm:max-w-none px-2 sm:px-2.5 gap-1.5 font-bold text-xs bg-background/50 border-border/80 rounded-lg cursor-pointer hover:border-primary/50 transition-colors"
+              className="h-8 w-auto max-w-[125px] sm:max-w-none px-2 sm:px-2.5 gap-1.5 font-bold text-xs bg-background/50 border-border/80 rounded-lg cursor-pointer hover:border-primary/50 transition-colors"
               aria-label="Select instrument sound"
             >
               {isInstrumentLoading ? (
@@ -504,7 +504,7 @@ export function TransportBar({
                     <div className="flex flex-col text-left">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-foreground">{inst.name}</span>
-                        <span className="text-[9px] font-mono text-muted-foreground uppercase px-1 py-0.2 rounded bg-muted/60">
+                        <span className="text-[9px] font-mono text-muted-foreground uppercase px-1 py-0.5 rounded bg-muted/60">
                           {inst.category}
                         </span>
                       </div>
@@ -519,7 +519,7 @@ export function TransportBar({
           {/* Playback Rhythm Pattern */}
           <Select value={rhythm} onValueChange={(val) => onRhythmChange?.(val as RhythmPattern)}>
             <SelectTrigger
-              className="h-8.5 w-auto px-2 sm:px-2.5 gap-1.5 font-bold text-xs bg-background/50 border-border/80 rounded-lg cursor-pointer hover:border-primary/50 transition-colors"
+              className="h-8 w-auto px-2 sm:px-2.5 gap-1.5 font-bold text-xs bg-background/50 border-border/80 rounded-lg cursor-pointer hover:border-primary/50 transition-colors"
               aria-label="Select playback rhythm style"
               title="Playback Rhythm Style (OneMotion Pulse, Sustain, etc.)"
             >
@@ -550,7 +550,7 @@ export function TransportBar({
             size="sm"
             onClick={onToggleMetronome}
             className={cn(
-              "h-8.5 rounded-lg px-2.5 text-xs font-bold shadow-xs transition-all cursor-pointer",
+              "h-8 rounded-lg px-2.5 text-xs font-bold shadow-xs transition-all cursor-pointer",
               !metronome && "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
             )}
             aria-pressed={metronome}
@@ -565,7 +565,7 @@ export function TransportBar({
             variant="ghost"
             size="sm"
             onClick={onToggleRehearsal}
-            className="h-8.5 rounded-lg px-2.5 text-xs font-bold text-muted-foreground hover:bg-muted/60 hover:text-foreground cursor-pointer"
+            className="h-8 rounded-lg px-2.5 text-xs font-bold text-muted-foreground hover:bg-muted/60 hover:text-foreground cursor-pointer"
             title="Open Fullscreen Rehearsal Mode"
           >
             <Presentation className="size-3.5" />

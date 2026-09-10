@@ -23,7 +23,7 @@ export function UserProfileButton({ savedSongsCount = 0 }: UserProfileButtonProp
         variant="outline"
         size="sm"
         onClick={() => openAuthModal("login")}
-        className="h-8.5 px-2.5 gap-1.5 rounded-xl border-amber-400/40 bg-amber-400/10 text-amber-400 hover:bg-amber-400/20 text-xs font-bold shadow-xs cursor-pointer"
+        className="h-8 px-2.5 gap-1.5 rounded-xl border-amber-400/40 bg-amber-400/10 text-amber-400 hover:bg-amber-400/20 text-xs font-bold shadow-xs cursor-pointer"
         title="Sign in or create an account to sync songs"
       >
         <LogIn className="size-3.5" />

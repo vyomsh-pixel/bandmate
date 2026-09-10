@@ -29,7 +29,7 @@ import { AVAILABLE_INSTRUMENTS, type InstrumentId } from "@/lib/audio/soundfont-
 import { createId } from "@/lib/storage/local-store"
 import type { ChordEntry, Section, Song, Note } from "@/lib/music/types"
 import { Button } from "@/components/ui/button"
-import { X, Piano, Layers, Music4, Search, ListMusic } from "lucide-react"
+import { X, Piano, Layers, Music4, Search, ListMusic, Plus } from "lucide-react"
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts"
 import { cn } from "@/lib/utils"
 
@@ -650,7 +650,8 @@ export function SongLab({
                 className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-border bg-secondary/50 px-2.5 py-1.5 font-mono text-xs font-bold text-muted-foreground transition-all hover:border-amber-500/50 hover:bg-secondary hover:text-amber-300 cursor-pointer shadow-xs"
                 title="Add a new section to the song"
               >
-                <span>+ Add Section</span>
+                <Plus className="size-3.5" />
+                <span>Add Section</span>
               </button>
             </div>
           </div>

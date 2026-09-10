@@ -537,7 +537,7 @@ export function ProgressionEditor({
                     className="h-8 gap-1.5 rounded-lg border-amber-500/40 bg-amber-500/10 text-xs font-bold text-amber-300 hover:bg-amber-500/20 cursor-pointer shadow-xs"
                   >
                     <Plus className="size-3.5" />
-                    <span>+ Add Section</span>
+                    <span>Add Section</span>
                     <ChevronDown className="size-3 ml-0.5 opacity-70" />
                   </Button>
                 </DropdownMenuTrigger>

@@ -240,8 +240,8 @@ export function PianoKeyboard({
                   }}
                   aria-label={`Play ${key.label}`}
                   className={cn(
-                    "relative flex-1 rounded-b-md border border-black/30 border-t-0 transition-all duration-75 shadow-xs touch-manipulation",
-                    "flex items-end justify-center pb-2 cursor-pointer",
+                    "relative flex-1 rounded-b-md border border-black/30 border-t-0 transition-all duration-75 shadow-xs touch-manipulation min-w-0",
+                    "flex flex-col justify-end items-center pb-1.5 cursor-pointer",
                     isLhBass || isLhRoot
                       ? "bg-cyan-400 text-black font-extrabold shadow-[0_0_15px_rgba(34,211,238,0.8)_inset]"
                       : isBass
@@ -253,31 +253,33 @@ export function PianoKeyboard({
                             : "bg-stone-200 hover:bg-stone-100 active:bg-stone-300 text-stone-700",
                   )}
                 >
-                  <span
-                    className={cn(
-                      "font-mono text-[10px] leading-none pointer-events-none",
-                      isActive || isRoot || isBass || isLhBass || isLhRoot ? "opacity-100 font-extrabold" : "opacity-60",
-                    )}
-                  >
-                    {key.label}
-                  </span>
-                  {isLhBass ? (
-                    <span className="absolute top-1.5 left-1/2 -translate-x-1/2 text-[7px] font-mono font-black tracking-tighter text-black bg-cyan-300 px-0.5 py-0.2 rounded-xs uppercase shadow-xs">
-                      LH BASS
+                  <div className="flex flex-col items-center gap-0.5 pointer-events-none z-0 min-w-0 px-0.5">
+                    {isLhBass ? (
+                      <span className="text-[7px] font-mono font-black tracking-tighter text-black bg-cyan-300 px-1 py-0.5 rounded-xs uppercase shadow-xs whitespace-nowrap">
+                        LH BASS
+                      </span>
+                    ) : isLhRoot ? (
+                      <span className="text-[7px] font-mono font-black tracking-tighter text-black bg-cyan-200 px-1 py-0.5 rounded-xs uppercase shadow-xs whitespace-nowrap">
+                        LH ROOT
+                      </span>
+                    ) : isBass ? (
+                      <span className="text-[7px] font-mono font-black tracking-tighter text-black bg-emerald-300 px-1 py-0.5 rounded-xs uppercase shadow-xs whitespace-nowrap">
+                        BASS
+                      </span>
+                    ) : isRoot ? (
+                      <span className="text-[7px] font-mono font-black tracking-tighter text-black bg-amber-200 px-1 py-0.5 rounded-xs uppercase shadow-xs whitespace-nowrap">
+                        ROOT
+                      </span>
+                    ) : null}
+                    <span
+                      className={cn(
+                        "font-mono text-[10px] leading-none pointer-events-none whitespace-nowrap",
+                        isActive || isRoot || isBass || isLhBass || isLhRoot ? "opacity-100 font-extrabold" : "opacity-60",
+                      )}
+                    >
+                      {key.label}
                     </span>
-                  ) : isLhRoot ? (
-                    <span className="absolute top-1.5 left-1/2 -translate-x-1/2 text-[7px] font-mono font-black tracking-tighter text-black bg-cyan-200 px-0.5 py-0.2 rounded-xs uppercase shadow-xs">
-                      LH ROOT
-                    </span>
-                  ) : isBass ? (
-                    <span className="absolute top-1.5 left-1/2 -translate-x-1/2 text-[7px] font-mono font-black tracking-tighter text-black bg-emerald-300 px-0.5 py-0.2 rounded-xs uppercase shadow-xs">
-                      BASS
-                    </span>
-                  ) : isRoot ? (
-                    <span className="absolute top-1.5 left-1/2 -translate-x-1/2 text-[7px] font-mono font-black tracking-tighter text-black bg-amber-200 px-0.5 py-0.2 rounded-xs uppercase shadow-xs">
-                      ROOT
-                    </span>
-                  ) : null}
+                  </div>
                 </button>
               )
             })}
