@@ -7,65 +7,128 @@
  */
 
 export type InstrumentId =
+  // Keyboards & Organs
   | "acoustic_grand_piano"
   | "bright_acoustic_piano"
   | "electric_piano_1"
   | "electric_piano_2"
+  | "harpsichord"
+  | "drawbar_organ"
+  | "rock_organ"
+  | "vibraphone"
+  | "marimba"
+  // Guitars
   | "acoustic_guitar_nylon"
   | "acoustic_guitar_steel"
   | "electric_guitar_clean"
-  | "string_ensemble_1"
+  | "electric_guitar_jazz"
+  | "overdriven_guitar"
+  | "distortion_guitar"
+  // Bass
   | "electric_bass_finger"
+  | "acoustic_bass"
+  | "slap_bass_1"
+  | "synth_bass_1"
+  // Strings & Orchestral
+  | "string_ensemble_1"
+  | "orchestral_harp"
+  | "pizzicato_strings"
+  | "choir_aahs"
+  // Brass & Winds
+  | "brass_section"
+  | "tenor_sax"
+  | "flute"
+  // Synths & Soundscapes
   | "synth_warm"
+  | "pad_1_new_age"
+  | "lead_2_sawtooth"
   | "synth_8bit"
 
 export interface InstrumentInfo {
   id: InstrumentId
   name: string
-  category: "Keyboards" | "Guitars" | "Strings" | "Bass" | "Synths"
+  category: "Keyboards" | "Guitars" | "Bass" | "Strings" | "Brass & Winds" | "Synths"
   icon: string
   description: string
 }
 
 export const AVAILABLE_INSTRUMENTS: InstrumentInfo[] = [
+  // Keyboards
   {
     id: "acoustic_grand_piano",
     name: "Concert Grand Piano",
     category: "Keyboards",
     icon: "piano",
-    description: "Authentic sampled acoustic grand piano",
+    description: "Authentic sampled Steinway acoustic grand piano",
   },
   {
     id: "bright_acoustic_piano",
     name: "Bright Pop Piano",
     category: "Keyboards",
     icon: "piano",
-    description: "Punchy, crisp Yamaha-style acoustic piano",
+    description: "Punchy, crisp Yamaha C7-style pop piano",
   },
   {
     id: "electric_piano_1",
-    name: "Vintage Rhodes",
+    name: "Vintage Rhodes EP",
     category: "Keyboards",
     icon: "piano",
-    description: "Warm classic vintage electric piano with silky tines",
+    description: "Warm classic vintage Rhodes electric piano with silky tines",
   },
   {
     id: "electric_piano_2",
-    name: "FM Electric Piano (DX7)",
+    name: "FM EP (DX7)",
     category: "Keyboards",
     icon: "piano",
-    description: "Sparkling 80s digital electric piano",
+    description: "Sparkling 80s digital FM electric piano",
   },
+  {
+    id: "harpsichord",
+    name: "Baroque Harpsichord",
+    category: "Keyboards",
+    icon: "piano",
+    description: "Crisp double-manual orchestral harpsichord",
+  },
+  {
+    id: "drawbar_organ",
+    name: "Hammond B3 Organ",
+    category: "Keyboards",
+    icon: "piano",
+    description: "Rich vintage drawbar organ with rotary Leslie speaker",
+  },
+  {
+    id: "rock_organ",
+    name: "Overdriven Rock Organ",
+    category: "Keyboards",
+    icon: "piano",
+    description: "Punchy, gritty overdriven rock Hammond organ",
+  },
+  {
+    id: "vibraphone",
+    name: "Jazz Vibraphone",
+    category: "Keyboards",
+    icon: "piano",
+    description: "Mellow metallic vibes with soft tremolo motor",
+  },
+  {
+    id: "marimba",
+    name: "Wooden Marimba",
+    category: "Keyboards",
+    icon: "piano",
+    description: "Deep, warm percussive wooden orchestral marimba",
+  },
+
+  // Guitars
   {
     id: "acoustic_guitar_nylon",
     name: "Classical Nylon Guitar",
     category: "Guitars",
     icon: "guitar",
-    description: "Warm, intimate Spanish classical guitar",
+    description: "Warm, intimate Spanish classical nylon guitar",
   },
   {
     id: "acoustic_guitar_steel",
-    name: "Acoustic Steel Guitar",
+    name: "Steel String Acoustic",
     category: "Guitars",
     icon: "guitar",
     description: "Bright acoustic steel-string dreadnought",
@@ -78,6 +141,59 @@ export const AVAILABLE_INSTRUMENTS: InstrumentInfo[] = [
     description: "Mellow hollowbody jazz & neo-soul electric guitar",
   },
   {
+    id: "electric_guitar_jazz",
+    name: "Hollowbody Jazz Guitar",
+    category: "Guitars",
+    icon: "guitar",
+    description: "Smooth, warm archtop jazz guitar",
+  },
+  {
+    id: "overdriven_guitar",
+    name: "Overdrive Crunch Guitar",
+    category: "Guitars",
+    icon: "guitar",
+    description: "Crunchy classic rock overdriven electric guitar",
+  },
+  {
+    id: "distortion_guitar",
+    name: "Heavy Distortion Guitar",
+    category: "Guitars",
+    icon: "guitar",
+    description: "High-gain distortion guitar for heavy rock & metal",
+  },
+
+  // Bass
+  {
+    id: "electric_bass_finger",
+    name: "Electric Finger Bass",
+    category: "Bass",
+    icon: "bass",
+    description: "Deep, punchy fingerstyle bass in true low register",
+  },
+  {
+    id: "acoustic_bass",
+    name: "Upright Acoustic Bass",
+    category: "Bass",
+    icon: "bass",
+    description: "Deep, resonant acoustic jazz upright bass",
+  },
+  {
+    id: "slap_bass_1",
+    name: "Funk Slap Bass",
+    category: "Bass",
+    icon: "bass",
+    description: "Punchy popping funk slap bass with thumb attack",
+  },
+  {
+    id: "synth_bass_1",
+    name: "Synth Bass 303",
+    category: "Bass",
+    icon: "bass",
+    description: "Heavy resonant analog synth bass for modern grooves",
+  },
+
+  // Strings & Orchestral
+  {
     id: "string_ensemble_1",
     name: "Cinematic String Ensemble",
     category: "Strings",
@@ -85,18 +201,71 @@ export const AVAILABLE_INSTRUMENTS: InstrumentInfo[] = [
     description: "Rich orchestral sustained violins & cellos with bow swell",
   },
   {
-    id: "electric_bass_finger",
-    name: "Electric Finger Bass",
-    category: "Bass",
-    icon: "bass",
-    description: "Deep, punchy fingerstyle bass in true low-octave register",
+    id: "orchestral_harp",
+    name: "Concert Harp",
+    category: "Strings",
+    icon: "strings",
+    description: "Delicate plucked concert orchestral harp",
   },
+  {
+    id: "pizzicato_strings",
+    name: "Pizzicato Strings",
+    category: "Strings",
+    icon: "strings",
+    description: "Staccato plucked string ensemble",
+  },
+  {
+    id: "choir_aahs",
+    name: "Lush Choir Aahs",
+    category: "Strings",
+    icon: "strings",
+    description: "Atmospheric vocal choir ensemble with sustained vowels",
+  },
+
+  // Brass & Winds
+  {
+    id: "brass_section",
+    name: "Pop Brass Section",
+    category: "Brass & Winds",
+    icon: "brass",
+    description: "Punchy horn section (trumpets, trombones, saxes)",
+  },
+  {
+    id: "tenor_sax",
+    name: "Tenor Saxophone",
+    category: "Brass & Winds",
+    icon: "brass",
+    description: "Warm, expressive solo tenor saxophone",
+  },
+  {
+    id: "flute",
+    name: "Concert Flute",
+    category: "Brass & Winds",
+    icon: "brass",
+    description: "Smooth orchestral woodwind concert flute",
+  },
+
+  // Synths & Soundscapes
   {
     id: "synth_warm",
     name: "Lush Analog Synth Pad",
     category: "Synths",
     icon: "synth",
     description: "Silky Juno/Prophet-style warm analog poly-synth",
+  },
+  {
+    id: "pad_1_new_age",
+    name: "New Age Ambient Pad",
+    category: "Synths",
+    icon: "synth",
+    description: "Shimmering cosmic synth pad with evolving harmonics",
+  },
+  {
+    id: "lead_2_sawtooth",
+    name: "Analog Saw Lead",
+    category: "Synths",
+    icon: "synth",
+    description: "Cutting 80s analog sawtooth synth lead",
   },
   {
     id: "synth_8bit",
@@ -118,85 +287,47 @@ export interface InstrumentProfile {
 }
 
 const INSTRUMENT_PROFILES: Record<InstrumentId, InstrumentProfile> = {
-  acoustic_grand_piano: {
-    gainScale: 0.52,
-    attack: 0.005,
-    decay: 1.6,
-    sustain: 0.35,
-    release: 0.15,
-  },
-  bright_acoustic_piano: {
-    gainScale: 0.50,
-    attack: 0.004,
-    decay: 1.5,
-    sustain: 0.35,
-    release: 0.15,
-  },
-  electric_piano_1: {
-    gainScale: 0.48,
-    attack: 0.006,
-    decay: 1.8,
-    sustain: 0.45,
-    release: 0.20,
-  },
-  electric_piano_2: {
-    gainScale: 0.45,
-    attack: 0.005,
-    decay: 1.6,
-    sustain: 0.40,
-    release: 0.20,
-  },
-  acoustic_guitar_nylon: {
-    gainScale: 0.44, // Calibrated sweet spot: zero distortion on nylon strings
-    attack: 0.012,
-    decay: 1.3,
-    sustain: 0.38,
-    release: 0.18,
-  },
-  acoustic_guitar_steel: {
-    gainScale: 0.44,
-    attack: 0.008,
-    decay: 1.4,
-    sustain: 0.38,
-    release: 0.18,
-  },
-  electric_guitar_clean: {
-    gainScale: 0.42,
-    attack: 0.010,
-    decay: 1.6,
-    sustain: 0.50,
-    release: 0.22,
-  },
-  string_ensemble_1: {
-    gainScale: 0.35, // Balanced so full chords never clip
-    attack: 0.110, // Lush orchestral bow swell
-    decay: 0.4,
-    sustain: 0.88, // Holds orchestral richness for entire chord duration
-    release: 0.45, // Warm cinematic release
-    isSustained: true,
-  },
-  electric_bass_finger: {
-    gainScale: 0.55,
-    attack: 0.008,
-    decay: 1.4,
-    sustain: 0.55,
-    release: 0.20,
-    octaveShift: -12, // Transpose to true deep electric bass register!
-  },
-  synth_warm: {
-    gainScale: 0.18,
-    attack: 0.025,
-    decay: 0.35,
-    sustain: 0.65,
-    release: 0.35,
-  },
-  synth_8bit: {
-    gainScale: 0.12,
-    attack: 0.003,
-    decay: 0.15,
-    sustain: 0.55,
-    release: 0.10,
-  },
+  // Keyboards
+  acoustic_grand_piano: { gainScale: 0.52, attack: 0.005, decay: 1.6, sustain: 0.35, release: 0.15 },
+  bright_acoustic_piano: { gainScale: 0.50, attack: 0.004, decay: 1.5, sustain: 0.35, release: 0.15 },
+  electric_piano_1: { gainScale: 0.48, attack: 0.006, decay: 1.8, sustain: 0.45, release: 0.20 },
+  electric_piano_2: { gainScale: 0.45, attack: 0.005, decay: 1.6, sustain: 0.40, release: 0.20 },
+  harpsichord: { gainScale: 0.42, attack: 0.003, decay: 1.1, sustain: 0.25, release: 0.10 },
+  drawbar_organ: { gainScale: 0.38, attack: 0.010, decay: 0.2, sustain: 0.82, release: 0.15, isSustained: true },
+  rock_organ: { gainScale: 0.36, attack: 0.008, decay: 0.2, sustain: 0.85, release: 0.15, isSustained: true },
+  vibraphone: { gainScale: 0.45, attack: 0.005, decay: 2.2, sustain: 0.50, release: 0.25 },
+  marimba: { gainScale: 0.46, attack: 0.004, decay: 0.9, sustain: 0.20, release: 0.12 },
+
+  // Guitars
+  acoustic_guitar_nylon: { gainScale: 0.44, attack: 0.012, decay: 1.3, sustain: 0.38, release: 0.18 },
+  acoustic_guitar_steel: { gainScale: 0.44, attack: 0.008, decay: 1.4, sustain: 0.38, release: 0.18 },
+  electric_guitar_clean: { gainScale: 0.42, attack: 0.010, decay: 1.6, sustain: 0.50, release: 0.22 },
+  electric_guitar_jazz: { gainScale: 0.42, attack: 0.012, decay: 1.7, sustain: 0.52, release: 0.22 },
+  overdriven_guitar: { gainScale: 0.38, attack: 0.008, decay: 1.5, sustain: 0.60, release: 0.20 },
+  distortion_guitar: { gainScale: 0.35, attack: 0.008, decay: 1.5, sustain: 0.65, release: 0.20 },
+
+  // Bass
+  electric_bass_finger: { gainScale: 0.55, attack: 0.008, decay: 1.4, sustain: 0.55, release: 0.20, octaveShift: -12 },
+  acoustic_bass: { gainScale: 0.52, attack: 0.010, decay: 1.5, sustain: 0.50, release: 0.22, octaveShift: -12 },
+  slap_bass_1: { gainScale: 0.52, attack: 0.005, decay: 1.1, sustain: 0.42, release: 0.15, octaveShift: -12 },
+  synth_bass_1: { gainScale: 0.48, attack: 0.006, decay: 1.2, sustain: 0.50, release: 0.18, octaveShift: -12 },
+
+  // Strings & Orchestral
+  string_ensemble_1: { gainScale: 0.35, attack: 0.110, decay: 0.4, sustain: 0.88, release: 0.45, isSustained: true },
+  orchestral_harp: { gainScale: 0.44, attack: 0.006, decay: 1.8, sustain: 0.35, release: 0.20 },
+  pizzicato_strings: { gainScale: 0.46, attack: 0.004, decay: 0.6, sustain: 0.15, release: 0.10 },
+  choir_aahs: { gainScale: 0.34, attack: 0.120, decay: 0.4, sustain: 0.85, release: 0.45, isSustained: true },
+
+  // Brass & Winds
+  brass_section: { gainScale: 0.36, attack: 0.025, decay: 0.3, sustain: 0.78, release: 0.20, isSustained: true },
+  tenor_sax: { gainScale: 0.40, attack: 0.020, decay: 0.3, sustain: 0.75, release: 0.20, isSustained: true },
+  flute: { gainScale: 0.38, attack: 0.030, decay: 0.3, sustain: 0.75, release: 0.20, isSustained: true },
+
+  // Synths & Soundscapes
+  synth_warm: { gainScale: 0.18, attack: 0.025, decay: 0.35, sustain: 0.65, release: 0.35 },
+  pad_1_new_age: { gainScale: 0.32, attack: 0.100, decay: 0.4, sustain: 0.85, release: 0.45, isSustained: true },
+  lead_2_sawtooth: { gainScale: 0.35, attack: 0.010, decay: 0.3, sustain: 0.70, release: 0.20, isSustained: true },
+  synth_8bit: { gainScale: 0.12, attack: 0.003, decay: 0.15, sustain: 0.55, release: 0.10 },
 }
 
 const NOTE_NAMES = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"]
@@ -207,7 +338,10 @@ export function midiToSampleName(midi: number): string {
   return `${NOTE_NAMES[pc]}${oct}`
 }
 
-const SOUNDFONT_CDN_BASE = "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM"
+const SOUNDFONT_CDN_BASES = [
+  "https://gleitz.github.io/midi-js-soundfonts/MusyngKite",
+  "https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM",
+]
 
 // Native zero-dependency IndexedDB cache for soundfont payloads
 const DB_NAME = "BandMateSoundfonts"
@@ -340,20 +474,30 @@ class SoundfontEngine {
       }
 
       if (!rawData) {
-        const url = `${SOUNDFONT_CDN_BASE}/${id}-mp3.js`
-        const res = await fetch(url)
-        if (!res.ok) throw new Error(`HTTP ${res.status} fetching soundfont: ${url}`)
-        const text = await res.text()
+        let lastErr: unknown = null
+        for (const baseUrl of SOUNDFONT_CDN_BASES) {
+          try {
+            const url = `${baseUrl}/${id}-mp3.js`
+            const res = await fetch(url)
+            if (!res.ok) continue
+            const text = await res.text()
 
-        // Extract soundfont JS object
-        const MIDI: Record<string, unknown> = {}
-        const fn = new Function("MIDI", `${text}; return MIDI;`)
-        const result = fn(MIDI) as { Soundfont?: Record<string, Record<string, string>> }
+            const MIDI: Record<string, unknown> = {}
+            const fn = new Function("MIDI", `${text}; return MIDI;`)
+            const result = fn(MIDI) as { Soundfont?: Record<string, Record<string, string>> }
 
-        if (!result.Soundfont || !result.Soundfont[id]) {
-          throw new Error(`Invalid soundfont data for ${id}`)
+            if (result.Soundfont && result.Soundfont[id]) {
+              rawData = result.Soundfont[id]
+              break
+            }
+          } catch (err) {
+            lastErr = err
+          }
         }
-        rawData = result.Soundfont[id]
+
+        if (!rawData) {
+          throw new Error(`Failed to load soundfont for ${id}: ${lastErr}`)
+        }
         this.rawDataCache.set(id, rawData)
         // Store in IndexedDB asynchronously
         setCachedRawData(id, rawData).catch(() => {})

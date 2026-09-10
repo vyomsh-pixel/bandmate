@@ -30,7 +30,8 @@ import { cn } from "@/lib/utils"
 function renderInstIcon(icon: string) {
   if (icon === "piano") return <Piano className="size-3.5 text-amber-400 shrink-0" />
   if (icon === "guitar" || icon === "bass") return <Guitar className="size-3.5 text-amber-400 shrink-0" />
-  return <Music className="size-3.5 text-amber-400 shrink-0" />
+  if (icon === "strings" || icon === "brass") return <Music className="size-3.5 text-amber-400 shrink-0" />
+  return <Zap className="size-3.5 text-amber-400 shrink-0" />
 }
 
 function renderRhythmIcon(key: string) {
