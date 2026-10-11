@@ -64,6 +64,7 @@ export function useSongLibrary(userId: string = "guest-user") {
   // Undo/redo stacks for the currently active song
   const undoStack = useRef<Song[]>([])
   const redoStack = useRef<Song[]>([])
+  const songsRef = useRef<Song[]>([])
   const currentSongRef = useRef<Song | null>(null)
   const userRef = useRef<string>(userId)
 
@@ -71,6 +72,11 @@ export function useSongLibrary(userId: string = "guest-user") {
   useEffect(() => {
     userRef.current = userId
   }, [userId])
+
+  // Keep songsRef in sync
+  useEffect(() => {
+    songsRef.current = songs
+  }, [songs])
 
   // Hydrate per-user songs from storage & migrate guest songs if logging in.
   useEffect(() => {
@@ -84,11 +90,13 @@ export function useSongLibrary(userId: string = "guest-user") {
 
     if (stored.length === 0) {
       const seed = makeDefaultSong()
+      songsRef.current = [seed]
       setSongs([seed])
       setCurrentId(seed.id)
       saveUserSongs(userId, [seed])
       saveUserCurrentSongId(userId, seed.id)
     } else {
+      songsRef.current = stored
       setSongs(stored)
       const savedId = loadUserCurrentSongId(userId)
       const validId = savedId && stored.some((s) => s.id === savedId) ? savedId : stored[0].id
@@ -99,6 +107,7 @@ export function useSongLibrary(userId: string = "guest-user") {
   }, [userId])
 
   const persist = useCallback((next: Song[]) => {
+    songsRef.current = next
     setSongs(next)
     saveUserSongs(userRef.current, next)
   }, [])
@@ -123,11 +132,10 @@ export function useSongLibrary(userId: string = "guest-user") {
     (partial?: Partial<Song>) => {
       const base = makeDefaultSong()
       const song: Song = { ...base, ...partial, id: base.id, createdAt: base.createdAt, updatedAt: base.createdAt }
-      setSongs((prev) => {
-        const next = [song, ...prev]
-        saveUserSongs(userRef.current, next)
-        return next
-      })
+      const next = [song, ...songsRef.current]
+      songsRef.current = next
+      setSongs(next)
+      saveUserSongs(userRef.current, next)
       setCurrentId(song.id)
       saveUserCurrentSongId(userRef.current, song.id)
       undoStack.current = []
@@ -143,35 +151,37 @@ export function useSongLibrary(userId: string = "guest-user") {
 
   const updateSong = useCallback(
     (id: string, patch: Partial<Song> | ((song: Song) => Partial<Song>), options: { immediate?: boolean } = {}) => {
-      setSongs((prev) => {
-        const next = prev.map((s) => {
-          if (s.id !== id) return s
-          
-          if (s.id === currentSongRef.current?.id) {
-             if (options.immediate && debounceTimerRef.current) {
-                clearTimeout(debounceTimerRef.current)
-                debounceTimerRef.current = null
-             }
-             if (!debounceTimerRef.current) {
-                undoStack.current = [...undoStack.current, s].slice(-50)
-                redoStack.current = []
-                setUndoCount(undoStack.current.length)
-                setRedoCount(0)
-             }
-             if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
-             if (!options.immediate) {
-               debounceTimerRef.current = setTimeout(() => {
-                  debounceTimerRef.current = null
-               }, 500)
-             }
-          }
+      const prev = songsRef.current
+      const target = prev.find((s) => s.id === id)
+      if (!target) return
 
-          const changes = typeof patch === "function" ? patch(s) : patch
-          return { ...s, ...changes, id: s.id, updatedAt: Date.now() }
-        })
-        saveUserSongs(userRef.current, next)
-        return next
+      if (target.id === currentSongRef.current?.id) {
+        if (options.immediate && debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current)
+          debounceTimerRef.current = null
+        }
+        if (!debounceTimerRef.current) {
+          undoStack.current = [...undoStack.current, target].slice(-50)
+          redoStack.current = []
+          setUndoCount(undoStack.current.length)
+          setRedoCount(0)
+        }
+        if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current)
+        if (!options.immediate) {
+          debounceTimerRef.current = setTimeout(() => {
+            debounceTimerRef.current = null
+          }, 500)
+        }
+      }
+
+      const next = prev.map((s) => {
+        if (s.id !== id) return s
+        const changes = typeof patch === "function" ? patch(s) : patch
+        return { ...s, ...changes, id: s.id, updatedAt: Date.now() }
       })
+      songsRef.current = next
+      setSongs(next)
+      saveUserSongs(userRef.current, next)
     },
     [],
   )
@@ -182,12 +192,11 @@ export function useSongLibrary(userId: string = "guest-user") {
     redoStack.current.push(currentSongRef.current)
     setUndoCount(undoStack.current.length)
     setRedoCount(redoStack.current.length)
-    
-    setSongs((songs) => {
-      const next = songs.map(s => s.id === prev.id ? prev : s)
-      saveUserSongs(userRef.current, next)
-      return next
-    })
+
+    const next = songsRef.current.map((s) => (s.id === prev.id ? prev : s))
+    songsRef.current = next
+    setSongs(next)
+    saveUserSongs(userRef.current, next)
   }, [])
 
   const redo = useCallback(() => {
@@ -196,32 +205,31 @@ export function useSongLibrary(userId: string = "guest-user") {
     undoStack.current.push(currentSongRef.current)
     setUndoCount(undoStack.current.length)
     setRedoCount(redoStack.current.length)
-    
-    setSongs((songs) => {
-      const next = songs.map(s => s.id === nextState.id ? nextState : s)
-      saveUserSongs(userRef.current, next)
-      return next
-    })
+
+    const next = songsRef.current.map((s) => (s.id === nextState.id ? nextState : s))
+    songsRef.current = next
+    setSongs(next)
+    saveUserSongs(userRef.current, next)
   }, [])
 
   const deleteSong = useCallback(
     (id: string) => {
-      setSongs((prev) => {
-        const next = prev.filter((s) => s.id !== id)
-        const finalList = next.length === 0 ? [makeDefaultSong()] : next
-        saveUserSongs(userRef.current, finalList)
-        setCurrentId((curr) => {
-          if (curr !== id) return curr
-          const newId = finalList[0].id
-          saveUserCurrentSongId(userRef.current, newId)
-          return newId
-        })
-        undoStack.current = []
-        redoStack.current = []
-        setUndoCount(0)
-        setRedoCount(0)
-        return finalList
-      })
+      const next = songsRef.current.filter((s) => s.id !== id)
+      const finalList = next.length === 0 ? [makeDefaultSong()] : next
+      songsRef.current = finalList
+      setSongs(finalList)
+      saveUserSongs(userRef.current, finalList)
+
+      if (currentSongRef.current?.id === id) {
+        const newId = finalList[0].id
+        setCurrentId(newId)
+        saveUserCurrentSongId(userRef.current, newId)
+      }
+
+      undoStack.current = []
+      redoStack.current = []
+      setUndoCount(0)
+      setRedoCount(0)
     },
     [],
   )

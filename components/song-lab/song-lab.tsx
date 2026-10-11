@@ -9,21 +9,21 @@
  * metronome. All state persists through the song library hook.
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState, lazy, Suspense } from "react"
 import { toast } from "sonner"
-import { Card } from "@/components/ui/card"
-import { SongMetaBar } from "./song-meta-bar"
 import { ProgressionEditor } from "./progression-editor"
 import { ChordDetail } from "./chord-detail"
 import { PianoKeyboard } from "./piano-keyboard"
 import { TransportBar } from "./transport-bar"
-import { RehearsalMode } from "./rehearsal-mode"
 import { parseChord } from "@/lib/music/chord-parser"
-import { voiceChord, invertVoicing, playableVoicing, getVoicingMidis } from "@/lib/music/chords"
+import { playableVoicing, getVoicingMidis } from "@/lib/music/chords"
+
+const RehearsalMode = lazy(() =>
+  import("./rehearsal-mode").then((m) => ({ default: m.RehearsalMode })),
+)
 import { suggestSmoothInversion } from "@/lib/music/voice-leading"
-import { keyAccidental, MAJOR_TONICS, MINOR_TONICS } from "@/lib/music/scales"
-import { transposeProgression, transposeSymbol, semitonesBetween } from "@/lib/music/transpose"
-import { midiToPc, noteNameToPc, pcToName } from "@/lib/music/notes"
+import { keyAccidental } from "@/lib/music/scales"
+import { midiToPc } from "@/lib/music/notes"
 import { getAudioEngine, type TransportConfig, type RhythmPattern } from "@/lib/audio/audio-engine"
 import { AVAILABLE_INSTRUMENTS, type InstrumentId } from "@/lib/audio/soundfont-engine"
 import { createId } from "@/lib/storage/local-store"
@@ -49,12 +49,6 @@ interface SongLabProps {
   onToggleInspector?: () => void
 }
 
-/** Pick the tonic spelling (from the mode's option list) for a pitch class. */
-function tonicForPc(pc: number, mode: "major" | "minor"): string {
-  const list = mode === "major" ? MAJOR_TONICS : MINOR_TONICS
-  const match = list.find((t) => noteNameToPc(t) === ((pc % 12) + 12) % 12)
-  return match ?? pcToName(pc, "sharp")
-}
 
 export function SongLab({
   song,
@@ -102,6 +96,11 @@ export function SongLab({
   const [rhythm, setRhythm] = useState<RhythmPattern>("pulse")
   const [isRehearsing, setIsRehearsing] = useState(false)
   const [twoHanded, setTwoHanded] = useState(false)
+  const [showKeyboard, setShowKeyboard] = useState(showPiano)
+
+  useEffect(() => {
+    setShowKeyboard(showPiano)
+  }, [showPiano])
 
   // Resizable panel dimensions
   const [leftWidth, setLeftWidth] = useState(210)
@@ -329,15 +328,17 @@ export function SongLab({
   )
 
   const handleMoveChord = useCallback(
-    (id: string, dir: -1 | 1) => {
+    (id: string, delta: number) => {
+      if (delta === 0) return
       updateSections((sections) => {
         return sections.map((s) => {
           const i = s.chords.findIndex((c) => c.id === id)
           if (i < 0) return s
-          const j = i + dir
-          if (j < 0 || j >= s.chords.length) return s // Can't move outside section for now
+          const j = Math.max(0, Math.min(s.chords.length - 1, i + delta))
+          if (j === i) return s
           const next = [...s.chords]
-          ;[next[i], next[j]] = [next[j], next[i]]
+          const [moved] = next.splice(i, 1)
+          next.splice(j, 0, moved)
           return { ...s, chords: next }
         })
       })
@@ -378,42 +379,6 @@ export function SongLab({
       setSelectedId(entry.id)
     },
     [updateSections, song.beatsPerBar, selectedId],
-  )
-
-  // ---- Key / transpose -------------------------------------------------------
-  const handleKeyChange = useCallback(
-    (newTonic: string) => {
-      const semis = semitonesBetween(song.keyTonic, newTonic)
-      if (semis === 0) {
-        onUpdate(song.id, { keyTonic: newTonic })
-        return
-      }
-      onUpdate(song.id, (s) => ({
-        keyTonic: newTonic,
-        sections: s.sections.map((sec) => ({
-          ...sec,
-          chords: transposeProgression(sec.chords, semis, newTonic, s.keyMode)
-        })),
-      }))
-      toast.success(`Transposed to ${newTonic} ${song.keyMode}`)
-    },
-    [onUpdate, song.id, song.keyTonic, song.keyMode],
-  )
-
-  const handleTranspose = useCallback(
-    (semitones: number) => {
-      const oldPc = noteNameToPc(song.keyTonic) ?? 0
-      const newTonic = tonicForPc(oldPc + semitones, song.keyMode)
-      const acc = keyAccidental(newTonic, song.keyMode)
-      onUpdate(song.id, (s) => ({
-        keyTonic: newTonic,
-        sections: s.sections.map((sec) => ({
-          ...sec,
-          chords: sec.chords.map((c) => ({ ...c, symbol: transposeSymbol(c.symbol, semitones, acc) }))
-        })),
-      }))
-    },
-    [onUpdate, song.id, song.keyTonic, song.keyMode],
   )
 
   const handleBpmChange = useCallback((bpm: number) => onUpdate(song.id, { bpm }), [onUpdate, song.id])
@@ -518,7 +483,11 @@ export function SongLab({
     },
     i: () => {
       onToggleInspector?.()
-    }
+    },
+    p: () => {
+      setShowKeyboard((v) => !v)
+      onTogglePiano?.()
+    },
   })
 
   const handleAddSection = useCallback(
@@ -786,6 +755,7 @@ export function SongLab({
               onAutoVoice={handleAutoVoiceSection}
               onAddSection={handleAddSection}
               onImportSong={onImportSong}
+              twoHanded={twoHanded}
             />
           </div>
 
@@ -795,12 +765,15 @@ export function SongLab({
             <div className="flex items-center justify-between px-3 py-1 bg-secondary/80 border-b border-border/40">
               <button
                 type="button"
-                onClick={() => onTogglePiano?.()}
+                onClick={() => {
+                  setShowKeyboard((v) => !v)
+                  onTogglePiano?.()
+                }}
                 className="flex items-center gap-1.5 font-mono text-xs font-bold text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 <Piano className="size-3.5 text-primary" />
                 <span>Virtual Piano</span>
-                <span className="text-[10px] text-amber-400 font-normal">({showPiano ? "Expanded" : "Collapsed"})</span>
+                <span className="text-[10px] text-amber-400 font-normal">({showKeyboard ? "Expanded" : "Collapsed"})</span>
               </button>
 
               <button
@@ -818,7 +791,7 @@ export function SongLab({
                 <span>2-Handed Mode ({twoHanded ? "ON" : "OFF"})</span>
               </button>
             </div>
-            {showPiano && (
+            {showKeyboard && (
               <div className="p-2">
                 <PianoKeyboard
                   activeMidis={activeMidis}
@@ -992,15 +965,17 @@ export function SongLab({
 
       {/* Fullscreen Overlays */}
       {isRehearsing && (
-        <RehearsalMode
-          song={song}
-          isPlaying={isPlaying}
-          activeIndex={isPlaying ? activeIndex : null}
-          volume={volume}
-          onVolumeChange={setVolume}
-          onTogglePlay={togglePlay}
-          onClose={() => setIsRehearsing(false)}
-        />
+        <Suspense fallback={null}>
+          <RehearsalMode
+            song={song}
+            isPlaying={isPlaying}
+            activeIndex={isPlaying ? activeIndex : null}
+            volume={volume}
+            onVolumeChange={setVolume}
+            onTogglePlay={togglePlay}
+            onClose={() => setIsRehearsing(false)}
+          />
+        </Suspense>
       )}
     </div>
   )

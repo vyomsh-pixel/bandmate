@@ -43,7 +43,7 @@ export function suggestNextChords(currentChords: string[], key: Key): ChordSugge
       {
         symbol: diatonic[5]?.symbol || key.tonic,
         roman: key.mode === "major" ? "vi" : "VI",
-        label: "Relative Minor",
+        label: key.mode === "major" ? "Relative Minor" : "Submediant (VI)",
         category: "color",
         reason: "Adds instant emotional depth and warmth.",
       },
@@ -57,6 +57,7 @@ export function suggestNextChords(currentChords: string[], key: Key): ChordSugge
   const tonicSymbol = key.tonic
   const subdomSymbol = diatonic[3]?.symbol || "F"
   const domSymbol = diatonic[4]?.symbol || "G"
+  const dom7Symbol = diatonic[8]?.symbol || `${domSymbol}7`
   const relMinSymbol = diatonic[5]?.symbol || "Am"
   const superTonicSymbol = diatonic[1]?.symbol || "Dm"
 
@@ -98,8 +99,8 @@ export function suggestNextChords(currentChords: string[], key: Key): ChordSugge
         reason: "Builds forward momentum pointing towards the home key.",
       },
       {
-        symbol: `${domSymbol}7`,
-        roman: key.mode === "major" ? "V7" : "v7",
+        symbol: dom7Symbol,
+        roman: "V7",
         label: "Dominant 7th",
         category: "color",
         reason: "Adds blues/pop harmonic tension to pull back to Tonic.",

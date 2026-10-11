@@ -1,11 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import Link from "next/link"
 import { useAuth } from "@/lib/auth/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { TrebleClefIcon } from "@/components/ui/treble-clef-icon"
-import { Eye, EyeOff, Mail, Lock, User, Sparkles, ArrowRight, X } from "lucide-react"
+import { recordStudioConsent } from "./studio-gate"
+import { Eye, EyeOff, Mail, Lock, User, ArrowRight, X, ShieldCheck } from "lucide-react"
 
 export function AuthModal() {
   const {
@@ -23,18 +25,55 @@ export function AuthModal() {
   const [name, setName] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [consentStorage, setConsentStorage] = useState(true)
+  const [consentCreativeAid, setConsentCreativeAid] = useState(true)
+
+  // Sync mode state with authModalMode prop/context
+  useEffect(() => {
+    setMode(authModalMode)
+  }, [authModalMode])
+
+  // Escape key handler to close modal
+  useEffect(() => {
+    if (!isAuthModalOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        closeAuthModal()
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [isAuthModalOpen, closeAuthModal])
 
   if (!isAuthModalOpen) return null
 
+  const canProceed = consentStorage && consentCreativeAid && !isSubmitting
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!canProceed) return
     setIsSubmitting(true)
 
     try {
-      if (mode === "login") {
-        await login(email, password)
-      } else {
-        await signup(email, password, name)
+      const ok =
+        mode === "login"
+          ? await login(email, password)
+          : await signup(email, password, name)
+      if (ok) {
+        recordStudioConsent()
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleGoogleSignIn = async () => {
+    if (!canProceed) return
+    setIsSubmitting(true)
+    try {
+      const ok = await loginWithGoogle()
+      if (ok) {
+        recordStudioConsent()
       }
     } finally {
       setIsSubmitting(false)
@@ -42,9 +81,15 @@ export function AuthModal() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+      onClick={closeAuthModal}
+    >
       <div
-        className="relative w-full max-w-md bg-zinc-950 border border-zinc-800 text-zinc-100 p-6 rounded-2xl shadow-2xl backdrop-blur-xl animate-in zoom-in-95 duration-150"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="auth-modal-title"
+        className="relative w-full max-w-md bg-zinc-950 border border-zinc-800 text-zinc-100 p-6 rounded-2xl shadow-2xl backdrop-blur-xl animate-in zoom-in-95 duration-150 max-h-[92vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
@@ -62,25 +107,26 @@ export function AuthModal() {
           <div className="size-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-black flex items-center justify-center shadow-lg shadow-amber-500/20 mb-1">
             <TrebleClefIcon className="size-7 fill-current" />
           </div>
-          <h2 className="text-xl font-mono font-black tracking-tight text-white">
+          <h2 id="auth-modal-title" className="text-xl font-mono font-black tracking-tight text-white">
             {mode === "login" ? "Sign In to BandMate" : "Create Your Song Lab Account"}
           </h2>
           <p className="text-xs text-zinc-400">
             {mode === "login"
-              ? "Sign in to save your chord progressions & sync songs across devices."
-              : "Save your songs permanently across devices and unlock full studio features."}
+              ? "Sign in to save your chord progressions & migrate guest tracks to your studio vault."
+              : "Save your songs permanently in your studio vault and unlock full account portability."}
           </p>
         </div>
 
-        {/* PRIMARY ACTION: Google Sign In First at the Top! */}
+        {/* PRIMARY ACTION: Google Sign In First at the Top */}
         <div className="mt-4 mb-3 space-y-2">
           <Button
             type="button"
-            onClick={() => loginWithGoogle()}
-            className="w-full h-11 bg-white text-black hover:bg-zinc-100 font-bold text-xs rounded-xl cursor-pointer gap-3 shadow-lg shadow-white/10 flex items-center justify-center border border-zinc-200 transition-all hover:scale-[1.01]"
+            disabled={!canProceed}
+            onClick={handleGoogleSignIn}
+            className="w-full h-11 bg-white text-black hover:bg-zinc-100 disabled:opacity-40 font-bold text-xs rounded-xl cursor-pointer gap-3 shadow-lg shadow-white/10 flex items-center justify-center border border-zinc-200 transition-all hover:scale-[1.01]"
           >
             {/* Google Logo SVG */}
-            <svg className="size-4 shrink-0" viewBox="0 0 24 24">
+            <svg className="size-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
               <path
                 fill="#4285F4"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -143,12 +189,16 @@ export function AuthModal() {
         <form onSubmit={handleSubmit} className="space-y-3 mt-2">
           {mode === "signup" && (
             <div className="space-y-1">
-              <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400">
+              <label
+                htmlFor="auth-modal-name"
+                className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400"
+              >
                 Display Name / Artist Handle
               </label>
               <div className="relative">
                 <User className="absolute left-3 top-2.5 size-4 text-zinc-500" />
                 <Input
+                  id="auth-modal-name"
                   type="text"
                   placeholder="e.g. Jimi Hendrix"
                   value={name}
@@ -161,12 +211,16 @@ export function AuthModal() {
           )}
 
           <div className="space-y-1">
-            <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400">
+            <label
+              htmlFor="auth-modal-email"
+              className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400"
+            >
               Email Address
             </label>
             <div className="relative">
               <Mail className="absolute left-3 top-2.5 size-4 text-zinc-500" />
               <Input
+                id="auth-modal-email"
                 type="email"
                 placeholder="musician@example.com"
                 value={email}
@@ -178,12 +232,16 @@ export function AuthModal() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400">
+            <label
+              htmlFor="auth-modal-password"
+              className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400"
+            >
               Password
             </label>
             <div className="relative">
               <Lock className="absolute left-3 top-2.5 size-4 text-zinc-500" />
               <Input
+                id="auth-modal-password"
                 type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
                 value={password}
@@ -194,17 +252,57 @@ export function AuthModal() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-2.5 text-zinc-500 hover:text-zinc-300"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="absolute right-3 top-2.5 text-zinc-500 hover:text-zinc-300 cursor-pointer"
               >
                 {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
               </button>
             </div>
           </div>
 
+          {/* Studio Consent & Disclaimers */}
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-3 space-y-2 text-[11px] text-zinc-300">
+            <div className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase text-amber-400">
+              <ShieldCheck className="size-3.5" />
+              <span>Studio Data &amp; Creative Aid Consent</span>
+            </div>
+            <label className="flex items-start gap-2.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={consentStorage}
+                onChange={(e) => setConsentStorage(e.target.checked)}
+                className="mt-0.5 size-3.5 rounded accent-amber-400 cursor-pointer shrink-0"
+              />
+              <span>
+                I consent to BandMate caching studio soundfont samples in browser IndexedDB and storing my chord progressions in local/account storage.
+              </span>
+            </label>
+            <label className="flex items-start gap-2.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={consentCreativeAid}
+                onChange={(e) => setConsentCreativeAid(e.target.checked)}
+                className="mt-0.5 size-3.5 rounded accent-amber-400 cursor-pointer shrink-0"
+              />
+              <span>
+                I understand that BandMate&apos;s harmonic analysis, voice-leading, and chord suggestions are creative studio aids.
+              </span>
+            </label>
+            <div className="flex items-center justify-end gap-2 pt-1 font-mono text-[10px]">
+              <Link href="/privacy" onClick={closeAuthModal} className="text-amber-400 hover:underline">
+                Privacy Policy
+              </Link>
+              <span className="text-zinc-600">·</span>
+              <Link href="/terms" onClick={closeAuthModal} className="text-amber-400 hover:underline">
+                Terms of Service
+              </Link>
+            </div>
+          </div>
+
           <Button
             type="submit"
-            disabled={isSubmitting}
-            className="w-full h-10 bg-amber-400 text-black hover:bg-amber-300 font-mono font-black text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-amber-400/20 cursor-pointer gap-2 mt-4"
+            disabled={!canProceed}
+            className="w-full h-10 bg-amber-400 text-black hover:bg-amber-300 disabled:opacity-40 font-mono font-black text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-amber-400/20 cursor-pointer gap-2 mt-4"
           >
             <span>{mode === "login" ? "Sign In to Studio" : "Create My Account"}</span>
             <ArrowRight className="size-4" />

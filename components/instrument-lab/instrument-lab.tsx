@@ -274,7 +274,12 @@ export function InstrumentLab({ song }: InstrumentLabProps) {
 
             {/* Fretboard Canvas Attached Directly Below Chord Buttons */}
             <div className="p-2.5 sm:p-4 bg-zinc-900/40">
-              <GuitarFretboard chord={activeFretboardChord} capoFret={capoFret} concertSymbol={concertChord?.symbol} />
+              <GuitarFretboard
+                chord={activeFretboardChord}
+                capoFret={capoFret}
+                onCapoChange={setCapoFret}
+                concertSymbol={concertChord?.symbol}
+              />
             </div>
           </div>
         </div>

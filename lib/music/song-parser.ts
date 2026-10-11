@@ -6,6 +6,7 @@
  */
 
 import { parseChord } from "./chord-parser"
+import { detectKey } from "./analysis"
 import { createId } from "../storage/local-store"
 import type { ChordEntry, Section, Song } from "./types"
 
@@ -61,10 +62,49 @@ function extractBeats(token: string, defaultBeats: number): number {
 }
 
 /**
- * Parses freeform description text into a structured Song object.
+ * Parses freeform description text or a BandMate JSON project backup into a structured Song object.
  * Returns valid: false if no valid chords could be extracted from input.
  */
 export function parseSongFromDescription(text: string): ParsedSongResult {
+  const trimmed = text.trim()
+  if (trimmed.startsWith("{")) {
+    try {
+      const json = JSON.parse(trimmed) as Partial<Song>
+      if (Array.isArray(json.sections) && json.sections.length > 0) {
+        const sections: Section[] = json.sections.map((s, idx) => ({
+          id: createId(),
+          name: typeof s.name === "string" && s.name.trim() ? s.name.trim() : `Section ${idx + 1}`,
+          chords: Array.isArray(s.chords)
+            ? s.chords
+                .filter((c) => c && typeof c.symbol === "string" && parseChord(c.symbol).valid)
+                .map((c) => ({
+                  id: createId(),
+                  symbol: c.symbol,
+                  beats: typeof c.beats === "number" && c.beats >= 1 ? c.beats : 4,
+                  inversion: typeof c.inversion === "number" ? c.inversion : 0,
+                }))
+            : [],
+        })).filter((s) => s.chords.length > 0)
+
+        const chordsExtracted = sections.reduce((acc, s) => acc + s.chords.length, 0)
+        if (chordsExtracted > 0) {
+          return {
+            title: typeof json.title === "string" && json.title.trim() ? json.title.trim() : "Imported Song",
+            keyTonic: typeof json.keyTonic === "string" ? json.keyTonic : "C",
+            keyMode: json.keyMode === "minor" ? "minor" : "major",
+            bpm: typeof json.bpm === "number" && json.bpm >= 30 && json.bpm <= 300 ? json.bpm : 120,
+            beatsPerBar: typeof json.beatsPerBar === "number" && json.beatsPerBar >= 1 ? json.beatsPerBar : 4,
+            sections,
+            chordsExtracted,
+            valid: true,
+          }
+        }
+      }
+    } catch {
+      // Fall through to freeform text parser
+    }
+  }
+
   const lines = text
     .split(/\r?\n/)
     .map((l) => l.trim())
@@ -73,6 +113,7 @@ export function parseSongFromDescription(text: string): ParsedSongResult {
   let title = "Untitled Song"
   let keyTonic = "C"
   let keyMode: "major" | "minor" = "major"
+  let hasExplicitKey = false
   let bpm = 120
   let beatsPerBar = 4
   const sections: Section[] = []
@@ -113,6 +154,7 @@ export function parseSongFromDescription(text: string): ParsedSongResult {
       const parsed = parseKeyString(keyMatch[1])
       keyTonic = parsed.keyTonic
       keyMode = parsed.keyMode
+      hasExplicitKey = true
     }
 
     // 3. BPM Extraction:
@@ -213,6 +255,16 @@ export function parseSongFromDescription(text: string): ParsedSongResult {
 
   const chordsExtracted = sections.reduce((acc, s) => acc + s.chords.length, 0)
   const valid = chordsExtracted > 0
+
+  // Automatically infer the best key signature if no explicit "Key:" line was provided
+  if (valid && !hasExplicitKey) {
+    const allSymbols = sections.flatMap((s) => s.chords.map((c) => c.symbol))
+    const detected = detectKey(allSymbols)
+    if (detected) {
+      keyTonic = detected.tonic
+      keyMode = detected.mode
+    }
+  }
 
   return {
     title,

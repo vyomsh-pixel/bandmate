@@ -2,7 +2,6 @@
 
 import { initializeApp, getApps, getApp } from "firebase/app"
 import { getAuth, GoogleAuthProvider } from "firebase/auth"
-import { getFirestore } from "firebase/firestore"
 
 // Default Firebase Configuration — configured for BandMate Web App
 const firebaseConfig = {
@@ -17,11 +16,10 @@ const firebaseConfig = {
 // Initialize Firebase App singleton safely for Next.js App Router
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp()
 const auth = getAuth(app)
-const db = getFirestore(app)
 const googleProvider = new GoogleAuthProvider()
 
 googleProvider.setCustomParameters({
   prompt: "select_account",
 })
 
-export { app, auth, db, googleProvider }
+export { app, auth, googleProvider }

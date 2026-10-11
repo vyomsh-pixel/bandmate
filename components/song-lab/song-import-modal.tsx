@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { createPortal } from "react-dom"
 import { AlertTriangle, Check, ArrowRight, Wand2, X, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -56,7 +56,16 @@ export function SongImportModal({ onImport, triggerClassName }: SongImportModalP
     setMounted(true)
   }, [])
 
-  const parsed = parseSongFromDescription(inputText)
+  useEffect(() => {
+    if (!open) return
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false)
+    }
+    window.addEventListener("keydown", handleKey)
+    return () => window.removeEventListener("keydown", handleKey)
+  }, [open])
+
+  const parsed = useMemo(() => parseSongFromDescription(inputText), [inputText])
 
   const handleApply = () => {
     if (!parsed.valid || parsed.chordsExtracted === 0) return
@@ -65,8 +74,17 @@ export function SongImportModal({ onImport, triggerClassName }: SongImportModalP
   }
 
   const modalContent = open ? (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150">
-      <div className="relative w-full max-w-2xl border border-zinc-800 bg-zinc-950/95 p-6 z-50 rounded-2xl shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150"
+      onClick={() => setOpen(false)}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="song-import-modal-title"
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-2xl border border-zinc-800 bg-zinc-950/95 p-6 z-50 rounded-2xl shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar"
+      >
         {/* Modal Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2.5">
@@ -74,7 +92,7 @@ export function SongImportModal({ onImport, triggerClassName }: SongImportModalP
               <Wand2 className="size-4.5" />
             </div>
             <div>
-              <h3 className="font-mono text-base font-black tracking-tight text-white">
+              <h3 id="song-import-modal-title" className="font-mono text-base font-black tracking-tight text-white">
                 Smart Song Import
               </h3>
               <p className="text-xs text-zinc-400">
@@ -85,6 +103,7 @@ export function SongImportModal({ onImport, triggerClassName }: SongImportModalP
           <button
             type="button"
             onClick={() => setOpen(false)}
+            aria-label="Close dialog"
             className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-white cursor-pointer transition-colors"
           >
             <X className="size-4" />
@@ -143,20 +162,6 @@ export function SongImportModal({ onImport, triggerClassName }: SongImportModalP
               <Zap className="size-3 text-amber-400" />
               <span>Real-time chord extraction active as you type or paste</span>
             </div>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                // Force re-evaluation of parsed result
-                setInputText((prev) => prev + " ")
-                setTimeout(() => setInputText((prev) => prev.trimEnd()), 50)
-              }}
-              className="h-6 px-2.5 text-[10px] font-bold border-amber-400/40 bg-amber-400/10 text-amber-300 hover:bg-amber-400/20 cursor-pointer gap-1"
-            >
-              <Wand2 className="size-3" />
-              <span>Refresh Parser</span>
-            </Button>
           </div>
         </div>
 

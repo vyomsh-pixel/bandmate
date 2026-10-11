@@ -10,6 +10,7 @@
 import { useMemo, useRef, useEffect, useState, useCallback } from "react"
 import { cn } from "@/lib/utils"
 import { midiToPc, pcToName, midiToName } from "@/lib/music/notes"
+import { computeLeftHandMidis } from "@/lib/music/chords"
 import { getAudioEngine } from "@/lib/audio/audio-engine"
 import type { Accidental } from "@/lib/music/types"
 import { ChevronLeft, ChevronRight } from "lucide-react"
@@ -44,40 +45,17 @@ export function PianoKeyboard({
   twoHanded = false,
 }: PianoKeyboardProps) {
   // Compute left-hand lower register notes when twoHanded mode is active
-  const { activeSet, lhBassMidi, lhRootMidi, lhMidisSet } = useMemo(() => {
+  const { activeSet, lhBassMidi, lhRootMidi } = useMemo(() => {
     const active = new Set(activeMidis)
-    const lhMidis = new Set<number>()
-    let lhBass: number | null = null
-    let lhRoot: number | null = null
-
-    if (twoHanded) {
-      const targetBass = bassMidi ?? rootMidi ?? (activeMidis.length > 0 ? Math.min(...activeMidis) : null)
-      if (targetBass !== null) {
-        // Compute left-hand bass octave (C2-C3 range: 36-48)
-        let lb = targetBass
-        while (lb >= 48) lb -= 12
-        while (lb < 36 && lb + 12 <= 48) lb += 12
-        lhBass = lb
-        lhMidis.add(lb)
-        active.add(lb)
-
-        const targetRoot = rootMidi ?? targetBass
-        let lr = targetRoot
-        while (lr >= 48) lr -= 12
-        while (lr < 36 && lr + 12 <= 48) lr += 12
-        if (lr !== lb) {
-          lhRoot = lr
-          lhMidis.add(lr)
-          active.add(lr)
-        }
-      }
+    if (!twoHanded) {
+      return { activeSet: active, lhBassMidi: null, lhRootMidi: null }
     }
-
+    const { lhBassMidi: lb, lhRootMidi: lr, lhMidis } = computeLeftHandMidis(activeMidis, rootMidi, bassMidi)
+    for (const m of lhMidis) active.add(m)
     return {
       activeSet: active,
-      lhBassMidi: lhBass,
-      lhRootMidi: lhRoot,
-      lhMidisSet: lhMidis,
+      lhBassMidi: lb,
+      lhRootMidi: lr,
     }
   }, [activeMidis, rootMidi, bassMidi, twoHanded])
 

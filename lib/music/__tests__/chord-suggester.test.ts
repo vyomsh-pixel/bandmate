@@ -23,5 +23,19 @@ describe("AI Chord Suggester Engine", () => {
     expect(suggestions.length).toBe(3)
     const symbols = suggestions.map((s) => s.symbol)
     expect(symbols).toContain("G")
+    expect(symbols).toContain("G7")
+  })
+
+  it("uses Submediant (VI) label and harmonic minor V7 (E7) in A minor", () => {
+    const keyAm = makeKey("A", "minor")
+    const initial = suggestNextChords([], keyAm)
+    const viSuggestion = initial.find((s) => s.roman === "VI")
+    expect(viSuggestion?.label).toBe("Submediant (VI)")
+    expect(viSuggestion?.symbol).toBe("F")
+
+    const afterSubdom = suggestNextChords(["Am", "Dm"], keyAm)
+    const dom7 = afterSubdom.find((s) => s.label === "Dominant 7th")
+    expect(dom7?.symbol).toBe("E7")
+    expect(dom7?.roman).toBe("V7")
   })
 })

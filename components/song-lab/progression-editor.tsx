@@ -8,8 +8,8 @@
  * reorder / remove. Clicking a slot selects it for inspection + playback.
  */
 
-import { useEffect, useMemo, useRef, useState } from "react"
-import { Plus, X, ChevronLeft, ChevronRight, ChevronDown, Minus, Sparkles, Copy, Home, ArrowRightLeft, Zap, Shield, Volume2, GripVertical } from "lucide-react"
+import { useEffect, useMemo, useRef, useState, lazy, Suspense } from "react"
+import { Plus, X, ChevronLeft, ChevronRight, ChevronDown, Minus, Sparkles, Copy, Volume2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -24,7 +24,7 @@ import { getHarmonicFunction, type HarmonicRole } from "@/lib/music/analysis"
 import { suggestNextChords } from "@/lib/music/chord-suggester"
 import type { ChordEntry, Section } from "@/lib/music/types"
 import { getAudioEngine } from "@/lib/audio/audio-engine"
-import { playableVoicing } from "@/lib/music/chords"
+import { getVoicingMidis } from "@/lib/music/chords"
 
 function getShortQuality(label: string): string {
   if (!label) return ""
@@ -90,8 +90,11 @@ function HarmonicBadge({ role, roman, label }: { role: HarmonicRole; roman: stri
   )
 }
 
-import { SongImportModal } from "./song-import-modal"
 import type { ParsedSongResult } from "@/lib/music/song-parser"
+
+const SongImportModal = lazy(() =>
+  import("./song-import-modal").then((m) => ({ default: m.SongImportModal })),
+)
 
 interface ProgressionEditorProps {
   sections: Section[]
@@ -102,7 +105,7 @@ interface ProgressionEditorProps {
   onSelect: (id: string) => void
   onUpdate: (id: string, patch: Partial<ChordEntry>) => void
   onRemove: (id: string) => void
-  onMove: (id: string, dir: -1 | 1) => void
+  onMove: (id: string, delta: number) => void
   onAdd: (symbol: string, targetSectionId?: string) => void
   onDuplicate?: (id: string) => void
   onDeleteSection?: (sectionId: string) => void
@@ -110,6 +113,7 @@ interface ProgressionEditorProps {
   onAutoVoice?: (sectionId: string) => void
   onAddSection?: (name: string) => void
   onImportSong?: (songData: ParsedSongResult) => void
+  twoHanded?: boolean
 }
 
 export function ProgressionEditor({
@@ -129,6 +133,7 @@ export function ProgressionEditor({
   onAutoVoice,
   onAddSection,
   onImportSong,
+  twoHanded = false,
 }: ProgressionEditorProps) {
   const key = makeKey(keyTonic, keyMode)
   const diatonic = diatonicChords(key)
@@ -137,10 +142,14 @@ export function ProgressionEditor({
   const [draggedId, setDraggedId] = useState<string | null>(null)
   const [dragOverId, setDragOverId] = useState<string | null>(null)
 
-  const handlePreviewChord = (symbol: string) => {
+  const handlePreviewChord = (symbol: string, inversion = 0) => {
     const p = parseChord(symbol)
     if (!p.valid) return
-    const midis = playableVoicing(p, { octave: 4 }).map((n) => n.midi)
+    const midis = getVoicingMidis(
+      p,
+      { octave: 4, accidental: key.accidental, inversion },
+      twoHanded,
+    )
     getAudioEngine().playChord(midis, { duration: 1.2 })
   }
 
@@ -328,7 +337,7 @@ export function ProgressionEditor({
                             const targetIdx = idxWithinSection
                             if (srcIdx !== -1) {
                               const diff = targetIdx - srcIdx
-                              if (diff !== 0) onMove(srcId, diff > 0 ? 1 : -1)
+                              if (diff !== 0) onMove(srcId, diff)
                             }
                           }
                           setDraggedId(null)
@@ -392,7 +401,7 @@ export function ProgressionEditor({
                               title="Audition / Preview Chord"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                handlePreviewChord(entry.symbol)
+                                handlePreviewChord(entry.symbol, entry.inversion ?? 0)
                               }}
                               className="rounded p-1 text-amber-400 hover:bg-amber-500/20 transition-colors touch-manipulation cursor-pointer"
                             >
@@ -527,7 +536,11 @@ export function ProgressionEditor({
             <span>Section Arranger</span>
           </span>
           <div className="flex items-center gap-2">
-            {onImportSong && <SongImportModal onImport={onImportSong} />}
+            {onImportSong && (
+              <Suspense fallback={null}>
+                <SongImportModal onImport={onImportSong} />
+              </Suspense>
+            )}
             {onAddSection && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

@@ -140,53 +140,27 @@ export function getHarmonicFunction(chordSymbol: string, key: Key): HarmonicFunc
     }
   }
 
-  if (key.mode === "major") {
-    if (degreeIndex === 0 || degreeIndex === 5 || degreeIndex === 2) {
-      return {
-        role: "tonic",
-        label: degreeIndex === 0 ? "Tonic" : "Tonic Rel",
-        roman,
-        badgeColor: "text-amber-400 bg-amber-500/10 border-amber-500/30",
-      }
-    }
-    if (degreeIndex === 3 || degreeIndex === 1) {
-      return {
-        role: "subdominant",
-        label: "Subdominant",
-        roman,
-        badgeColor: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
-      }
-    }
+  if (degreeIndex === 0 || degreeIndex === 2 || degreeIndex === 5) {
     return {
-      role: "dominant",
-      label: "Dominant",
+      role: "tonic",
+      label: degreeIndex === 0 ? "Tonic" : "Tonic Rel",
       roman,
-      badgeColor: "text-rose-400 bg-rose-500/10 border-rose-500/30",
+      badgeColor: "text-amber-400 bg-amber-500/10 border-amber-500/30",
     }
-  } else {
-    // Minor key
-    if (degreeIndex === 0 || degreeIndex === 2 || degreeIndex === 5) {
-      return {
-        role: "tonic",
-        label: degreeIndex === 0 ? "Tonic" : "Tonic Rel",
-        roman,
-        badgeColor: "text-amber-400 bg-amber-500/10 border-amber-500/30",
-      }
-    }
-    if (degreeIndex === 3 || degreeIndex === 1) {
-      return {
-        role: "subdominant",
-        label: "Subdominant",
-        roman,
-        badgeColor: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
-      }
-    }
+  }
+  if (degreeIndex === 3 || degreeIndex === 1) {
     return {
-      role: "dominant",
-      label: "Dominant",
+      role: "subdominant",
+      label: "Subdominant",
       roman,
-      badgeColor: "text-rose-400 bg-rose-500/10 border-rose-500/30",
+      badgeColor: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
     }
+  }
+  return {
+    role: "dominant",
+    label: "Dominant",
+    roman,
+    badgeColor: "text-rose-400 bg-rose-500/10 border-rose-500/30",
   }
 }
 

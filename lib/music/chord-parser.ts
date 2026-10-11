@@ -164,14 +164,6 @@ export function parseChord(input: string): ParsedChord {
   }
 }
 
-function bestTokenLength(def: QualityDef, rest: string): number {
-  let len = 0
-  for (const token of def.tokens) {
-    if (rest.startsWith(token) && token.length > len) len = token.length
-  }
-  return len
-}
-
 /** Note names that make up the chord (spelled with the given accidental). */
 export function chordNoteNames(chord: ParsedChord, accidental: "sharp" | "flat" = "sharp"): string[] {
   if (!chord.valid) return []

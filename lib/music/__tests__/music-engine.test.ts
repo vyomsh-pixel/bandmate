@@ -108,10 +108,23 @@ describe("Music Engine: Guitar Voicings", () => {
     expect(voicings.some(v => v.label.includes("C-Shape"))).toBe(true)
   })
 
-  it("generates barre shapes for B without negative frets", () => {
+  it("generates barre shapes for B and F#m with accurate baseFret on frets 2-3", () => {
     const bMajor = parseChord("B")
     const voicings = generateGuitarVoicings(bMajor)
     expect(voicings.length).toBeGreaterThan(0)
+    const aBarre = voicings.find((v) => v.label.includes("A-Shape"))
+    expect(aBarre).toBeDefined()
+    expect(aBarre?.baseFret).toBe(2)
+
+    const fSharpMin = parseChord("F#m")
+    const fsmVoicings = generateGuitarVoicings(fSharpMin)
+    const emBarre = fsmVoicings.find((v) => v.label.includes("Em-Shape"))
+    expect(emBarre).toBeDefined()
+    expect(emBarre?.baseFret).toBe(2)
+
+    const cBarre = generateGuitarVoicings(parseChord("C")).find((v) => v.label.includes("A-Shape"))
+    expect(cBarre?.baseFret).toBe(3)
+
     for (const v of voicings) {
       for (const fret of v.frets) {
         if (typeof fret === "number") {
@@ -120,6 +133,32 @@ describe("Music Engine: Guitar Voicings", () => {
         }
       }
     }
+  })
+
+  it("produces dedicated guitar voicings for all 36 chord qualities without falling back to E-Shape (Barre)", () => {
+    const qualitySymbols = [
+      "C", "Cm", "Cdim", "Caug", "Csus2", "Csus4", "C5", "C6", "Cm6",
+      "C7", "Cmaj7", "Cm7", "Cm7b5", "Cdim7", "C9", "Cmaj9", "Cm9", "Cadd9",
+      "C11", "Cmaj11", "Cm11", "C13", "Cmaj13", "Cm13", "C7sus4",
+      "C7#9", "C7b9", "C7#5", "C7b5", "Cm(maj7)", "C7alt", "Cmaj7#11",
+      "C13b9", "C7b13", "C7#11", "Cm(add9)",
+    ]
+    expect(qualitySymbols.length).toBe(36)
+
+    const seenQualities = new Set<string>()
+    for (const sym of qualitySymbols) {
+      const parsed = parseChord(sym)
+      expect(parsed.valid).toBe(true)
+      seenQualities.add(parsed.quality)
+
+      const voicings = generateGuitarVoicings(parsed)
+      expect(voicings.length).toBeGreaterThan(0)
+      expect(voicings[0].label).not.toBe("No Shape Found")
+      if (parsed.quality !== "maj") {
+        expect(voicings[0].label).not.toBe("E-Shape (Barre)")
+      }
+    }
+    expect(seenQualities.size).toBe(36)
   })
 })
 

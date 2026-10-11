@@ -34,7 +34,7 @@ export function useKeyboardShortcuts(shortcuts: ShortcutMap, active = true) {
       const keyName = key === " " ? "space" : key
       shortcutKey += keyName
 
-      const handler = shortcuts[shortcutKey] || shortcuts[keyName]
+      const handler = shortcuts[shortcutKey] || (!isCtrl && !isAlt ? shortcuts[keyName] : undefined)
       if (handler) {
         e.preventDefault()
         handler(e)

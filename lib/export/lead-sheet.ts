@@ -5,7 +5,7 @@
  * suitable for printing, copying into emails, or sharing with bandmates.
  */
 
-import { makeKey, diatonicChords } from "../music/scales"
+import { makeKey } from "../music/scales"
 import { getHarmonicFunction } from "../music/analysis"
 import { suggestCapo, chordShapeForCapo } from "../music/capo"
 import type { Song } from "../music/types"
@@ -77,6 +77,20 @@ export function downloadLeadSheetText(song: Song) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement("a")
   const fileName = `${song.title.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "song"}-chordsheet.txt`
+  a.href = url
+  a.download = fileName
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
+export function downloadProjectJson(song: Song) {
+  const jsonContent = JSON.stringify(song, null, 2)
+  const blob = new Blob([jsonContent], { type: "application/json;charset=utf-8" })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  const fileName = `${song.title.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "song"}.bandmate.json`
   a.href = url
   a.download = fileName
   document.body.appendChild(a)

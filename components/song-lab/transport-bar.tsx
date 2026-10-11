@@ -44,8 +44,10 @@ function renderRhythmIcon(key: string) {
 export const RHYTHM_PATTERNS = [
   { id: "pulse" as const, name: "Pulse (OneMotion)", iconKey: "pulse", description: "Rhythmic pulse on every beat" },
   { id: "sustain" as const, name: "Sustain (Hold)", iconKey: "sustain", description: "Single sustained chord per bar" },
-  { id: "pop" as const, name: "Bass & Strum", iconKey: "pop", description: "Bass on beat 1, chords on offbeats" },
-  { id: "arpeggio" as const, name: "Arpeggiator", iconKey: "arpeggio", description: "Rolling chord notes in sequence" },
+  { id: "acoustic_strum" as const, name: "Acoustic Strum", iconKey: "pop", description: "Campfire D-DU-UDU 8th-note strumming" },
+  { id: "pop" as const, name: "Bass & Offbeat", iconKey: "pop", description: "Bass on 1 & 3, syncopated chords" },
+  { id: "arpeggio" as const, name: "Fingerpick Arp", iconKey: "arpeggio", description: "8th-note rolling Travis picking" },
+  { id: "neosoul" as const, name: "Neo-Soul / Bossa", iconKey: "arpeggio", description: "Syncopated Rhodes & Nylon pocket" },
 ]
 
 interface TransportBarProps {

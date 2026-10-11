@@ -6,6 +6,7 @@
  */
 
 import type { Song } from "../music/types"
+import { clearSoundfontCache } from "../audio/soundfont-engine"
 
 function isBrowser(): boolean {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined"
@@ -95,4 +96,100 @@ export function migrateGuestSongsToUser(userUid: string): Song[] {
   } catch {
     return []
   }
+}
+
+/**
+ * Export all studio data (profile, songs, active song ID, and consent timestamp) as formatted JSON.
+ */
+export function exportUserStudioData(userId: string): string {
+  const songs = loadUserSongs(userId)
+  const currentSongId = loadUserCurrentSongId(userId)
+  let profile: Record<string, unknown> | null = null
+  let consentAcceptedAt: number | string | null = null
+
+  if (isBrowser()) {
+    try {
+      const rawUser = window.localStorage.getItem("bandmate:auth:user:v1")
+      if (rawUser) {
+        const parsedUser = JSON.parse(rawUser)
+        if (parsedUser && (!parsedUser.uid || parsedUser.uid === userId)) {
+          profile = parsedUser
+          if (parsedUser.consentAcceptedAt) {
+            consentAcceptedAt = parsedUser.consentAcceptedAt
+          }
+        }
+      }
+    } catch {}
+
+    try {
+      const rawConsent =
+        window.localStorage.getItem(`bandmate:consent:${userId}:v1`) ??
+        window.localStorage.getItem("bandmate:privacy:consent:v1")
+      if (rawConsent && !consentAcceptedAt) {
+        const num = Number(rawConsent)
+        consentAcceptedAt = Number.isFinite(num) && num > 0 ? num : rawConsent
+      }
+    } catch {}
+  }
+
+  return JSON.stringify(
+    {
+      exportedAt: new Date().toISOString(),
+      userId,
+      profile,
+      consentAcceptedAt,
+      currentSongId,
+      songs,
+    },
+    null,
+    2,
+  )
+}
+
+/**
+ * Permanently delete all local studio data, account credentials, consent records, and soundfont cache for a user.
+ */
+export async function deleteUserStudioData(userId: string): Promise<void> {
+  if (isBrowser()) {
+    try {
+      window.localStorage.removeItem(getUserSongsKey(userId))
+      window.localStorage.removeItem(getUserCurrentSongKey(userId))
+      window.localStorage.removeItem(`bandmate:consent:${userId}:v1`)
+      window.localStorage.removeItem("bandmate:privacy:consent:v1")
+
+      const rawUser = window.localStorage.getItem("bandmate:auth:user:v1")
+      if (rawUser) {
+        try {
+          const parsedUser = JSON.parse(rawUser)
+          if (!parsedUser?.uid || parsedUser.uid === userId) {
+            window.localStorage.removeItem("bandmate:auth:user:v1")
+          }
+        } catch {
+          window.localStorage.removeItem("bandmate:auth:user:v1")
+        }
+      }
+
+      const rawAccounts = window.localStorage.getItem("bandmate:auth:accounts:v1")
+      if (rawAccounts) {
+        try {
+          const accounts = JSON.parse(rawAccounts) as Record<
+            string,
+            { user?: { uid?: string; email?: string } }
+          >
+          let changed = false
+          for (const [emailKey, entry] of Object.entries(accounts)) {
+            if (entry?.user?.uid === userId || emailKey === userId.toLowerCase()) {
+              delete accounts[emailKey]
+              changed = true
+            }
+          }
+          if (changed) {
+            window.localStorage.setItem("bandmate:auth:accounts:v1", JSON.stringify(accounts))
+          }
+        } catch {}
+      }
+    } catch {}
+  }
+
+  await clearSoundfontCache()
 }

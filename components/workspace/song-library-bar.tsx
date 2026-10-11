@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, lazy, Suspense } from "react"
 import type { Song } from "@/lib/music/types"
 import { Button } from "@/components/ui/button"
 import {
@@ -15,18 +15,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Plus, MoreVertical, Trash2, Music, ChevronDown, ChevronUp, Piano, Sparkles, PanelRight, Settings, Download, FileText } from "lucide-react"
+import { Plus, MoreVertical, Trash2, Music, ChevronDown, ChevronUp, Piano, Sparkles, PanelRight, Settings, Download, FileText, FileJson } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { MAJOR_TONICS, MINOR_TONICS } from "@/lib/music/scales"
 import { cn } from "@/lib/utils"
 import { TrebleClefIcon } from "@/components/ui/treble-clef-icon"
 import { downloadMidi } from "@/lib/export/midi-export"
-import { downloadLeadSheetText } from "@/lib/export/lead-sheet"
+import { downloadLeadSheetText, downloadProjectJson } from "@/lib/export/lead-sheet"
 import { UserProfileButton } from "@/components/auth/user-profile-button"
 import { MODULES } from "./modules"
 
-import { SongImportModal } from "@/components/song-lab/song-import-modal"
+const SongImportModal = lazy(() =>
+  import("@/components/song-lab/song-import-modal").then((m) => ({ default: m.SongImportModal })),
+)
 import type { ParsedSongResult } from "@/lib/music/song-parser"
 
 export interface SongLibraryBarProps {
@@ -39,6 +41,7 @@ export interface SongLibraryBarProps {
   onKeyChange?: (tonic: string) => void
   onModeChange?: (mode: "major" | "minor") => void
   onTranspose?: (semitones: number) => void
+  onDetectKey?: () => void
   onImportSong?: (songData: ParsedSongResult) => void
   showPiano?: boolean
   onTogglePiano?: () => void
@@ -58,6 +61,7 @@ export function SongLibraryBar({
   onKeyChange,
   onModeChange,
   onTranspose,
+  onDetectKey,
   onImportSong,
   showPiano,
   onTogglePiano,
@@ -248,6 +252,18 @@ export function SongLibraryBar({
                     </Button>
                   </div>
                 </div>
+
+                {onDetectKey && (
+                  <button
+                    type="button"
+                    onClick={onDetectKey}
+                    className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg border border-amber-400/40 bg-amber-400/10 text-amber-400 hover:bg-amber-400/20 font-mono text-xs font-bold transition-colors cursor-pointer"
+                    title="Auto-detect song key from chords without transposing"
+                  >
+                    <Sparkles className="size-3.5" />
+                    <span>Auto-Detect Key</span>
+                  </button>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           )}
@@ -301,6 +317,13 @@ export function SongLibraryBar({
                   >
                     <FileText className="size-3.5" />
                     <span>Export Lead Sheet (.txt)</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => downloadProjectJson(currentSong)}
+                    className="cursor-pointer font-bold text-xs flex items-center gap-2 py-1.5 text-emerald-400"
+                  >
+                    <FileJson className="size-3.5" />
+                    <span>Export Project (.json)</span>
                   </DropdownMenuItem>
                 </>
               )}
@@ -563,13 +586,32 @@ export function SongLibraryBar({
                 <ChevronUp className="size-3" />
               </button>
             </div>
+
+            {onDetectKey && (
+              <>
+                <div className="h-3.5 w-px bg-zinc-700/80" />
+                <button
+                  type="button"
+                  onClick={onDetectKey}
+                  className="size-6 flex items-center justify-center rounded-md bg-zinc-800 text-amber-400 hover:bg-zinc-700 hover:text-amber-300 cursor-pointer transition-colors"
+                  title="Auto-detect song key from chords without transposing"
+                  aria-label="Auto-detect song key"
+                >
+                  <Sparkles className="size-3" />
+                </button>
+              </>
+            )}
           </div>
         )}
 
         {/* Desktop Right: User Profile + AI Import + Export + Piano + Inspector + Autosaved */}
         <div className="flex items-center gap-1.5 shrink-0">
           <UserProfileButton savedSongsCount={songs.length} />
-          {onImportSong && <SongImportModal onImport={onImportSong} />}
+          {onImportSong && (
+            <Suspense fallback={null}>
+              <SongImportModal onImport={onImportSong} />
+            </Suspense>
+          )}
           {currentSong && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -577,7 +619,7 @@ export function SongLibraryBar({
                   variant="outline"
                   size="sm"
                   className="h-8 gap-1 rounded-xl border-amber-400/40 bg-amber-400/10 text-amber-400 hover:bg-amber-400/20 text-xs font-bold shadow-xs cursor-pointer px-2.5"
-                  title="Export song progression to MIDI or Lead Sheet"
+                  title="Export song progression to MIDI, Lead Sheet, or JSON"
                 >
                   <Download className="size-3.5" />
                   <span>Export</span>
@@ -607,6 +649,16 @@ export function SongLibraryBar({
                     <span>Lead Sheet (.txt)</span>
                   </div>
                   <span className="text-[9px] font-mono text-muted-foreground">Print / Text</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => downloadProjectJson(currentSong)}
+                  className="cursor-pointer font-bold text-xs flex items-center justify-between py-2 text-emerald-400 focus:text-emerald-300"
+                >
+                  <div className="flex items-center gap-2">
+                    <FileJson className="size-3.5" />
+                    <span>Project File (.json)</span>
+                  </div>
+                  <span className="text-[9px] font-mono text-muted-foreground">Backup</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

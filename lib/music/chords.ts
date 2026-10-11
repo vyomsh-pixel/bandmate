@@ -99,6 +99,37 @@ export function playableVoicing(
 }
 
 /**
+ * Compute left-hand lower-register bass/root MIDI notes (C2–C3 register, MIDI 36–48).
+ * Shared by both audio voicing and the 88-key PianoKeyboard visualizer.
+ */
+export function computeLeftHandMidis(
+  activeMidis: number[],
+  rootMidi: number | null,
+  bassMidi: number | null,
+): { lhBassMidi: number | null; lhRootMidi: number | null; lhMidis: number[] } {
+  const targetBass = bassMidi ?? rootMidi ?? (activeMidis.length > 0 ? Math.min(...activeMidis) : null)
+  if (targetBass === null) return { lhBassMidi: null, lhRootMidi: null, lhMidis: [] }
+
+  let lb = targetBass
+  while (lb >= 48) lb -= 12
+  while (lb < 36 && lb + 12 <= 48) lb += 12
+
+  const targetRoot = rootMidi ?? targetBass
+  let lr = targetRoot
+  while (lr >= 48) lr -= 12
+  while (lr < 36 && lr + 12 <= 48) lr += 12
+
+  const lhMidis: number[] = [lb]
+  let lhRootMidi: number | null = null
+  if (lr !== lb) {
+    lhRootMidi = lr
+    lhMidis.push(lr)
+  }
+
+  return { lhBassMidi: lb, lhRootMidi, lhMidis }
+}
+
+/**
  * Return MIDI note numbers for a chord voicing.
  * If twoHanded is true, appends lower-register left-hand bass/root notes (C2/C3 register, MIDI 36-48).
  */
@@ -114,21 +145,8 @@ export function getVoicingMidis(
 
   const bassMidi = parsed.bassPc !== null ? rhMidis.find((m) => midiToPc(m) === parsed.bassPc) ?? null : null
   const rootMidi = rhMidis.find((m) => midiToPc(m) === parsed.rootPc) ?? null
-  const targetBass = bassMidi ?? rootMidi ?? Math.min(...rhMidis)
-
-  let lb = targetBass
-  while (lb >= 48) lb -= 12
-  while (lb < 36 && lb + 12 <= 48) lb += 12
-
-  const targetRoot = rootMidi ?? targetBass
-  let lr = targetRoot
-  while (lr >= 48) lr -= 12
-  while (lr < 36 && lr + 12 <= 48) lr += 12
-
-  const lhMidis: number[] = [lb]
-  if (lr !== lb) {
-    lhMidis.push(lr)
-  }
+  const { lhMidis } = computeLeftHandMidis(rhMidis, rootMidi, bassMidi)
 
   return Array.from(new Set([...lhMidis, ...rhMidis])).sort((a, b) => a - b)
 }
+

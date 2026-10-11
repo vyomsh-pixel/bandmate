@@ -2,10 +2,10 @@
 
 import { useMemo } from "react"
 import type { Song, ParsedChord, Key } from "@/lib/music/types"
-import { scalePitchClasses, isInKey } from "@/lib/music/scales"
-import { pcToName } from "@/lib/music/notes"
-import { cn } from "@/lib/utils"
-import { Target, ShieldCheck, Flame } from "lucide-react"
+import { scalePitchClasses } from "@/lib/music/scales"
+import { pcToName, toMidi } from "@/lib/music/notes"
+import { getAudioEngine } from "@/lib/audio/audio-engine"
+import { Target, ShieldCheck, Flame, Volume2 } from "lucide-react"
 
 interface SoloCoachProps {
   song: Song
@@ -13,7 +13,7 @@ interface SoloCoachProps {
   currentKey: Key
 }
 
-export function SoloCoach({ song, activeChord, currentKey }: SoloCoachProps) {
+export function SoloCoach({ activeChord, currentKey }: SoloCoachProps) {
   const { targetNotes, safeNotes, spicyNotes } = useMemo(() => {
     if (!activeChord || !activeChord.valid) {
       return { targetNotes: [], safeNotes: [], spicyNotes: [] }
@@ -32,15 +32,16 @@ export function SoloCoach({ song, activeChord, currentKey }: SoloCoachProps) {
       } else if (keyScalePcs.has(i)) {
         safes.push(i) // Diatonic non-chord tones are safe passing notes
       } else {
-        // Non-diatonic, non-chord tones
-        // For a rock/blues context, b3, b5, b7 often act as spicy blue notes.
-        // For now, we'll classify all out-of-key notes as spicy/tension notes.
-        spicys.push(i) 
+        spicys.push(i)
       }
     }
 
     return { targetNotes: targets, safeNotes: safes, spicyNotes: spicys }
   }, [activeChord, currentKey])
+
+  const handleAuditionNote = (pc: number) => {
+    getAudioEngine().playNote(toMidi(pc, 4), { duration: 1.1, velocity: 0.9 })
+  }
 
   if (!activeChord || !activeChord.valid) {
     return (
@@ -58,7 +59,7 @@ export function SoloCoach({ song, activeChord, currentKey }: SoloCoachProps) {
             <Flame className="w-5 h-5 text-orange-500" />
             Solo Coach
          </h2>
-         <p className="text-sm text-muted-foreground">Target notes and scales for {activeChord.symbol}</p>
+         <p className="text-sm text-muted-foreground">Tap any note to audition it against {activeChord.symbol}</p>
       </div>
 
       <div className="flex flex-col gap-6">
@@ -70,11 +71,21 @@ export function SoloCoach({ song, activeChord, currentKey }: SoloCoachProps) {
             </h3>
             <p className="text-xs text-muted-foreground mb-2">Land on these notes on the strong beats. They will always sound good.</p>
             <div className="flex flex-wrap gap-2">
-               {targetNotes.map(pc => (
-                 <span key={pc} className="px-3 py-1.5 rounded-md bg-primary/20 border border-primary/50 font-mono text-sm font-bold text-foreground">
-                    {pcToName(pc, currentKey.accidental)}
-                 </span>
-               ))}
+               {targetNotes.map(pc => {
+                 const name = pcToName(pc, currentKey.accidental)
+                 return (
+                   <button
+                     key={pc}
+                     type="button"
+                     onClick={() => handleAuditionNote(pc)}
+                     title={`Play target note ${name}`}
+                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-primary/20 hover:bg-primary/30 active:scale-95 border border-primary/50 font-mono text-sm font-bold text-foreground transition-all cursor-pointer"
+                   >
+                     <span>{name}</span>
+                     <Volume2 className="size-3 text-primary/80" />
+                   </button>
+                 )
+               })}
             </div>
          </div>
 
@@ -86,11 +97,21 @@ export function SoloCoach({ song, activeChord, currentKey }: SoloCoachProps) {
             </h3>
             <p className="text-xs text-muted-foreground mb-2">Use these to connect your target notes.</p>
             <div className="flex flex-wrap gap-2">
-               {safeNotes.map(pc => (
-                 <span key={pc} className="px-3 py-1.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 font-mono text-sm text-foreground/80">
-                    {pcToName(pc, currentKey.accidental)}
-                 </span>
-               ))}
+               {safeNotes.map(pc => {
+                 const name = pcToName(pc, currentKey.accidental)
+                 return (
+                   <button
+                     key={pc}
+                     type="button"
+                     onClick={() => handleAuditionNote(pc)}
+                     title={`Play passing note ${name}`}
+                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-500/10 hover:bg-emerald-500/20 active:scale-95 border border-emerald-500/30 font-mono text-sm text-foreground/80 transition-all cursor-pointer"
+                   >
+                     <span>{name}</span>
+                     <Volume2 className="size-3 text-emerald-400/70" />
+                   </button>
+                 )
+               })}
             </div>
          </div>
 
@@ -102,11 +123,21 @@ export function SoloCoach({ song, activeChord, currentKey }: SoloCoachProps) {
             </h3>
             <p className="text-xs text-muted-foreground mb-2">Use sparingly as passing chromatic notes or bends to create tension.</p>
             <div className="flex flex-wrap gap-2">
-               {spicyNotes.map(pc => (
-                 <span key={pc} className="px-3 py-1.5 rounded-md bg-orange-500/10 border border-orange-500/30 font-mono text-xs text-muted-foreground">
-                    {pcToName(pc, currentKey.accidental)}
-                 </span>
-               ))}
+               {spicyNotes.map(pc => {
+                 const name = pcToName(pc, currentKey.accidental)
+                 return (
+                   <button
+                     key={pc}
+                     type="button"
+                     onClick={() => handleAuditionNote(pc)}
+                     title={`Play tension note ${name}`}
+                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-orange-500/10 hover:bg-orange-500/20 active:scale-95 border border-orange-500/30 font-mono text-xs text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+                   >
+                     <span>{name}</span>
+                     <Volume2 className="size-3 text-orange-400/70" />
+                   </button>
+                 )
+               })}
             </div>
          </div>
       </div>

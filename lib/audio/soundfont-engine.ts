@@ -347,8 +347,11 @@ const SOUNDFONT_CDN_BASES = [
 const DB_NAME = "BandMateSoundfonts"
 const STORE_NAME = "soundfont_raw"
 
+let dbPromise: Promise<IDBDatabase | null> | null = null
+
 function getIDB(): Promise<IDBDatabase | null> {
-  return new Promise((resolve) => {
+  if (dbPromise) return dbPromise
+  dbPromise = new Promise((resolve) => {
     if (typeof window === "undefined") {
       resolve(null)
       return
@@ -366,11 +369,62 @@ function getIDB(): Promise<IDBDatabase | null> {
         }
       }
       req.onsuccess = () => resolve(req.result)
-      req.onerror = () => resolve(null)
+      req.onerror = () => {
+        dbPromise = null
+        resolve(null)
+      }
     } catch (e) {
+      dbPromise = null
       resolve(null)
     }
   })
+  return dbPromise
+}
+
+export async function clearSoundfontCache(): Promise<void> {
+  if (typeof window === "undefined") return
+  try {
+    const db = await getIDB()
+    if (db) {
+      await new Promise<void>((resolve) => {
+        try {
+          const tx = db.transaction(STORE_NAME, "readwrite")
+          const store = tx.objectStore(STORE_NAME)
+          const req = store.clear()
+          req.onsuccess = () => resolve()
+          req.onerror = () => resolve()
+        } catch {
+          resolve()
+        }
+      })
+      db.close()
+    }
+    dbPromise = null
+    if ("indexedDB" in window && window.indexedDB) {
+      await new Promise<void>((resolve) => {
+        try {
+          const delReq = window.indexedDB.deleteDatabase(DB_NAME)
+          delReq.onsuccess = () => resolve()
+          delReq.onerror = () => resolve()
+          delReq.onblocked = () => resolve()
+        } catch {
+          resolve()
+        }
+      })
+    }
+  } catch {}
+}
+
+export function parseSoundfontScript(text: string): Record<string, string> | null {
+  const result: Record<string, string> = {}
+  const regex = /"([A-G]b?-?\d+)":\s*"(data:audio\/[^"]+)"/g
+  let match: RegExpExecArray | null
+  let count = 0
+  while ((match = regex.exec(text)) !== null) {
+    result[match[1]] = match[2]
+    count++
+  }
+  return count > 0 ? result : null
 }
 
 async function getCachedRawData(id: string): Promise<Record<string, string> | null> {
@@ -482,12 +536,9 @@ class SoundfontEngine {
             if (!res.ok) continue
             const text = await res.text()
 
-            const MIDI: Record<string, unknown> = {}
-            const fn = new Function("MIDI", `${text}; return MIDI;`)
-            const result = fn(MIDI) as { Soundfont?: Record<string, Record<string, string>> }
-
-            if (result.Soundfont && result.Soundfont[id]) {
-              rawData = result.Soundfont[id]
+            const parsed = parseSoundfontScript(text)
+            if (parsed) {
+              rawData = parsed
               break
             }
           } catch (err) {
@@ -503,18 +554,21 @@ class SoundfontEngine {
         setCachedRawData(id, rawData).catch(() => {})
       }
 
-      // Mark instrument usable immediately once sample table is ready
-      entry.loaded = true
-      entry.loading = false
-      this.notify(id, true)
-
-      // Decode the core chord register (MIDI 36 to 84 = C2 to C6) in small batches of 8
-      // to avoid freezing the browser WebAudio thread
-      const coreMidis: number[] = []
+      // Decode the middle register (MIDI 48 to 72 = C3 to C5) first, then outer core register (36..47, 73..84)
+      // in small batches of 8 to avoid freezing the browser WebAudio thread
+      const middleMidis: number[] = []
+      const outerMidis: number[] = []
       for (let midi = 36; midi <= 84; midi++) {
         const noteName = midiToSampleName(midi)
-        if (rawData[noteName]) coreMidis.push(midi)
+        if (rawData[noteName]) {
+          if (midi >= 48 && midi <= 72) {
+            middleMidis.push(midi)
+          } else {
+            outerMidis.push(midi)
+          }
+        }
       }
+      const coreMidis = [...middleMidis, ...outerMidis]
 
       const chunkSize = 8
       for (let i = 0; i < coreMidis.length; i += chunkSize) {
@@ -527,6 +581,11 @@ class SoundfontEngine {
           })
         )
       }
+
+      // Mark instrument usable only after sample decoding loop completes
+      entry.loaded = true
+      entry.loading = false
+      this.notify(id, true)
 
       return true
     } catch (err) {
@@ -634,8 +693,33 @@ class SoundfontEngine {
       }
 
       const gain = ctx.createGain()
+      const panner = typeof ctx.createStereoPanner === "function" ? ctx.createStereoPanner() : null
+      if (panner) {
+        // Natural acoustic stage width: lower notes sit slightly left, higher notes slightly right
+        const pan = Math.max(-0.42, Math.min(0.42, (midi - 60) / 48))
+        panner.pan.setValueAtTime(pan, when)
+      }
+
       // Calibrated peak level per instrument to avoid clipping through studio makeup gain
       const peak = Math.min(1.15, Math.max(0.08, velocity * profile.gainScale))
+
+      source.onended = () => {
+        try {
+          source.disconnect()
+          gain.disconnect()
+          panner?.disconnect()
+        } catch {}
+      }
+
+      const connectChain = () => {
+        source.connect(gain)
+        if (panner) {
+          gain.connect(panner)
+          panner.connect(destination)
+        } else {
+          gain.connect(destination)
+        }
+      }
 
       if (profile.isSustained) {
         // Sustained instrument (e.g. String Ensemble)
@@ -645,22 +729,24 @@ class SoundfontEngine {
         gain.gain.setValueAtTime(peak * profile.sustain, Math.max(when + profile.attack, end - profile.release))
         gain.gain.exponentialRampToValueAtTime(0.0001, end + profile.release)
 
-        source.connect(gain)
-        gain.connect(destination)
+        connectChain()
         source.start(when)
         source.stop(end + profile.release + 0.05)
       } else {
         // Acoustic decaying instrument (Piano, Classical Nylon, Steel Guitar, Rhodes)
-        const decayTime = Math.min(buffer.duration, duration + 0.8)
+        // Natural decay over the note duration followed by a smooth damper release (no step-jump clicks)
+        const holdEnd = when + Math.max(profile.attack + 0.02, Math.min(buffer.duration - 0.08, duration))
+        const releaseEnd = Math.min(when + buffer.duration, holdEnd + profile.release)
+        const sustainLevel = Math.max(0.001, peak * profile.sustain)
+
         gain.gain.setValueAtTime(0.0001, when)
         gain.gain.linearRampToValueAtTime(peak, when + profile.attack)
-        gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, peak * profile.sustain), when + decayTime)
-        gain.gain.setValueAtTime(0.0001, when + decayTime + 0.05)
+        gain.gain.exponentialRampToValueAtTime(sustainLevel, holdEnd)
+        gain.gain.exponentialRampToValueAtTime(0.0001, Math.max(holdEnd + 0.04, releaseEnd))
 
-        source.connect(gain)
-        gain.connect(destination)
+        connectChain()
         source.start(when)
-        source.stop(when + decayTime + 0.1)
+        source.stop(Math.max(holdEnd + 0.06, releaseEnd + 0.02))
       }
 
       return true

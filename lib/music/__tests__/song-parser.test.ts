@@ -83,4 +83,44 @@ Bm F# A E
     expect(song.chordsExtracted).toBe(0)
     expect(song.sections).toEqual([])
   })
+
+  it("auto-detects the key when no explicit Key header is present", () => {
+    const rawSheet = `
+"Wonderwall"
+BPM: 87
+Verse 1:
+Em7 G Dsus4 A7sus4
+`
+    const song = parseSongFromDescription(rawSheet)
+    expect(song.valid).toBe(true)
+    expect(["G", "E"]).toContain(song.keyTonic)
+  })
+
+  it("parses a JSON project backup directly", () => {
+    const jsonBackup = JSON.stringify({
+      title: "JSON Backup Track",
+      keyTonic: "F",
+      keyMode: "major",
+      bpm: 98,
+      beatsPerBar: 4,
+      sections: [
+        {
+          id: "sec-1",
+          name: "Chorus",
+          chords: [
+            { id: "c1", symbol: "Fmaj7", beats: 4, inversion: 1 },
+            { id: "c2", symbol: "Gm7", beats: 4, inversion: 0 },
+            { id: "c3", symbol: "C7", beats: 4, inversion: 2 },
+          ],
+        },
+      ],
+    })
+    const song = parseSongFromDescription(jsonBackup)
+    expect(song.valid).toBe(true)
+    expect(song.title).toBe("JSON Backup Track")
+    expect(song.keyTonic).toBe("F")
+    expect(song.bpm).toBe(98)
+    expect(song.chordsExtracted).toBe(3)
+    expect(song.sections[0].chords[0].inversion).toBe(1)
+  })
 })

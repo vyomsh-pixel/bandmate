@@ -8,12 +8,13 @@
  * engine + audio engine.
  */
 
-import { Play, Music2, Sparkles, Volume2, Copy } from "lucide-react"
+import { Music2, Volume2, Copy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { midiToName } from "@/lib/music/notes"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { allInversions } from "@/lib/music/chords"
+import { allInversions, playableVoicing } from "@/lib/music/chords"
+import { getAudioEngine } from "@/lib/audio/audio-engine"
 import type { Accidental, ParsedChord } from "@/lib/music/types"
 import { Badge } from "@/components/ui/badge"
 
@@ -26,23 +27,26 @@ interface ChordDetailProps {
   onDuplicate?: () => void
 }
 
-function getIntervalName(pc: number, rootPc: number): string {
+function getIntervalName(pc: number, rootPc: number, isSlashBass = false): string {
   const diff = (pc - rootPc + 12) % 12
-  switch (diff) {
-    case 0: return "Root"
-    case 1: return "Minor 2nd / b9"
-    case 2: return "Major 2nd / 9th"
-    case 3: return "Minor 3rd"
-    case 4: return "Major 3rd"
-    case 5: return "Perfect 4th / 11th"
-    case 6: return "Dim 5th / #11"
-    case 7: return "Perfect 5th"
-    case 8: return "Aug 5th / b13"
-    case 9: return "Major 6th / 13th"
-    case 10: return "Minor 7th"
-    case 11: return "Major 7th"
-    default: return ""
-  }
+  const base = (() => {
+    switch (diff) {
+      case 0: return "Root"
+      case 1: return "Minor 2nd / b9"
+      case 2: return "Major 2nd / 9th"
+      case 3: return "Minor 3rd"
+      case 4: return "Major 3rd"
+      case 5: return "Perfect 4th / 11th"
+      case 6: return "Dim 5th / #11"
+      case 7: return "Perfect 5th"
+      case 8: return "Aug 5th / b13"
+      case 9: return "Major 6th / 13th"
+      case 10: return "Minor 7th"
+      case 11: return "Major 7th"
+      default: return ""
+    }
+  })()
+  return isSlashBass ? `Bass (${base})` : base
 }
 
 export function ChordDetail({ chord, accidental, inversion, onInversionChange, onPlay, onDuplicate }: ChordDetailProps) {
@@ -63,7 +67,9 @@ export function ChordDetail({ chord, accidental, inversion, onInversionChange, o
   }
 
   const inversions = allInversions(chord, { octave: 4, accidental })
-  const current = inversions[Math.min(inversion, inversions.length - 1)] ?? inversions[0]
+  const safeInv = Math.min(inversion, Math.max(0, inversions.length - 1))
+  const current = inversions[safeInv] ?? inversions[0]
+  const voicedNotes = playableVoicing(chord, { octave: 4, accidental, inversion: safeInv })
 
   return (
     <div className="flex flex-col gap-5">
@@ -100,21 +106,28 @@ export function ChordDetail({ chord, accidental, inversion, onInversionChange, o
         </div>
       </div>
 
-      {/* Notes of the current voicing */}
+      {/* Notes of the current voicing (click any note to audition) */}
       <div className="flex flex-col gap-2">
-        <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          Voicing Notes
-        </span>
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Voicing Notes
+          </span>
+          <span className="text-[10px] font-mono text-muted-foreground">Tap note to hear</span>
+        </div>
         <TooltipProvider delay={100}>
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-            {current?.notes.map((note, i) => {
-              const intervalLabel = getIntervalName(note.pc, chord.rootPc)
+            {voicedNotes.map((note, i) => {
+              const isSlashBass = i === 0 && chord.bassPc !== null && note.pc === chord.bassPc
+              const intervalLabel = getIntervalName(note.pc, chord.rootPc, isSlashBass)
               const isRoot = note.pc === chord.rootPc
 
               return (
                 <Tooltip key={`${note.midi}-${i}`}>
-                  <TooltipTrigger className="flex flex-col items-center justify-center rounded-xl border border-border/80 bg-background/60 p-2.5 text-center transition-all hover:border-primary/50 hover:bg-muted cursor-pointer shadow-xs">
-                    <span className={cn("font-mono text-sm font-black", isRoot ? "text-primary" : "text-foreground")}>
+                  <TooltipTrigger
+                    onClick={() => getAudioEngine().playNote(note.midi, { duration: 1.25, velocity: 0.9 })}
+                    className="flex flex-col items-center justify-center rounded-xl border border-border/80 bg-background/60 p-2.5 text-center transition-all hover:border-primary/50 hover:bg-muted active:scale-95 cursor-pointer shadow-xs"
+                  >
+                    <span className={cn("font-mono text-sm font-black", isSlashBass ? "text-emerald-400" : isRoot ? "text-primary" : "text-foreground")}>
                       {midiToName(note.midi, accidental)}
                     </span>
                     <span className="text-[10px] font-semibold text-muted-foreground text-center leading-tight w-full mt-0.5 truncate px-0.5" title={intervalLabel}>
@@ -122,7 +135,7 @@ export function ChordDetail({ chord, accidental, inversion, onInversionChange, o
                     </span>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="text-xs">
-                    MIDI {note.midi} · {intervalLabel}
+                    Click to play · MIDI {note.midi} · {intervalLabel}
                   </TooltipContent>
                 </Tooltip>
               )

@@ -1,16 +1,18 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { ChevronLeft, ChevronRight, Eye, Layers } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { ChevronLeft, ChevronRight, Eye, Layers, Volume2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { pcToName } from "@/lib/music/notes"
 import type { ParsedChord } from "@/lib/music/types"
 import { generateGuitarVoicings } from "@/lib/music/guitar-voicings"
+import { getAudioEngine } from "@/lib/audio/audio-engine"
 
 interface GuitarFretboardProps {
   chord: ParsedChord | null
   frets?: number
   capoFret?: number
+  onCapoChange?: (fret: number) => void
   concertSymbol?: string
 }
 
@@ -22,9 +24,22 @@ export const GUITAR_TUNINGS = [
   { id: "open_d", name: "Open D (DADF#AD)", strings: [{ note: "d", midi: 62 }, { note: "A", midi: 57 }, { note: "F#", midi: 54 }, { note: "D", midi: 50 }, { note: "A", midi: 45 }, { note: "D", midi: 38 }] },
 ]
 
-export function GuitarFretboard({ chord, frets = 15, capoFret: initialCapo = 0, concertSymbol }: GuitarFretboardProps) {
+export function GuitarFretboard({ chord, capoFret = 0, onCapoChange }: GuitarFretboardProps) {
   const [tuningId, setTuningId] = useState("standard")
-  const [capoFret, setCapoFret] = useState(initialCapo)
+  const [syncedCapo, setSyncedCapo] = useState(capoFret)
+
+  // Sync capoFret with the prop from InstrumentLab (single source of truth)
+  useEffect(() => {
+    setSyncedCapo(capoFret)
+  }, [capoFret])
+
+  const activeCapo = onCapoChange ? capoFret : syncedCapo
+
+  const handleCapoChange = (nextFret: number) => {
+    const clamped = Math.max(0, Math.min(7, nextFret))
+    setSyncedCapo(clamped)
+    onCapoChange?.(clamped)
+  }
 
   const currentTuning = GUITAR_TUNINGS.find((t) => t.id === tuningId) ?? GUITAR_TUNINGS[0]
   const strings = currentTuning.strings
@@ -37,6 +52,10 @@ export function GuitarFretboard({ chord, frets = 15, capoFret: initialCapo = 0, 
   const [shapeIndex, setShapeIndex] = useState(0)
   // "compact" fits 100% on phone screen with zero scrollbar; "neck" shows the extended 15-fret neck
   const [viewMode, setViewMode] = useState<"compact" | "neck">("compact")
+
+  useEffect(() => {
+    setShapeIndex(0)
+  }, [chord?.symbol])
 
   // Ensure we don't go out of bounds if chord changes
   const activeVoicing = voicings[Math.min(shapeIndex, voicings.length - 1)]
@@ -52,9 +71,36 @@ export function GuitarFretboard({ chord, frets = 15, capoFret: initialCapo = 0, 
   const baseFret = activeVoicing.baseFret
   const isCompact = viewMode === "compact"
 
-  // In compact mode: 4-fret window centered on the chord position (fits phone screens 100%)
-  const startFret = isCompact ? (baseFret > 1 ? baseFret : 1) : 1
-  const renderFretsCount = isCompact ? 4 : Math.max(12, baseFret + 4)
+  const numericFrets = activeVoicing.frets.filter((f): f is number => typeof f === "number" && f > 0)
+  const minPositiveFret = numericFrets.length > 0 ? Math.min(...numericFrets) : baseFret
+  const maxFret = numericFrets.length > 0 ? Math.max(...numericFrets) : baseFret
+
+  // In compact mode: 4-fret window centered on the chord position, adjusted so startFret + renderFretsCount - 1 >= maxFret (never clipping 5th-fret notes)
+  const renderFretsCount = isCompact
+    ? Math.max(4, maxFret - minPositiveFret + 1)
+    : Math.max(12, baseFret + 4, maxFret + 2)
+  let startFret = isCompact ? (baseFret > 1 ? baseFret : 1) : 1
+  if (isCompact && startFret + renderFretsCount - 1 < maxFret) {
+    startFret = Math.max(1, maxFret - renderFretsCount + 1)
+  }
+
+  const handleStrumVoicing = () => {
+    const midis: number[] = []
+    // strings array is [high e (0) ... low E (5)], while activeVoicing.frets is [low E (0) ... high e (5)]
+    for (let sIdx = 5; sIdx >= 0; sIdx--) {
+      const fretVal = activeVoicing.frets[5 - sIdx]
+      if (fretVal !== "X") {
+        midis.push(strings[sIdx].midi + activeCapo + fretVal)
+      }
+    }
+    if (midis.length > 0) {
+      getAudioEngine().playChord(midis, { duration: 1.75, velocity: 0.92, strumDirection: "down", strumSpread: 0.022 })
+    }
+  }
+
+  const handlePluckString = (stringMidi: number, fretOffset: number) => {
+    getAudioEngine().playNote(stringMidi + activeCapo + fretOffset, { duration: 1.35, velocity: 0.9 })
+  }
 
   return (
     <div className="flex flex-col gap-3">
@@ -65,12 +111,24 @@ export function GuitarFretboard({ chord, frets = 15, capoFret: initialCapo = 0, 
             {activeVoicing.label}
           </span>
           <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-black bg-amber-400/15 text-amber-400 border border-amber-400/30">
-            {capoFret > 0
-              ? `Capo ${capoFret}: Play ${chord.symbol} shape`
+            {activeCapo > 0
+              ? `Capo ${activeCapo}: Play ${chord.symbol} shape`
               : baseFret > 1
                 ? `Fret ${baseFret} (Barre)`
                 : "Nut (Open Chord)"}
           </span>
+
+          {/* Strum Voicing Button */}
+          <button
+            type="button"
+            onClick={handleStrumVoicing}
+            className="flex items-center gap-1 px-2.5 h-7 rounded-md border border-amber-400/50 bg-amber-400/15 text-[10px] font-mono font-extrabold text-amber-300 hover:bg-amber-400/25 active:scale-95 transition-all cursor-pointer"
+            title="Strum this guitar chord voicing"
+            aria-label="Strum chord"
+          >
+            <Volume2 className="size-3 text-amber-400" />
+            <span>Strum</span>
+          </button>
 
           {/* Tuning Preset Selector */}
           <select
@@ -91,18 +149,20 @@ export function GuitarFretboard({ chord, frets = 15, capoFret: initialCapo = 0, 
             <span className="font-mono text-[10px] font-bold text-muted-foreground mr-1">CAPO</span>
             <button
               type="button"
-              onClick={() => setCapoFret((c) => Math.max(0, c - 1))}
+              onClick={() => handleCapoChange(activeCapo - 1)}
               className="px-1 text-xs font-bold text-muted-foreground hover:text-foreground cursor-pointer"
+              aria-label="Decrease capo fret"
             >
               -
             </button>
             <span className="font-mono text-[10px] font-black text-amber-400 px-1 min-w-[14px] text-center">
-              {capoFret}
+              {activeCapo}
             </span>
             <button
               type="button"
-              onClick={() => setCapoFret((c) => Math.min(12, c + 1))}
+              onClick={() => handleCapoChange(activeCapo + 1)}
               className="px-1 text-xs font-bold text-muted-foreground hover:text-foreground cursor-pointer"
+              aria-label="Increase capo fret"
             >
               +
             </button>
@@ -113,7 +173,7 @@ export function GuitarFretboard({ chord, frets = 15, capoFret: initialCapo = 0, 
           {/* View Mode Toggle: Compact (Zero-scroll) vs Full Neck */}
           <button
             type="button"
-            onClick={() => setViewMode(v => v === "compact" ? "neck" : "compact")}
+            onClick={() => setViewMode((v) => (v === "compact" ? "neck" : "compact"))}
             className="flex items-center gap-1 px-2 py-1 rounded-lg border border-border/80 bg-background/60 text-[10px] font-mono font-bold text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer transition-colors"
             title={isCompact ? "Switch to 15-fret full neck" : "Switch to compact 4-fret chord box"}
           >
@@ -125,7 +185,8 @@ export function GuitarFretboard({ chord, frets = 15, capoFret: initialCapo = 0, 
           {voicings.length > 1 && (
             <div className="flex items-center gap-1 bg-background/60 rounded-lg p-0.5 border border-border/80">
               <button
-                onClick={() => setShapeIndex(i => Math.max(0, i - 1))}
+                type="button"
+                onClick={() => setShapeIndex((i) => Math.max(0, i - 1))}
                 disabled={shapeIndex === 0}
                 className="size-6 flex items-center justify-center hover:bg-muted rounded disabled:opacity-30 cursor-pointer"
                 aria-label="Previous shape"
@@ -136,7 +197,8 @@ export function GuitarFretboard({ chord, frets = 15, capoFret: initialCapo = 0, 
                 {Math.min(shapeIndex + 1, voicings.length)} / {voicings.length}
               </span>
               <button
-                onClick={() => setShapeIndex(i => Math.min(voicings.length - 1, i + 1))}
+                type="button"
+                onClick={() => setShapeIndex((i) => Math.min(voicings.length - 1, i + 1))}
                 disabled={shapeIndex >= voicings.length - 1}
                 className="size-6 flex items-center justify-center hover:bg-muted rounded disabled:opacity-30 cursor-pointer"
                 aria-label="Next shape"
@@ -150,10 +212,15 @@ export function GuitarFretboard({ chord, frets = 15, capoFret: initialCapo = 0, 
 
       {/* Fretboard Canvas */}
       <div className={cn("relative w-full pb-2", !isCompact && "overflow-x-auto")}>
-        <div className={cn(
-          "flex flex-col gap-[2px] bg-zinc-800 p-[2px] rounded-lg select-none border border-zinc-700 shadow-md relative",
-          isCompact ? "w-full min-w-0" : "min-w-[620px]",
-        )}>
+        <div
+          role="region"
+          aria-label="Guitar fretboard diagram — click to strum chord"
+          onClick={handleStrumVoicing}
+          className={cn(
+            "flex flex-col gap-[2px] bg-zinc-800 p-[2px] rounded-lg select-none border border-zinc-700 shadow-md relative cursor-pointer",
+            isCompact ? "w-full min-w-0" : "min-w-[620px]",
+          )}
+        >
           {/* 6 Guitar Strings */}
           {strings.map((string, stringIdx) => {
             const fretValue = activeVoicing.frets[5 - stringIdx] // 0 is low E in generator, reverse
@@ -162,24 +229,39 @@ export function GuitarFretboard({ chord, frets = 15, capoFret: initialCapo = 0, 
 
             return (
               <div key={stringIdx} className="flex h-7 sm:h-8 bg-zinc-950">
-                {/* Nut / Starting Position Indicator */}
-                <div className="w-10 sm:w-12 shrink-0 flex items-center justify-center border-r-4 border-r-zinc-600 font-mono text-xs font-bold text-zinc-300 bg-zinc-900/60 relative">
+                {/* Nut / Starting Position Indicator (click to pluck individual string) */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handlePluckString(string.midi, typeof fretValue === "number" ? fretValue : 0)
+                  }}
+                  title={`Pluck ${string.note} string`}
+                  className="w-10 sm:w-12 shrink-0 flex items-center justify-center border-r-4 border-r-zinc-600 font-mono text-xs font-bold text-zinc-300 bg-zinc-900/60 hover:bg-zinc-800/80 relative cursor-pointer transition-colors"
+                >
                   {isMuted && <span className="absolute left-1.5 text-rose-400 font-bold text-xs">✕</span>}
                   {isOpen && <span className="absolute left-1.5 text-emerald-400 font-bold text-xs">○</span>}
                   <span>{string.note}</span>
-                </div>
+                </button>
 
                 {/* Frets in this row */}
                 {Array.from({ length: renderFretsCount }).map((_, fretOffset) => {
                   const absoluteFret = startFret + fretOffset
                   const isActive = fretValue === absoluteFret
                   const isRoot = isActive && (string.midi + absoluteFret) % 12 === chord.rootPc
+                  const noteName = pcToName((string.midi + activeCapo + absoluteFret) % 12, "sharp")
 
                   return (
-                    <div
+                    <button
                       key={fretOffset}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleStrumVoicing()
+                      }}
+                      title={`Strum ${chord.symbol} (${noteName} · fret ${absoluteFret})`}
                       className={cn(
-                        "flex-1 border-r border-r-zinc-700 flex items-center justify-center relative min-w-0",
+                        "flex-1 border-r border-r-zinc-700 flex items-center justify-center relative min-w-0 cursor-pointer hover:bg-zinc-900/70 transition-colors",
                         "before:absolute before:left-0 before:right-0 before:h-[2px] before:bg-zinc-600/70 before:top-1/2 before:-translate-y-1/2",
                       )}
                     >
@@ -211,7 +293,7 @@ export function GuitarFretboard({ chord, frets = 15, capoFret: initialCapo = 0, 
                           {pcToName((string.midi + absoluteFret) % 12, "sharp")}
                         </div>
                       )}
-                    </div>
+                    </button>
                   )
                 })}
               </div>
