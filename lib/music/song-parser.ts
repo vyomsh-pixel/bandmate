@@ -141,11 +141,22 @@ export function parseSongFromDescription(text: string): ParsedSongResult {
 
     if (titlePrefixed) {
       title = titlePrefixed[1].trim()
+      continue
     } else if (quotedTitle && title === "Untitled Song") {
       const remaining = line.replace(/^(?:\d+[\.\)\s-]*)?["'“][^"'”]+["'”]\s*[-—–]?\s*/, "").trim()
       title = remaining ? `${quotedTitle[1]} (${remaining})` : quotedTitle[1]
-    } else if (i === 0 && !line.includes(":") && !line.includes("Key") && title === "Untitled Song") {
+      continue
+    } else if (
+      i === 0 &&
+      !line.includes(":") &&
+      !line.includes("Key") &&
+      !line.includes("->") &&
+      !line.includes("→") &&
+      !line.includes("|") &&
+      title === "Untitled Song"
+    ) {
       title = line.replace(/^(?:\d+[\.\)\s-]*)?/, "").replace(/[-—–].*$/, "").trim()
+      continue
     }
 
     // 2. Key Extraction:
