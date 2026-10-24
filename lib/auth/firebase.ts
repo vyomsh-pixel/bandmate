@@ -5,12 +5,12 @@ import { getAuth, GoogleAuthProvider } from "firebase/auth"
 
 // Default Firebase Configuration — configured for BandMate Web App
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyB3Ik8FqV0NRUO5k8IyNyPNV98QAd2Yk2g",
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "bandmate-39809.firebaseapp.com",
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "bandmate-39809",
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "bandmate-39809.firebasestorage.app",
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "642455640959",
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:642455640959:web:2265a6e62caf4fbf67184a",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSy_demo_fallback_key_for_testing",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "bandmate-demo.firebaseapp.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "bandmate-demo",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "bandmate-demo.firebasestorage.app",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "000000000000",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:000000000000:web:demofallback",
 }
 
 // Initialize Firebase App singleton safely for Next.js App Router
