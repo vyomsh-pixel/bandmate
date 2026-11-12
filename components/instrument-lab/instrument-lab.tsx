@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useRef } from "react"
 import { ChevronLeft, ChevronRight, Sparkles, Anchor, RotateCcw, Guitar } from "lucide-react"
-import { GuitarFretboard } from "./guitar-fretboard"
+import { GuitarFretboard, type FretboardInstrument } from "./guitar-fretboard"
 import { SoloCoach } from "./solo-coach"
 import type { Song } from "@/lib/music/types"
 import { parseChord } from "@/lib/music/chord-parser"
@@ -21,6 +21,7 @@ export function InstrumentLab({ song }: InstrumentLabProps) {
   const allChords = useMemo(() => song.sections.flatMap((s) => s.chords), [song.sections])
   const [activeChordId, setActiveChordId] = useState<string | null>(allChords[0]?.id ?? null)
   const [capoFret, setCapoFret] = useState<number>(0)
+  const [instrument, setInstrument] = useState<FretboardInstrument>("guitar")
 
   // Ensure selection remains valid when song changes
   const activeEntry = allChords.find((c) => c.id === activeChordId) ?? allChords[0] ?? null
@@ -105,11 +106,55 @@ export function InstrumentLab({ song }: InstrumentLabProps) {
     <div className="flex flex-col lg:flex-row h-full w-full overflow-hidden bg-background">
       <div className="flex-1 flex flex-col bg-card/40 min-w-0 overflow-y-auto">
         <div className="flex-1 p-2.5 sm:p-5 flex flex-col gap-3">
-          {/* Header Bar with Capo Quick Controls */}
+          {/* Header Bar with Instrument Switcher & Capo Quick Controls */}
           <div className="flex flex-wrap items-center justify-between gap-2 shrink-0">
-            <div className="flex items-center gap-2">
-              <Guitar className="size-5 text-amber-400" />
-              <h2 className="text-base sm:text-xl font-black tracking-tight text-white">Guitar Workspace</h2>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Guitar className="size-5 text-amber-400" />
+                <h2 className="text-base sm:text-xl font-black tracking-tight text-white capitalize">
+                  {instrument} Lab
+                </h2>
+              </div>
+
+              {/* Instrument Switcher Tabs */}
+              <div className="flex items-center rounded-xl bg-zinc-950 p-1 border border-zinc-800 shadow-inner">
+                <button
+                  type="button"
+                  onClick={() => setInstrument("guitar")}
+                  className={cn(
+                    "px-2.5 py-1 font-mono text-xs font-bold rounded-lg cursor-pointer transition-all",
+                    instrument === "guitar"
+                      ? "bg-amber-400 text-black shadow-xs font-black"
+                      : "text-zinc-400 hover:text-white"
+                  )}
+                >
+                  Guitar (6-Str)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInstrument("bass")}
+                  className={cn(
+                    "px-2.5 py-1 font-mono text-xs font-bold rounded-lg cursor-pointer transition-all",
+                    instrument === "bass"
+                      ? "bg-amber-400 text-black shadow-xs font-black"
+                      : "text-zinc-400 hover:text-white"
+                  )}
+                >
+                  Bass (4-Str)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInstrument("ukulele")}
+                  className={cn(
+                    "px-2.5 py-1 font-mono text-xs font-bold rounded-lg cursor-pointer transition-all",
+                    instrument === "ukulele"
+                      ? "bg-amber-400 text-black shadow-xs font-black"
+                      : "text-zinc-400 hover:text-white"
+                  )}
+                >
+                  Ukulele (4-Str)
+                </button>
+              </div>
             </div>
 
             <div className="flex items-center gap-2">
@@ -279,6 +324,7 @@ export function InstrumentLab({ song }: InstrumentLabProps) {
                 capoFret={capoFret}
                 onCapoChange={setCapoFret}
                 concertSymbol={concertChord?.symbol}
+                instrument={instrument}
               />
             </div>
           </div>

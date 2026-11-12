@@ -6,7 +6,11 @@ import { cn } from "@/lib/utils"
 import { pcToName } from "@/lib/music/notes"
 import type { ParsedChord } from "@/lib/music/types"
 import { generateGuitarVoicings } from "@/lib/music/guitar-voicings"
+import { generateUkuleleVoicings } from "@/lib/music/ukulele-voicings"
+import { generateBassVoicings } from "@/lib/music/bass-voicings"
 import { getAudioEngine } from "@/lib/audio/audio-engine"
+
+export type FretboardInstrument = "guitar" | "bass" | "ukulele"
 
 interface GuitarFretboardProps {
   chord: ParsedChord | null
@@ -14,20 +18,49 @@ interface GuitarFretboardProps {
   capoFret?: number
   onCapoChange?: (fret: number) => void
   concertSymbol?: string
+  instrument?: FretboardInstrument
 }
 
-export const GUITAR_TUNINGS = [
-  { id: "standard", name: "Standard (EADGBE)", strings: [{ note: "e", midi: 64 }, { note: "B", midi: 59 }, { note: "G", midi: 55 }, { note: "D", midi: 50 }, { note: "A", midi: 45 }, { note: "E", midi: 40 }] },
-  { id: "drop_d", name: "Drop D (DADGBE)", strings: [{ note: "e", midi: 64 }, { note: "B", midi: 59 }, { note: "G", midi: 55 }, { note: "D", midi: 50 }, { note: "A", midi: 45 }, { note: "D", midi: 38 }] },
-  { id: "dadgad", name: "DADGAD", strings: [{ note: "d", midi: 62 }, { note: "A", midi: 57 }, { note: "G", midi: 55 }, { note: "D", midi: 50 }, { note: "A", midi: 45 }, { note: "D", midi: 38 }] },
-  { id: "half_step", name: "Half-Step Down (Eb)", strings: [{ note: "eb", midi: 63 }, { note: "Bb", midi: 58 }, { note: "Gb", midi: 54 }, { note: "Db", midi: 49 }, { note: "Ab", midi: 44 }, { note: "Eb", midi: 39 }] },
-  { id: "open_d", name: "Open D (DADF#AD)", strings: [{ note: "d", midi: 62 }, { note: "A", midi: 57 }, { note: "F#", midi: 54 }, { note: "D", midi: 50 }, { note: "A", midi: 45 }, { note: "D", midi: 38 }] },
-]
+export const INSTRUMENT_TUNINGS: Record<
+  FretboardInstrument,
+  Array<{ id: string; name: string; strings: { note: string; midi: number }[] }>
+> = {
+  guitar: [
+    { id: "standard", name: "Standard (EADGBE)", strings: [{ note: "e", midi: 64 }, { note: "B", midi: 59 }, { note: "G", midi: 55 }, { note: "D", midi: 50 }, { note: "A", midi: 45 }, { note: "E", midi: 40 }] },
+    { id: "drop_d", name: "Drop D (DADGBE)", strings: [{ note: "e", midi: 64 }, { note: "B", midi: 59 }, { note: "G", midi: 55 }, { note: "D", midi: 50 }, { note: "A", midi: 45 }, { note: "D", midi: 38 }] },
+    { id: "dadgad", name: "DADGAD", strings: [{ note: "d", midi: 62 }, { note: "A", midi: 57 }, { note: "G", midi: 55 }, { note: "D", midi: 50 }, { note: "A", midi: 45 }, { note: "D", midi: 38 }] },
+    { id: "half_step", name: "Half-Step Down (Eb)", strings: [{ note: "eb", midi: 63 }, { note: "Bb", midi: 58 }, { note: "Gb", midi: 54 }, { note: "Db", midi: 49 }, { note: "Ab", midi: 44 }, { note: "Eb", midi: 39 }] },
+    { id: "open_d", name: "Open D (DADF#AD)", strings: [{ note: "d", midi: 62 }, { note: "A", midi: 57 }, { note: "F#", midi: 54 }, { note: "D", midi: 50 }, { note: "A", midi: 45 }, { note: "D", midi: 38 }] },
+  ],
+  bass: [
+    { id: "standard", name: "Standard 4-Str (EADG)", strings: [{ note: "G", midi: 43 }, { note: "D", midi: 38 }, { note: "A", midi: 33 }, { note: "E", midi: 28 }] },
+    { id: "drop_d", name: "Drop D (DADG)", strings: [{ note: "G", midi: 43 }, { note: "D", midi: 38 }, { note: "A", midi: 33 }, { note: "D", midi: 26 }] },
+  ],
+  ukulele: [
+    { id: "standard", name: "Standard (GCEA)", strings: [{ note: "A", midi: 69 }, { note: "E", midi: 64 }, { note: "C", midi: 60 }, { note: "G", midi: 67 }] },
+    { id: "low_g", name: "Low-G (GCEA)", strings: [{ note: "A", midi: 69 }, { note: "E", midi: 64 }, { note: "C", midi: 60 }, { note: "G", midi: 55 }] },
+    { id: "baritone", name: "Baritone (DGBE)", strings: [{ note: "e", midi: 64 }, { note: "B", midi: 59 }, { note: "G", midi: 55 }, { note: "D", midi: 50 }] },
+  ],
+}
 
-export function GuitarFretboard({ chord, capoFret = 0, onCapoChange }: GuitarFretboardProps) {
+export const GUITAR_TUNINGS = INSTRUMENT_TUNINGS.guitar
+
+export function GuitarFretboard({
+  chord,
+  capoFret = 0,
+  onCapoChange,
+  instrument = "guitar",
+}: GuitarFretboardProps) {
   const [tuningId, setTuningId] = useState("standard")
   const [syncedCapo, setSyncedCapo] = useState(capoFret)
   const [scaleOverlay, setScaleOverlay] = useState<"none" | "pentatonic" | "chord-tones">("none")
+  const [shapeIndex, setShapeIndex] = useState(0)
+
+  // Reset tuning and shape index when instrument changes
+  useEffect(() => {
+    setTuningId("standard")
+    setShapeIndex(0)
+  }, [instrument])
 
   // Sync capoFret with the prop from InstrumentLab (single source of truth)
   useEffect(() => {
@@ -42,13 +75,16 @@ export function GuitarFretboard({ chord, capoFret = 0, onCapoChange }: GuitarFre
     onCapoChange?.(clamped)
   }
 
-  const currentTuning = GUITAR_TUNINGS.find((t) => t.id === tuningId) ?? GUITAR_TUNINGS[0]
+  const availableTunings = INSTRUMENT_TUNINGS[instrument] ?? INSTRUMENT_TUNINGS.guitar
+  const currentTuning = availableTunings.find((t) => t.id === tuningId) ?? availableTunings[0]
   const strings = currentTuning.strings
 
   const voicings = useMemo(() => {
     if (!chord || !chord.valid) return []
+    if (instrument === "ukulele") return generateUkuleleVoicings(chord)
+    if (instrument === "bass") return generateBassVoicings(chord)
     return generateGuitarVoicings(chord)
-  }, [chord])
+  }, [chord, instrument])
 
   const scalePitchClasses = useMemo(() => {
     if (!chord || !chord.valid || scaleOverlay === "none") return new Set<number>()
@@ -61,7 +97,6 @@ export function GuitarFretboard({ chord, capoFret = 0, onCapoChange }: GuitarFre
     return new Set(pentatonicOffsets.map((o) => (root + o) % 12))
   }, [chord, scaleOverlay])
 
-  const [shapeIndex, setShapeIndex] = useState(0)
   // "compact" fits 100% on phone screen with zero scrollbar; "neck" shows the extended 15-fret neck
   const [viewMode, setViewMode] = useState<"compact" | "neck">("compact")
 
@@ -98,15 +133,20 @@ export function GuitarFretboard({ chord, capoFret = 0, onCapoChange }: GuitarFre
 
   const handleStrumVoicing = () => {
     const midis: number[] = []
-    // strings array is [high e (0) ... low E (5)], while activeVoicing.frets is [low E (0) ... high e (5)]
-    for (let sIdx = 5; sIdx >= 0; sIdx--) {
-      const fretVal = activeVoicing.frets[5 - sIdx]
+    const strCount = strings.length
+    for (let sIdx = strCount - 1; sIdx >= 0; sIdx--) {
+      const fretVal = activeVoicing.frets[strCount - 1 - sIdx]
       if (fretVal !== "X") {
         midis.push(strings[sIdx].midi + activeCapo + fretVal)
       }
     }
     if (midis.length > 0) {
-      getAudioEngine().playChord(midis, { duration: 1.75, velocity: 0.92, strumDirection: "down", strumSpread: 0.022 })
+      getAudioEngine().playChord(midis, {
+        duration: instrument === "bass" ? 2.2 : 1.75,
+        velocity: 0.92,
+        strumDirection: "down",
+        strumSpread: 0.022,
+      })
     }
   }
 
@@ -149,7 +189,7 @@ export function GuitarFretboard({ chord, capoFret = 0, onCapoChange }: GuitarFre
             className="h-7 rounded-md border border-border bg-background/80 px-2 font-mono text-[10px] font-bold text-amber-300 cursor-pointer outline-hidden"
             aria-label="Guitar Tuning"
           >
-            {GUITAR_TUNINGS.map((t) => (
+            {availableTunings.map((t) => (
               <option key={t.id} value={t.id} className="bg-popover text-foreground">
                 {t.name}
               </option>
@@ -246,9 +286,9 @@ export function GuitarFretboard({ chord, capoFret = 0, onCapoChange }: GuitarFre
             isCompact ? "w-full min-w-0" : "min-w-[620px]",
           )}
         >
-          {/* 6 Guitar Strings */}
+          {/* Instrument Strings */}
           {strings.map((string, stringIdx) => {
-            const fretValue = activeVoicing.frets[5 - stringIdx] // 0 is low E in generator, reverse
+            const fretValue = activeVoicing.frets[strings.length - 1 - stringIdx]
             const isOpen = fretValue === 0
             const isMuted = fretValue === "X"
 
