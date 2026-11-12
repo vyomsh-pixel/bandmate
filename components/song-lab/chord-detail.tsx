@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { Volume2, Sparkles, Copy, Music2, Layers, Sliders } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -48,6 +48,10 @@ interface ChordDetailProps {
   onInversionChange: (inversion: number) => void
   onPlay?: () => void
   onDuplicate?: () => void
+  voicingStyle?: VoicingStyle
+  onVoicingStyleChange?: (style: VoicingStyle) => void
+  octaveOffset?: number
+  onOctaveOffsetChange?: (offset: number) => void
 }
 
 const VOICING_STYLES: { id: VoicingStyle; label: string; desc: string }[] = [
@@ -64,8 +68,16 @@ export function ChordDetail({
   onInversionChange,
   onPlay,
   onDuplicate,
+  voicingStyle = "close",
+  onVoicingStyleChange,
+  octaveOffset = 0,
+  onOctaveOffsetChange,
 }: ChordDetailProps) {
-  const [activeStyle, setActiveStyle] = useState<VoicingStyle>("close")
+  const [activeStyle, setActiveStyle] = useState<VoicingStyle>(voicingStyle)
+
+  useEffect(() => {
+    setActiveStyle(voicingStyle)
+  }, [voicingStyle])
 
   if (!chord || !chord.valid) {
     return (
@@ -83,13 +95,14 @@ export function ChordDetail({
     )
   }
 
-  const inversions = allInversions(chord, { octave: 4, accidental })
+  const effectiveOctave = Math.max(2, Math.min(6, 4 + (octaveOffset ?? 0)))
+  const inversions = allInversions(chord, { octave: effectiveOctave, accidental })
   const safeInv = Math.min(inversion, Math.max(0, inversions.length - 1))
   const current = inversions[safeInv] ?? inversions[0]
 
   // Compute notes based on selected voicing style
   const styleNotes = voiceChordInStyle(chord, activeStyle, {
-    octave: 4,
+    octave: effectiveOctave,
     accidental,
     inversion: safeInv,
   })
@@ -170,7 +183,10 @@ export function ChordDetail({
               <button
                 key={st.id}
                 type="button"
-                onClick={() => setActiveStyle(st.id)}
+                onClick={() => {
+                  setActiveStyle(st.id)
+                  onVoicingStyleChange?.(st.id)
+                }}
                 className={cn(
                   "flex flex-col items-center justify-center p-2 rounded-lg border text-center transition-all duration-150 cursor-pointer shadow-xs",
                   isSelected
@@ -183,6 +199,37 @@ export function ChordDetail({
                 <span className="text-[9px] font-mono text-zinc-500 mt-0.5 truncate w-full">
                   {st.desc}
                 </span>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Octave Register Control */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-zinc-400">
+            Octave Register
+          </span>
+          <span className="text-[10px] font-mono text-zinc-500">Harmonic pitch height</span>
+        </div>
+        <div className="grid grid-cols-3 gap-1.5">
+          {[-1, 0, 1].map((offset) => {
+            const isSelected = (octaveOffset ?? 0) === offset
+            const labels = { "-1": "Low (C3)", "0": "Mid (C4)", "1": "High (C5)" }
+            return (
+              <button
+                key={offset}
+                type="button"
+                onClick={() => onOctaveOffsetChange?.(offset)}
+                className={cn(
+                  "flex items-center justify-center py-1.5 rounded-lg border font-mono text-xs font-bold transition-all cursor-pointer",
+                  isSelected
+                    ? "border-amber-500 bg-amber-500/15 text-amber-300 ring-1 ring-amber-500/50"
+                    : "border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:border-zinc-700 hover:bg-zinc-900"
+                )}
+              >
+                <span>{labels[String(offset) as "-1" | "0" | "1"]}</span>
               </button>
             )
           })}
