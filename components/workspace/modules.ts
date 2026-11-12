@@ -70,7 +70,7 @@ export const MODULES: ModuleDef[] = [
     name: "AI Medley Builder",
     description: "Smart transitions between songs",
     icon: Sparkles,
-    available: false,
+    available: true,
     phase: 4,
   },
   {

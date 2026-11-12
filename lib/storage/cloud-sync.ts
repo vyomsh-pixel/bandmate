@@ -25,10 +25,13 @@ export function getUserCurrentSongKey(uid: string): string {
 }
 
 /** Load all saved setlists for a user. */
-export function loadUserSetlists(uid: string): Setlist[] {
+export function loadUserSetlists(uid: string = "my-studio"): Setlist[] {
   if (!isBrowser()) return []
   try {
-    const raw = window.localStorage.getItem(getUserSetlistsKey(uid))
+    let raw = window.localStorage.getItem(getUserSetlistsKey(uid))
+    if (!raw && uid !== "guest-user") {
+      raw = window.localStorage.getItem(getUserSetlistsKey("guest-user"))
+    }
     if (!raw) return []
     const parsed = JSON.parse(raw) as Setlist[]
     return Array.isArray(parsed) ? parsed : []
@@ -48,15 +51,18 @@ export function saveUserSetlists(uid: string, setlists: Setlist[]): boolean {
   }
 }
 
-/** Load all saved songs for a specific user ID (or guest). */
-export function loadUserSongs(uid: string): Song[] {
+/** Load all saved songs for a specific user ID (or guest/personal studio). */
+export function loadUserSongs(uid: string = "my-studio"): Song[] {
   if (!isBrowser()) return []
   try {
     const userKey = getUserSongsKey(uid)
     let raw = window.localStorage.getItem(userKey)
 
-    // Fallback to legacy global store for guest mode or legacy data
-    if (!raw && (uid === "guest-user" || uid === "guest")) {
+    // Fallback to guest-user store for personal studio or legacy data
+    if (!raw && uid !== "guest-user") {
+      raw = window.localStorage.getItem(getUserSongsKey("guest-user"))
+    }
+    if (!raw && (uid === "guest-user" || uid === "guest" || uid === "my-studio")) {
       raw = window.localStorage.getItem("bandmate:songs:v1")
     }
 

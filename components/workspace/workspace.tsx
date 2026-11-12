@@ -6,15 +6,12 @@ import { ModulePlaceholder } from "./module-placeholder"
 import { SongLab } from "@/components/song-lab/song-lab"
 import { SongLibraryBar } from "./song-library-bar"
 import { useSongLibrary } from "@/hooks/use-song-library"
-import { useAuth } from "@/lib/auth/auth-context"
 import { toast } from "sonner"
 import type { ParsedSongResult } from "@/lib/music/song-parser"
 import { transposeSymbol, semitonesBetween } from "@/lib/music/transpose"
 import { keyAccidental, MAJOR_TONICS, MINOR_TONICS } from "@/lib/music/scales"
 import { noteNameToPc, pcToName } from "@/lib/music/notes"
 import { LegalModal, type LegalDocType } from "@/components/auth/legal-modals"
-import { lockStudioSession } from "@/components/auth/studio-gate"
-import { Lock } from "lucide-react"
 
 const InstrumentLab = lazy(() =>
   import("@/components/instrument-lab/instrument-lab").then((m) => ({ default: m.InstrumentLab })),
@@ -32,6 +29,10 @@ const ExportStudioView = lazy(() =>
   import("@/components/export-studio/export-studio-view").then((m) => ({ default: m.ExportStudioView })),
 )
 
+const MedleyBuilderView = lazy(() =>
+  import("@/components/medley-builder/medley-builder-view").then((m) => ({ default: m.MedleyBuilderView })),
+)
+
 /** Pick the tonic spelling (from the mode's option list) for a pitch class. */
 export function tonicForPc(pc: number, mode: "major" | "minor"): string {
   const list = mode === "major" ? MAJOR_TONICS : MINOR_TONICS
@@ -44,8 +45,7 @@ export function Workspace() {
   const [showPiano, setShowPiano] = useState(false)
   const [showInspector, setShowInspector] = useState(true)
   const [legalDoc, setLegalDoc] = useState<LegalDocType | null>(null)
-  const { user } = useAuth()
-  const lib = useSongLibrary(user?.uid ?? "guest-user")
+  const lib = useSongLibrary("my-studio")
 
   // On desktop screens (>= 1024px), show piano by default; on mobile, keep collapsed for maximum space
   useEffect(() => {
@@ -170,7 +170,7 @@ export function Workspace() {
               >
                 <SetlistsView
                   songs={lib.songs}
-                  userId={user?.uid ?? "guest-user"}
+                  userId="my-studio"
                   onSelectSong={lib.selectSong}
                   onOpenSongLab={(id) => {
                     lib.selectSong(id)
@@ -190,6 +190,27 @@ export function Workspace() {
                   songs={lib.songs}
                   currentSong={lib.currentSong}
                   onSelectSong={lib.selectSong}
+                />
+              </Suspense>
+            ) : activeModule === "medley-builder" ? (
+              <Suspense
+                fallback={
+                  <div className="flex h-full items-center justify-center font-mono text-xs text-muted-foreground">
+                    Loading Medley Builder…
+                  </div>
+                }
+              >
+                <MedleyBuilderView
+                  songs={lib.songs}
+                  onSaveMedleySong={(medley) => {
+                    const created = lib.createSong(medley)
+                    toast.success(`Created medley "${medley.title}" in Song Lab!`)
+                    setActiveModule("song-lab")
+                  }}
+                  onOpenSongLab={(id) => {
+                    lib.selectSong(id)
+                    setActiveModule("song-lab")
+                  }}
                 />
               </Suspense>
             ) : (
