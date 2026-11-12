@@ -98,6 +98,7 @@ class AudioEngine {
   private ctx: AudioContext | null = null
   private master: GainNode | null = null
   private dryClickBus: AudioNode | null = null
+  private analyser: AnalyserNode | null = null
 
   // Transport state.
   private running = false
@@ -160,6 +161,15 @@ class AudioEngine {
       }
 
       compressor.connect(makeupGain)
+
+      // Connect real-time stereo FFT/waveform AnalyserNode
+      try {
+        this.analyser = this.ctx.createAnalyser()
+        this.analyser.fftSize = 64
+        this.analyser.smoothingTimeConstant = 0.75
+        makeupGain.connect(this.analyser)
+      } catch {}
+
       makeupGain.connect(this.ctx.destination)
 
       // Listen for window focus & statechange to keep WebAudio engine alive on mobile/desktop
@@ -195,6 +205,10 @@ class AudioEngine {
       this.ctx.close().catch(() => {})
       this.ctx = null
     }
+  }
+
+  getAnalyser(): AnalyserNode | null {
+    return this.analyser
   }
 
   get currentTime(): number {

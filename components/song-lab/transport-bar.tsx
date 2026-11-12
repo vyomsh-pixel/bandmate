@@ -33,6 +33,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { HardwareKnob } from "@/components/ui/hardware-knob"
+import { AudioVuMeter } from "@/components/ui/audio-vu-meter"
 import {
   Select,
   SelectContent,
@@ -353,8 +354,11 @@ export function TransportBar({
           </Select>
         </div>
 
-        {/* Module 4: Hardware Master Volume Knob & Stage Mode */}
+        {/* Module 4: Hardware Master Volume Knob, VU Meter & Stage Mode */}
         <div className="flex items-center gap-3 bg-zinc-950/80 border border-zinc-800/80 rounded-xl px-3 py-1 shadow-inner shrink-0">
+          {/* Animated Stereo VU Meter */}
+          <AudioVuMeter className="hidden xl:flex" />
+
           {/* Metronome */}
           <Button
             variant={metronome ? "default" : "ghost"}
