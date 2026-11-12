@@ -15,6 +15,7 @@ import { ProgressionEditor } from "./progression-editor"
 import { ChordDetail } from "./chord-detail"
 import { PianoKeyboard } from "./piano-keyboard"
 import { GuitarFretboard } from "@/components/instrument-lab/guitar-fretboard"
+import { VoiceLeadingRibbon } from "./voice-leading-ribbon"
 import { TransportBar } from "./transport-bar"
 import { VoiceRibbon } from "./voice-ribbon"
 import { parseChord } from "@/lib/music/chord-parser"
@@ -99,7 +100,7 @@ export function SongLab({
   const [isRehearsing, setIsRehearsing] = useState(false)
   const [twoHanded, setTwoHanded] = useState(false)
   const [showKeyboard, setShowKeyboard] = useState(showPiano)
-  const [bottomDeckView, setBottomDeckView] = useState<"piano" | "guitar">("piano")
+  const [bottomDeckView, setBottomDeckView] = useState<"piano" | "guitar" | "voice-leading">("piano")
 
   useEffect(() => {
     setShowKeyboard(showPiano)
@@ -223,6 +224,21 @@ export function SongLab({
     })
     return map
   }, [keyboardNotes])
+
+  const activeChordIdx = useMemo(() => {
+    const targetId = displayedEntry?.id ?? selectedId
+    return allChords.findIndex((c) => c.id === targetId)
+  }, [allChords, displayedEntry?.id, selectedId])
+
+  const nextChordEntry = useMemo(() => {
+    if (activeChordIdx < 0 || activeChordIdx >= allChords.length - 1) return null
+    return allChords[activeChordIdx + 1]
+  }, [allChords, activeChordIdx])
+
+  const activeSectionId = useMemo(() => {
+    const targetId = displayedEntry?.id ?? selectedId
+    return song.sections.find((s) => s.chords.some((c) => c.id === targetId))?.id ?? song.sections[0]?.id
+  }, [song.sections, displayedEntry?.id, selectedId])
 
   // ---- Audio helpers ---------------------------------------------------------
   const buildConfig = useCallback((): TransportConfig => {
@@ -877,6 +893,24 @@ export function SongLab({
                   >
                     Guitar Fretboard
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBottomDeckView("voice-leading")
+                      if (!showKeyboard) {
+                        setShowKeyboard(true)
+                        onTogglePiano?.()
+                      }
+                    }}
+                    className={cn(
+                      "px-2 py-0.5 font-mono text-[10px] font-bold rounded cursor-pointer transition-all",
+                      bottomDeckView === "voice-leading"
+                        ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-xs"
+                        : "text-zinc-400 hover:text-zinc-200"
+                    )}
+                  >
+                    Voice Leading
+                  </button>
                 </div>
               </div>
 
@@ -895,9 +929,13 @@ export function SongLab({
                   <Layers className="size-3" />
                   <span>2-Handed Mode ({twoHanded ? "ON" : "OFF"})</span>
                 </button>
-              ) : (
+              ) : bottomDeckView === "guitar" ? (
                 <span className="text-[10px] font-mono text-zinc-400">
                   Interactive CAGED chord shapes &amp; Capo simulator
+                </span>
+              ) : (
+                <span className="text-[10px] font-mono text-zinc-400">
+                  SATB Step Motion &amp; Smoothness Engine
                 </span>
               )}
             </div>
@@ -912,10 +950,20 @@ export function SongLab({
                     twoHanded={twoHanded}
                     satbVoiceMap={satbVoiceMap}
                   />
-                ) : (
+                ) : bottomDeckView === "guitar" ? (
                   <GuitarFretboard
                     chord={isPlaying && parsedDisplayed ? parsedDisplayed : parsedSelected}
                   />
+                ) : (
+                  <div className="p-2">
+                    <VoiceLeadingRibbon
+                      currentChord={displayedEntry ?? selectedEntry}
+                      nextChord={nextChordEntry}
+                      accidental={accidental}
+                      voicingStyle={(displayedEntry ?? selectedEntry)?.voicingStyle as any ?? "close"}
+                      onAutoVoiceSection={() => activeSectionId && handleAutoVoiceSection(activeSectionId)}
+                    />
+                  </div>
                 )}
               </div>
             )}
@@ -974,6 +1022,16 @@ export function SongLab({
                 >
                   Guitar
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setBottomDeckView("voice-leading")}
+                  className={cn(
+                    "px-2 py-0.5 font-mono text-[10px] font-bold rounded cursor-pointer",
+                    bottomDeckView === "voice-leading" ? "bg-amber-500/20 text-amber-300 border border-amber-500/40" : "text-zinc-400"
+                  )}
+                >
+                  Voice
+                </button>
               </div>
             </div>
             {bottomDeckView === "piano" && (
@@ -1002,9 +1060,17 @@ export function SongLab({
                 twoHanded={twoHanded}
                 satbVoiceMap={satbVoiceMap}
               />
-            ) : (
+            ) : bottomDeckView === "guitar" ? (
               <GuitarFretboard
                 chord={isPlaying && parsedDisplayed ? parsedDisplayed : parsedSelected}
+              />
+            ) : (
+              <VoiceLeadingRibbon
+                currentChord={displayedEntry ?? selectedEntry}
+                nextChord={nextChordEntry}
+                accidental={accidental}
+                voicingStyle={(displayedEntry ?? selectedEntry)?.voicingStyle as any ?? "close"}
+                onAutoVoiceSection={() => activeSectionId && handleAutoVoiceSection(activeSectionId)}
               />
             )}
           </div>
