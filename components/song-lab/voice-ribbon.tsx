@@ -56,8 +56,9 @@ export function VoiceRibbon({
 
     const chordVoices = chords.map((c) => {
       const parsed = parseChord(c.symbol)
-      const notes = voiceChordInStyle(parsed, voicingStyle, {
-        octave: 4,
+      const effectiveStyle = c.voicingStyle === "standard" ? "close" : (c.voicingStyle ?? voicingStyle)
+      const notes = voiceChordInStyle(parsed, effectiveStyle as VoicingStyle, {
+        octave: 4 + (c.octaveOffset ?? 0),
         accidental,
         inversion: c.inversion ?? 0,
       })

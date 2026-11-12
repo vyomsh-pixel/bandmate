@@ -22,7 +22,7 @@ import { playableVoicing, getVoicingMidis } from "@/lib/music/chords"
 const RehearsalMode = lazy(() =>
   import("./rehearsal-mode").then((m) => ({ default: m.RehearsalMode })),
 )
-import { suggestSmoothInversion, assignSATBVoices, type VoicingStyle } from "@/lib/music/voice-leading"
+import { suggestSmoothInversion, suggestOptimalVoicing, autoVoiceProgression, assignSATBVoices, type VoicingStyle } from "@/lib/music/voice-leading"
 import { keyAccidental } from "@/lib/music/scales"
 import { midiToPc } from "@/lib/music/notes"
 import { getAudioEngine, type TransportConfig, type RhythmPattern } from "@/lib/audio/audio-engine"
@@ -183,8 +183,25 @@ export function SongLab({
   const keyboardNotes = useMemo(() => {
     if (!parsedDisplayed?.valid) return []
     const inv = displayedEntry?.inversion ?? (displayedEntry?.id === selectedId ? inversion : 0)
-    return playableVoicing(parsedDisplayed, { octave: 4, accidental, inversion: inv })
-  }, [parsedDisplayed, displayedEntry?.inversion, displayedEntry?.id, selectedId, inversion, accidental])
+    const octOffset = displayedEntry?.octaveOffset ?? 0
+    const style = displayedEntry?.voicingStyle ?? "standard"
+    return playableVoicing(parsedDisplayed, {
+      octave: 4,
+      accidental,
+      inversion: inv,
+      octaveOffset: octOffset,
+      voicingStyle: style,
+    })
+  }, [
+    parsedDisplayed,
+    displayedEntry?.inversion,
+    displayedEntry?.octaveOffset,
+    displayedEntry?.voicingStyle,
+    displayedEntry?.id,
+    selectedId,
+    inversion,
+    accidental,
+  ])
 
   const activeMidis = keyboardNotes.map((n) => n.midi)
   const bassMidi = parsedDisplayed?.valid && parsedDisplayed.bassPc !== null
@@ -218,7 +235,13 @@ export function SongLab({
         const parsed = parseChord(entry.symbol)
         const midis = getVoicingMidis(
           parsed,
-          { octave: 4, accidental: acc, inversion: entry.inversion ?? 0 },
+          {
+            octave: 4,
+            accidental: acc,
+            inversion: entry.inversion ?? 0,
+            octaveOffset: entry.octaveOffset ?? 0,
+            voicingStyle: entry.voicingStyle ?? "standard",
+          },
           twoHanded
         )
         return { midis, beats: Math.max(1, entry.beats) }
@@ -288,14 +311,31 @@ export function SongLab({
     engine.ensureContext().then(() => {
       engine.setMasterVolume(volume)
       const currentInv = selectedEntry?.inversion ?? inversion
+      const currentOctOffset = selectedEntry?.octaveOffset ?? 0
+      const currentStyle = selectedEntry?.voicingStyle ?? "standard"
       const midis = getVoicingMidis(
         parsedSelected,
-        { octave: 4, accidental, inversion: currentInv },
+        {
+          octave: 4,
+          accidental,
+          inversion: currentInv,
+          octaveOffset: currentOctOffset,
+          voicingStyle: currentStyle,
+        },
         twoHanded
       )
       engine.playChord(midis, { duration: 1.4 })
     })
-  }, [parsedSelected, accidental, selectedEntry?.inversion, inversion, volume, twoHanded])
+  }, [
+    parsedSelected,
+    accidental,
+    selectedEntry?.inversion,
+    selectedEntry?.octaveOffset,
+    selectedEntry?.voicingStyle,
+    inversion,
+    volume,
+    twoHanded,
+  ])
 
   // ---- Chord editing ---------------------------------------------------------
   const updateSections = useCallback(
@@ -430,23 +470,16 @@ export function SongLab({
       updateSections((sections) =>
         sections.map((sec) => {
           if (sec.id !== sectionId || sec.chords.length <= 1) return sec
-          let prevVoicing: Note[] = []
-          const newChords = sec.chords.map((entry, idx) => {
-            const parsed = parseChord(entry.symbol)
-            if (!parsed.valid) return entry
-            if (idx === 0) {
-              const inv = entry.inversion ?? 0
-              prevVoicing = playableVoicing(parsed, { octave: 4, accidental, inversion: inv })
-              return entry
-            }
-            const bestInversion = suggestSmoothInversion(prevVoicing, parsed, accidental)
-            prevVoicing = playableVoicing(parsed, { octave: 4, accidental, inversion: bestInversion })
-            return { ...entry, inversion: bestInversion }
-          })
+          const voiced = autoVoiceProgression(sec.chords, { accidental })
+          const newChords = sec.chords.map((entry, idx) => ({
+            ...entry,
+            inversion: voiced[idx]?.inversion ?? 0,
+            octaveOffset: voiced[idx]?.octaveOffset ?? 0,
+          }))
           return { ...sec, chords: newChords }
         }),
       )
-      toast.success("Voicings optimized for smooth voice leading!")
+      toast.success("Voicings smoothed: Common tones preserved & leaps eliminated!")
     },
     [updateSections, accidental],
   )
