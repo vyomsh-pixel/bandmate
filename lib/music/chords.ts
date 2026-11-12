@@ -84,13 +84,48 @@ export function allInversions(chord: ParsedChord, options: { octave?: number; ac
  */
 export function playableVoicing(
   chord: ParsedChord,
-  options: { octave?: number; accidental?: Accidental; inversion?: number } = {},
+  options: {
+    octave?: number
+    accidental?: Accidental
+    inversion?: number
+    octaveOffset?: number
+    voicingStyle?: "standard" | "open" | "drop2" | "shell"
+  } = {},
 ): Note[] {
-  const { octave = 4, accidental = "sharp", inversion = 0 } = options
-  const root = voiceChord(chord, { octave, accidental })
-  const voiced = invertVoicing(root, inversion, accidental)
+  const {
+    octave = 4,
+    accidental = "sharp",
+    inversion = 0,
+    octaveOffset = 0,
+    voicingStyle = "standard",
+  } = options
+
+  const effectiveOctave = Math.max(1, Math.min(7, octave + octaveOffset))
+  const root = voiceChord(chord, { octave: effectiveOctave, accidental })
+  let voiced = invertVoicing(root, inversion, accidental)
+
+  if (voicingStyle === "drop2" && voiced.length >= 4) {
+    // Drop 2nd voice from the top down by an octave
+    const dropIdx = voiced.length - 2
+    const dropped = voiced[dropIdx]
+    if (dropped) {
+      const lower = makeNote(dropped.pc, dropped.octave - 1, accidental)
+      const rest = voiced.filter((_, idx) => idx !== dropIdx)
+      voiced = [lower, ...rest].sort((a, b) => a.midi - b.midi)
+    }
+  } else if (voicingStyle === "shell" && voiced.length >= 3) {
+    // Shell voicing: preserve root, 3rd, and 7th (or highest color tone)
+    const rootNote = voiced[0]
+    const thirdNote = voiced[1]
+    const seventhNote = voiced[voiced.length - 1]
+    voiced = [rootNote, thirdNote, seventhNote].sort((a, b) => a.midi - b.midi)
+  } else if (voicingStyle === "open" && voiced.length >= 3) {
+    // Open spread: raise alternating voices up an octave
+    voiced = voiced.map((n, idx) => (idx % 2 === 1 ? makeNote(n.pc, n.octave + 1, accidental) : n)).sort((a, b) => a.midi - b.midi)
+  }
+
   if (chord.bassPc !== null) {
-    const bassOctave = octave <= 4 ? octave - 1 : 3
+    const bassOctave = effectiveOctave <= 4 ? effectiveOctave - 1 : 3
     const bass = makeNote(chord.bassPc, bassOctave, accidental)
     const filtered = voiced.filter((n) => n.midi !== bass.midi)
     return [bass, ...filtered]
@@ -135,7 +170,13 @@ export function computeLeftHandMidis(
  */
 export function getVoicingMidis(
   parsed: ParsedChord | null,
-  options: { octave?: number; accidental?: Accidental; inversion?: number } = {},
+  options: {
+    octave?: number
+    accidental?: Accidental
+    inversion?: number
+    octaveOffset?: number
+    voicingStyle?: "standard" | "open" | "drop2" | "shell"
+  } = {},
   twoHanded = false,
 ): number[] {
   if (!parsed?.valid) return []

@@ -1,4 +1,5 @@
 import { allInversions, voiceChord, invertVoicing } from "./chords"
+import { parseChord } from "./chord-parser"
 import { makeNote } from "./notes"
 import type { Accidental, Note, ParsedChord } from "./types"
 
@@ -255,4 +256,136 @@ export function suggestSmoothInversion(
   }
 
   return bestInversion
+}
+
+export interface OptimalVoicing {
+  inversion: number
+  octaveOffset: number
+  distance: number
+  notes: Note[]
+  midis: number[]
+  smoothnessScore: number
+  voiceStep?: VoiceLeadingStep
+}
+
+/**
+ * Suggest the mathematically optimal voicing (inversion + register offset)
+ * that produces the absolute smoothest voice-leading connection from currentVoicing.
+ */
+export function suggestOptimalVoicing(
+  currentVoicing: Note[],
+  targetChord: ParsedChord,
+  options: {
+    accidental?: Accidental
+    voicingStyle?: VoicingStyle
+    preferredOctave?: number
+  } = {},
+): OptimalVoicing {
+  const { accidental = "sharp", voicingStyle = "close", preferredOctave = 4 } = options
+  if (!targetChord.valid || currentVoicing.length === 0) {
+    const defaultNotes = voiceChordInStyle(targetChord, voicingStyle, { octave: preferredOctave, accidental })
+    return {
+      inversion: 0,
+      octaveOffset: 0,
+      distance: 0,
+      notes: defaultNotes,
+      midis: defaultNotes.map((n) => n.midi),
+      smoothnessScore: 100,
+    }
+  }
+
+  const targetInversions = allInversions(targetChord, { octave: preferredOctave, accidental })
+  if (targetInversions.length === 0) {
+    const defaultNotes = voiceChordInStyle(targetChord, voicingStyle, { octave: preferredOctave, accidental })
+    return {
+      inversion: 0,
+      octaveOffset: 0,
+      distance: 0,
+      notes: defaultNotes,
+      midis: defaultNotes.map((n) => n.midi),
+      smoothnessScore: 100,
+    }
+  }
+
+  let bestInversion = 0
+  let bestOctaveOffset = 0
+  let minDistance = Infinity
+  let bestNotes: Note[] = []
+
+  for (const inv of targetInversions) {
+    for (const octOffset of [-1, 0, 1]) {
+      const shifted = inv.notes.map((n) => makeNote(n.pc, n.octave + octOffset, accidental))
+      const dist = voiceLeadingDistance(currentVoicing, shifted)
+      if (dist < minDistance) {
+        minDistance = dist
+        bestInversion = inv.inversion
+        bestOctaveOffset = octOffset
+        bestNotes = shifted
+      }
+    }
+  }
+
+  const step = analyzeVoiceLeadingStep(currentVoicing, bestNotes, "prev", targetChord.symbol)
+
+  return {
+    inversion: bestInversion,
+    octaveOffset: bestOctaveOffset,
+    distance: minDistance,
+    notes: bestNotes,
+    midis: bestNotes.map((n) => n.midi),
+    smoothnessScore: step.smoothnessScore,
+    voiceStep: step,
+  }
+}
+
+/**
+ * Automatically voice an entire chord progression smoothly, preserving common tones
+ * and eliminating awkward register jumps across the entire song.
+ */
+export function autoVoiceProgression(
+  chords: { id: string; symbol: string; beats: number; inversion?: number; octaveOffset?: number }[],
+  options: { accidental?: Accidental; voicingStyle?: VoicingStyle; startingOctave?: number } = {},
+): { id: string; symbol: string; beats: number; inversion: number; octaveOffset: number }[] {
+  if (chords.length === 0) return []
+  const { accidental = "sharp", voicingStyle = "close", startingOctave = 4 } = options
+
+  const result: { id: string; symbol: string; beats: number; inversion: number; octaveOffset: number }[] = []
+  let previousVoicing: Note[] = []
+
+  for (let i = 0; i < chords.length; i++) {
+    const entry = chords[i]
+    const parsed = parseChord(entry.symbol)
+    if (!parsed.valid) {
+      result.push({ ...entry, inversion: entry.inversion ?? 0, octaveOffset: entry.octaveOffset ?? 0 })
+      continue
+    }
+
+    if (i === 0 || previousVoicing.length === 0) {
+      const startNotes = voiceChordInStyle(parsed, voicingStyle, {
+        octave: startingOctave,
+        accidental,
+        inversion: entry.inversion ?? 0,
+      })
+      previousVoicing = startNotes
+      result.push({
+        ...entry,
+        inversion: entry.inversion ?? 0,
+        octaveOffset: entry.octaveOffset ?? 0,
+      })
+    } else {
+      const optimal = suggestOptimalVoicing(previousVoicing, parsed, {
+        accidental,
+        voicingStyle,
+        preferredOctave: startingOctave,
+      })
+      previousVoicing = optimal.notes
+      result.push({
+        ...entry,
+        inversion: optimal.inversion,
+        octaveOffset: optimal.octaveOffset,
+      })
+    }
+  }
+
+  return result
 }

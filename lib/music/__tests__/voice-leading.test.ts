@@ -5,6 +5,8 @@ import {
   assignSATBVoices,
   analyzeVoiceLeadingStep,
   suggestSmoothInversion,
+  suggestOptimalVoicing,
+  autoVoiceProgression,
   voiceLeadingDistance,
 } from "../voice-leading"
 import { voiceChord } from "../chords"
@@ -66,5 +68,36 @@ describe("Voice Leading & SATB Polyphonic Engine", () => {
     const bestInv = suggestSmoothInversion(cmaj, fmaj)
     expect(typeof bestInv).toBe("number")
     expect([0, 1, 2]).toContain(bestInv)
+  })
+
+  it("suggestOptimalVoicing retains octave offsets and minimizes total movement", () => {
+    const cmaj = voiceChord(parseChord("C")) // [C4(60), E4(64), G4(67)]
+    const gmaj = parseChord("G")
+    const optimal = suggestOptimalVoicing(cmaj, gmaj)
+
+    expect(optimal).toBeDefined()
+    expect(typeof optimal.inversion).toBe("number")
+    expect(typeof optimal.octaveOffset).toBe("number")
+    expect(optimal.distance).toBeLessThanOrEqual(15)
+    expect(optimal.notes.length).toBe(3)
+    expect(optimal.smoothnessScore).toBeGreaterThanOrEqual(50)
+  })
+
+  it("autoVoiceProgression smooths out an entire multi-chord section", () => {
+    const chords = [
+      { id: "c1", symbol: "C", beats: 4 },
+      { id: "c2", symbol: "Am", beats: 4 },
+      { id: "c3", symbol: "F", beats: 4 },
+      { id: "c4", symbol: "G", beats: 4 },
+    ]
+
+    const smoothed = autoVoiceProgression(chords)
+    expect(smoothed).toHaveLength(4)
+    expect(smoothed[0].inversion).toBe(0)
+    // Later chords should receive optimal inversions
+    for (const c of smoothed) {
+      expect(typeof c.inversion).toBe("number")
+      expect(typeof c.octaveOffset).toBe("number")
+    }
   })
 })
