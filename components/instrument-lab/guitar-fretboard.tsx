@@ -257,9 +257,17 @@ export function GuitarFretboard({ chord, capoFret = 0, onCapoChange }: GuitarFre
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation()
-                        handleStrumVoicing()
+                        if (isActive) {
+                          handlePluckString(string.midi, absoluteFret)
+                        } else {
+                          handleStrumVoicing()
+                        }
                       }}
-                      title={`Strum ${chord.symbol} (${noteName} · fret ${absoluteFret})`}
+                      title={
+                        isActive
+                          ? `Pluck ${noteName} (fret ${absoluteFret})`
+                          : `Strum ${chord.symbol} (${noteName} · fret ${absoluteFret})`
+                      }
                       className={cn(
                         "flex-1 border-r border-r-zinc-700 flex items-center justify-center relative min-w-0 cursor-pointer hover:bg-zinc-900/70 transition-colors",
                         "before:absolute before:left-0 before:right-0 before:h-[2px] before:bg-zinc-600/70 before:top-1/2 before:-translate-y-1/2",
