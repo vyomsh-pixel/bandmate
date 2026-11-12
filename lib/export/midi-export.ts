@@ -76,6 +76,8 @@ export function generateMidiFile(song: Song): Uint8Array {
       octave: 4,
       accidental,
       inversion: entry.inversion ?? 0,
+      octaveOffset: entry.octaveOffset ?? 0,
+      voicingStyle: entry.voicingStyle ?? "standard",
     }).map((n) => n.midi)
 
     if (midis.length === 0) continue

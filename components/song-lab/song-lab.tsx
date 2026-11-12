@@ -14,6 +14,7 @@ import { toast } from "sonner"
 import { ProgressionEditor } from "./progression-editor"
 import { ChordDetail } from "./chord-detail"
 import { PianoKeyboard } from "./piano-keyboard"
+import { GuitarFretboard } from "@/components/instrument-lab/guitar-fretboard"
 import { TransportBar } from "./transport-bar"
 import { VoiceRibbon } from "./voice-ribbon"
 import { parseChord } from "@/lib/music/chord-parser"
@@ -98,6 +99,7 @@ export function SongLab({
   const [isRehearsing, setIsRehearsing] = useState(false)
   const [twoHanded, setTwoHanded] = useState(false)
   const [showKeyboard, setShowKeyboard] = useState(showPiano)
+  const [bottomDeckView, setBottomDeckView] = useState<"piano" | "guitar">("piano")
 
   useEffect(() => {
     setShowKeyboard(showPiano)
@@ -961,6 +963,14 @@ export function SongLab({
             onInversionChange={handleInversionChange}
             onPlay={playSelectedChord}
             onDuplicate={selectedId ? () => handleDuplicateChord(selectedId) : undefined}
+            voicingStyle={selectedEntry?.voicingStyle as any ?? "close"}
+            onVoicingStyleChange={(style) => {
+              if (selectedId) handleUpdateChord(selectedId, { voicingStyle: style as any })
+            }}
+            octaveOffset={selectedEntry?.octaveOffset ?? 0}
+            onOctaveOffsetChange={(offset) => {
+              if (selectedId) handleUpdateChord(selectedId, { octaveOffset: offset })
+            }}
           />
         </div>
       </div>
