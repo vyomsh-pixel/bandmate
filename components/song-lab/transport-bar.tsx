@@ -259,6 +259,53 @@ export function TransportBar({
             })}
           </div>
 
+          {/* Teenage Engineering OP-1 Style Mini Tape Deck Reels */}
+          <div
+            className="hidden lg:flex items-center gap-1.5 px-2 py-1 rounded-lg bg-[#07080a] border border-zinc-800/80 shadow-inner select-none"
+            title={isPlaying ? "Tape Transport Rolling" : "Tape Transport Ready"}
+          >
+            {/* Left Reel */}
+            <div className="relative size-6 flex items-center justify-center">
+              <div
+                className={cn(
+                  "size-5 rounded-full border-2 border-zinc-600 bg-zinc-900 flex items-center justify-center transition-transform",
+                  isPlaying && "animate-spin [animation-duration:2.5s]"
+                )}
+              >
+                <div className="size-1.5 rounded-full bg-amber-400/80" />
+                <div className="absolute w-4 h-0.5 bg-zinc-600/60" />
+                <div className="absolute h-4 w-0.5 bg-zinc-600/60" />
+              </div>
+            </div>
+
+            {/* Tape Window / Mode */}
+            <div className="flex flex-col items-center px-0.5">
+              <div
+                className={cn(
+                  "w-3.5 h-1 rounded-full transition-colors",
+                  isPlaying ? "bg-rose-500 shadow-[0_0_6px_#f43f5e]" : "bg-zinc-700"
+                )}
+              />
+              <span className="font-mono text-[7.5px] font-black text-zinc-500 tracking-tighter uppercase mt-0.5">
+                {isPlaying ? "RUN" : "TAPE"}
+              </span>
+            </div>
+
+            {/* Right Reel */}
+            <div className="relative size-6 flex items-center justify-center">
+              <div
+                className={cn(
+                  "size-5 rounded-full border-2 border-zinc-600 bg-zinc-900 flex items-center justify-center transition-transform",
+                  isPlaying && "animate-spin [animation-duration:2.5s]"
+                )}
+              >
+                <div className="size-1.5 rounded-full bg-amber-400/80" />
+                <div className="absolute w-4 h-0.5 bg-zinc-600/60" />
+                <div className="absolute h-4 w-0.5 bg-zinc-600/60" />
+              </div>
+            </div>
+          </div>
+
           {/* Loop Button */}
           <Button
             variant={loop ? "default" : "ghost"}
