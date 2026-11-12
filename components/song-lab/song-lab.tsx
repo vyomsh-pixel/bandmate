@@ -751,6 +751,7 @@ export function SongLab({
                 <VoiceRibbon
                   chords={allChords}
                   selectedIndex={Math.max(0, allChords.findIndex((c) => c.id === selectedId))}
+                  activeIndex={isPlaying ? activeIndex : null}
                   accidental={accidental}
                   onSelectIndex={(idx) => {
                     if (allChords[idx]) setSelectedId(allChords[idx].id)

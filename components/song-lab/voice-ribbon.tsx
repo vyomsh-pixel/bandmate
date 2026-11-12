@@ -9,6 +9,7 @@ import type { ChordEntry, Accidental } from "@/lib/music/types"
 interface VoiceRibbonProps {
   chords: ChordEntry[]
   selectedIndex: number
+  activeIndex?: number | null
   voicingStyle?: VoicingStyle
   accidental?: Accidental
   onSelectIndex: (index: number) => void
@@ -41,6 +42,7 @@ const VOICE_COLORS = {
 export function VoiceRibbon({
   chords,
   selectedIndex,
+  activeIndex = null,
   voicingStyle = "close",
   accidental = "sharp",
   onSelectIndex,
@@ -242,6 +244,7 @@ export function VoiceRibbon({
         {stepsData.chordVoices.map((cv, i) => {
           const x = paddingX + i * colSpacing
           const isSelected = i === selectedIndex
+          const isActive = i === activeIndex
           return (
             <text
               key={`chord-lbl-${i}`}
@@ -250,7 +253,11 @@ export function VoiceRibbon({
               textAnchor="middle"
               className={cn(
                 "text-[10px] font-mono font-bold cursor-pointer transition-colors duration-150",
-                isSelected ? "fill-amber-400" : "fill-zinc-400 hover:fill-zinc-200"
+                isActive
+                  ? "fill-emerald-400 font-black drop-shadow-[0_0_6px_#34d399]"
+                  : isSelected
+                    ? "fill-amber-400 font-black"
+                    : "fill-zinc-400 hover:fill-zinc-200"
               )}
               onClick={() => onSelectIndex(i)}
             >
@@ -258,6 +265,29 @@ export function VoiceRibbon({
             </text>
           )
         })}
+
+        {/* Real-Time Transport Scanning Playhead Beam */}
+        {activeIndex !== null && activeIndex >= 0 && activeIndex < chords.length && (
+          <g className="transition-all duration-100 ease-linear pointer-events-none">
+            <line
+              x1={paddingX + activeIndex * colSpacing}
+              y1={2}
+              x2={paddingX + activeIndex * colSpacing}
+              y2={height - 14}
+              stroke="#34d399"
+              strokeWidth={2.5}
+              strokeLinecap="round"
+              className="drop-shadow-[0_0_8px_rgba(52,211,153,0.9)]"
+            />
+            <circle
+              cx={paddingX + activeIndex * colSpacing}
+              cy={height / 2}
+              r={4}
+              fill="#34d399"
+              className="animate-ping opacity-60"
+            />
+          </g>
+        )}
       </svg>
     </div>
   )
