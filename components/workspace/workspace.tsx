@@ -20,6 +20,10 @@ const InstrumentLab = lazy(() =>
   import("@/components/instrument-lab/instrument-lab").then((m) => ({ default: m.InstrumentLab })),
 )
 
+const GesturePlayView = lazy(() =>
+  import("@/components/gesture-play/gesture-play-view").then((m) => ({ default: m.GesturePlayView })),
+)
+
 const SetlistsView = lazy(() =>
   import("@/components/setlists/setlists-view").then((m) => ({ default: m.SetlistsView })),
 )
@@ -145,6 +149,16 @@ export function Workspace() {
                 }
               >
                 <InstrumentLab song={lib.currentSong} onUpdate={lib.updateSong} />
+              </Suspense>
+            ) : activeModule === "gesture-play" ? (
+              <Suspense
+                fallback={
+                  <div className="flex h-full items-center justify-center font-mono text-xs text-muted-foreground">
+                    Loading Gesture Play…
+                  </div>
+                }
+              >
+                <GesturePlayView song={lib.currentSong} onUpdateSong={lib.updateSong} />
               </Suspense>
             ) : activeModule === "setlists" ? (
               <Suspense

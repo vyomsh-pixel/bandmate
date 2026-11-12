@@ -134,34 +134,25 @@ export function playableVoicing(
 }
 
 /**
- * Compute left-hand lower-register bass/root MIDI notes (C2–C3 register, MIDI 36–48).
- * Shared by both audio voicing and the 88-key PianoKeyboard visualizer.
+ * Compute left-hand chord MIDI notes when 2-handed mode is active.
+ * Plays the exact same chord voicing as the right hand, but transposed
+ * down by exactly one octave (-12 semitones), not two.
  */
 export function computeLeftHandMidis(
   activeMidis: number[],
-  rootMidi: number | null,
-  bassMidi: number | null,
+  rootMidi: number | null = null,
+  bassMidi: number | null = null,
 ): { lhBassMidi: number | null; lhRootMidi: number | null; lhMidis: number[] } {
-  const targetBass = bassMidi ?? rootMidi ?? (activeMidis.length > 0 ? Math.min(...activeMidis) : null)
-  if (targetBass === null) return { lhBassMidi: null, lhRootMidi: null, lhMidis: [] }
+  if (activeMidis.length === 0) return { lhBassMidi: null, lhRootMidi: null, lhMidis: [] }
 
-  let lb = targetBass
-  while (lb >= 48) lb -= 12
-  while (lb < 36 && lb + 12 <= 48) lb += 12
-
+  // Exactly one octave lower than right hand (-12 semitones)
+  const lhMidis = activeMidis.map((m) => m - 12).filter((m) => m >= 21)
+  const targetBass = bassMidi ?? rootMidi ?? activeMidis[0]
+  const lb = targetBass !== null ? targetBass - 12 : lhMidis[0] ?? null
   const targetRoot = rootMidi ?? targetBass
-  let lr = targetRoot
-  while (lr >= 48) lr -= 12
-  while (lr < 36 && lr + 12 <= 48) lr += 12
+  const lr = targetRoot !== null ? targetRoot - 12 : lb
 
-  const lhMidis: number[] = [lb]
-  let lhRootMidi: number | null = null
-  if (lr !== lb) {
-    lhRootMidi = lr
-    lhMidis.push(lr)
-  }
-
-  return { lhBassMidi: lb, lhRootMidi, lhMidis }
+  return { lhBassMidi: lb, lhRootMidi: lr, lhMidis }
 }
 
 /**

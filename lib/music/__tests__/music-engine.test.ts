@@ -253,7 +253,7 @@ describe("Music Engine: Scales & Slash Chords", () => {
 })
 
 describe("Music Engine: 2-Handed Mode Voicings", () => {
-  it("includes left-hand lower register bass note (C2/C3 range) when twoHanded is true", () => {
+  it("includes left-hand chord exactly one octave lower (-12 semitones) when twoHanded is true", () => {
     const am = parseChord("Am")
     const standardMidis = getVoicingMidis(am, { octave: 4 }, false)
     const twoHandedMidis = getVoicingMidis(am, { octave: 4 }, true)
@@ -261,19 +261,18 @@ describe("Music Engine: 2-Handed Mode Voicings", () => {
     // Standard RH: A4 (69), C5 (72), E5 (76)
     expect(standardMidis).toEqual([69, 72, 76])
 
-    // 2-Handed: A2 (45) + RH notes
-    expect(twoHandedMidis).toEqual([45, 69, 72, 76])
-    expect(twoHandedMidis[0]).toBeGreaterThanOrEqual(36)
-    expect(twoHandedMidis[0]).toBeLessThanOrEqual(48)
+    // 2-Handed: LH chord (A3=57, C4=60, E4=64) + RH chord (A4=69, C5=72, E5=76)
+    expect(twoHandedMidis).toEqual([57, 60, 64, 69, 72, 76])
+    expect(twoHandedMidis[0]).toBe(57) // A3 (exactly 1 octave below A4)
   })
 
-  it("handles slash chords correctly in 2-Handed mode with bass and root", () => {
+  it("handles slash chords correctly in 2-Handed mode with 1-octave lower bass and chord", () => {
     const gOverB = parseChord("G/B")
     const twoHandedMidis = getVoicingMidis(gOverB, { octave: 4 }, true)
 
-    // Should include lower register bass B note (47) and root G note (43)
-    expect(twoHandedMidis[0]).toBe(43) // G2
-    expect(twoHandedMidis[1]).toBe(47) // B2
+    // Should include 1-octave lower bass B note (47) and root G note (55)
+    expect(twoHandedMidis[0]).toBe(47) // B2 (1 octave below B3)
+    expect(twoHandedMidis[1]).toBe(55) // G3 (1 octave below G4)
   })
 })
 

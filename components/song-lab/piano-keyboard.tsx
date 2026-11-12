@@ -48,15 +48,17 @@ export function PianoKeyboard({
   satbVoiceMap,
 }: PianoKeyboardProps) {
   // Compute left-hand lower register notes when twoHanded mode is active
-  const { activeSet, lhBassMidi, lhRootMidi } = useMemo(() => {
+  const { activeSet, lhSet, lhBassMidi, lhRootMidi } = useMemo(() => {
     const active = new Set(activeMidis)
     if (!twoHanded) {
-      return { activeSet: active, lhBassMidi: null, lhRootMidi: null }
+      return { activeSet: active, lhSet: new Set<number>(), lhBassMidi: null, lhRootMidi: null }
     }
     const { lhBassMidi: lb, lhRootMidi: lr, lhMidis } = computeLeftHandMidis(activeMidis, rootMidi, bassMidi)
+    const lhS = new Set(lhMidis)
     for (const m of lhMidis) active.add(m)
     return {
       activeSet: active,
+      lhSet: lhS,
       lhBassMidi: lb,
       lhRootMidi: lr,
     }
@@ -176,6 +178,7 @@ export function PianoKeyboard({
           <div className="absolute inset-0 flex gap-0.5">
             {whiteKeys.map((key) => {
               const isActive = activeSet.has(key.midi) || pressedKeys.has(key.midi)
+              const isLh = lhSet.has(key.midi)
               const isLhBass = lhBassMidi === key.midi
               const isLhRoot = !isLhBass && lhRootMidi === key.midi
               const isBass = bassMidi === key.midi
@@ -236,7 +239,7 @@ export function PianoKeyboard({
                     "flex flex-col justify-end items-center pb-1.5 cursor-pointer",
                     voiceBg
                       ? voiceBg
-                      : isLhBass || isLhRoot
+                      : isLh
                         ? "bg-cyan-400 text-black font-extrabold shadow-[0_0_15px_rgba(34,211,238,0.8)_inset]"
                         : isBass
                           ? "bg-emerald-400 text-black font-extrabold shadow-[0_0_15px_rgba(52,211,153,0.8)_inset]"
@@ -260,6 +263,10 @@ export function PianoKeyboard({
                       <span className="text-[7px] font-mono font-black tracking-tighter text-black bg-cyan-200 px-1 py-0.5 rounded-xs uppercase shadow-xs whitespace-nowrap">
                         LH ROOT
                       </span>
+                    ) : isLh ? (
+                      <span className="text-[7px] font-mono font-black tracking-tighter text-black bg-cyan-200/90 px-1 py-0.5 rounded-xs uppercase shadow-xs whitespace-nowrap">
+                        LH
+                      </span>
                     ) : isBass ? (
                       <span className="text-[7px] font-mono font-black tracking-tighter text-black bg-emerald-300 px-1 py-0.5 rounded-xs uppercase shadow-xs whitespace-nowrap">
                         BASS
@@ -272,7 +279,7 @@ export function PianoKeyboard({
                     <span
                       className={cn(
                         "font-mono text-[10px] leading-none pointer-events-none whitespace-nowrap",
-                        isActive || isRoot || isBass || isLhBass || isLhRoot ? "opacity-100 font-extrabold" : "opacity-60",
+                        isActive || isRoot || isBass || isLh ? "opacity-100 font-extrabold" : "opacity-60",
                       )}
                     >
                       {key.label}
@@ -287,6 +294,7 @@ export function PianoKeyboard({
           <div className="pointer-events-none absolute inset-0">
             {blackKeys.map((key) => {
               const isActive = activeSet.has(key.midi) || pressedKeys.has(key.midi)
+              const isLh = lhSet.has(key.midi)
               const isLhBass = lhBassMidi === key.midi
               const isLhRoot = !isLhBass && lhRootMidi === key.midi
               const isBass = bassMidi === key.midi
@@ -348,7 +356,7 @@ export function PianoKeyboard({
                     "pointer-events-auto absolute top-0 h-[60%] rounded-b-md border border-black/90 transition-all duration-75 z-10 shadow-md cursor-pointer touch-manipulation",
                     voiceBg
                       ? voiceBg
-                      : isLhBass || isLhRoot
+                      : isLh
                         ? "bg-cyan-400 text-black font-extrabold shadow-[0_0_15px_rgba(34,211,238,0.9)]"
                         : isBass
                           ? "bg-emerald-400 text-black font-extrabold shadow-[0_0_15px_rgba(52,211,153,0.9)]"
@@ -363,7 +371,7 @@ export function PianoKeyboard({
                     width: `${widthPct * 0.7}%`,
                   }}
                 >
-                  {(isActive || isRoot || isBass || isLhBass || isLhRoot) && (
+                  {(isActive || isRoot || isBass || isLh) && (
                     <div className="absolute bottom-1 w-full text-center">
                       <span className="text-[9px] font-mono font-black text-black pointer-events-none">
                         {pcToName(midiToPc(key.midi), accidental)}

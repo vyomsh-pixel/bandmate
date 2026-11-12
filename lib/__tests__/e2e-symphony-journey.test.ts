@@ -299,15 +299,15 @@ C (4 beats) -> Fmaj7 (4 beats) -> G7 (4 beats) -> Cmaj7 (8 beats)
     expect(g7OverBVoicing[0].name).toBe("B")
     expect(g7OverBVoicing[0].midi).toBeLessThan(g7OverBVoicing[1].midi)
 
-    // Verify Two-Handed Orchestral Mode adds lower C2-C3 (MIDI 36-48) contrabass/cello notes
+    // Verify Two-Handed Mode adds left-hand chord exactly 1 octave lower (-12 semitones)
     const singleHandMidis = getVoicingMidis(parseChord("Cm"), { octave: 4, accidental: "flat" }, false)
     const twoHandMidis = getVoicingMidis(parseChord("Cm"), { octave: 4, accidental: "flat" }, true)
     expect(twoHandMidis.length).toBeGreaterThan(singleHandMidis.length)
-    expect(twoHandMidis[0]).toBeGreaterThanOrEqual(36)
-    expect(twoHandMidis[0]).toBeLessThanOrEqual(48)
+    expect(twoHandMidis[0]).toBe(48) // C3 (1 octave below C4=60)
 
     const lhCheck = computeLeftHandMidis(singleHandMidis, singleHandMidis[0], null)
-    expect(lhCheck.lhBassMidi).toBe(36) // C2 in bass!
+    expect(lhCheck.lhBassMidi).toBe(48) // C3 in left hand!
+    expect(lhCheck.lhMidis).toEqual(singleHandMidis.map((m) => m - 12))
 
     // Verify Key Transposition works cleanly across a movement
     const transposedUp2 = transposeProgression(movement1.chords, 2, "D", "minor")

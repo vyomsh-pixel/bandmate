@@ -44,9 +44,9 @@ export const MODULES: ModuleDef[] = [
   {
     id: "gesture-play",
     name: "Gesture Play",
-    description: "Play chords with hand gestures",
+    description: "Play chords with hand gestures & touch",
     icon: Hand,
-    available: false,
+    available: true,
     phase: 3,
   },
   {
