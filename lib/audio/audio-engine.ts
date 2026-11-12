@@ -425,6 +425,117 @@ class AudioEngine {
     osc2.stop(end + release + 0.05)
   }
 
+  /** Synthesize punchy acoustic drum kit hits (kick, snare, hi-hat, rim/cross-stick, open hat). */
+  playDrum(
+    type: "kick" | "snare" | "hihat" | "openhat" | "rim",
+    when: number = this.ctx?.currentTime ?? 0,
+    velocity: number = 0.9,
+  ) {
+    if (!this.ctx || !this.master) {
+      this.ensureContext().then(() => this.playDrum(type, when, velocity)).catch(() => {})
+      return
+    }
+    const ctx = this.ctx
+    const targetBus = this.master
+    const vel = Math.max(0.1, Math.min(1, velocity))
+
+    if (type === "kick") {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.type = "sine"
+      osc.frequency.setValueAtTime(145, when)
+      osc.frequency.exponentialRampToValueAtTime(42, when + 0.08)
+      gain.gain.setValueAtTime(0.001, when)
+      gain.gain.linearRampToValueAtTime(vel * 0.95, when + 0.003)
+      gain.gain.exponentialRampToValueAtTime(0.001, when + 0.28)
+      osc.connect(gain)
+      gain.connect(targetBus)
+      osc.start(when)
+      osc.stop(when + 0.3)
+      osc.onended = () => {
+        try {
+          osc.disconnect()
+          gain.disconnect()
+        } catch {}
+      }
+    } else if (type === "snare" || type === "rim") {
+      const osc = ctx.createOscillator()
+      const oscGain = ctx.createGain()
+      osc.type = "triangle"
+      osc.frequency.setValueAtTime(type === "rim" ? 380 : 185, when)
+      osc.frequency.exponentialRampToValueAtTime(80, when + 0.05)
+      oscGain.gain.setValueAtTime(0.001, when)
+      oscGain.gain.linearRampToValueAtTime(vel * (type === "rim" ? 0.35 : 0.45), when + 0.002)
+      oscGain.gain.exponentialRampToValueAtTime(0.001, when + 0.12)
+      osc.connect(oscGain)
+      oscGain.connect(targetBus)
+      osc.start(when)
+      osc.stop(when + 0.14)
+      osc.onended = () => {
+        try {
+          osc.disconnect()
+          oscGain.disconnect()
+        } catch {}
+      }
+
+      const bufferSize = Math.floor(ctx.sampleRate * (type === "rim" ? 0.04 : 0.18))
+      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate)
+      const output = noiseBuffer.getChannelData(0)
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1
+      }
+      const whiteNoise = ctx.createBufferSource()
+      whiteNoise.buffer = noiseBuffer
+      const filter = ctx.createBiquadFilter()
+      filter.type = "highpass"
+      filter.frequency.value = type === "rim" ? 2200 : 1200
+      const noiseGain = ctx.createGain()
+      noiseGain.gain.setValueAtTime(vel * (type === "rim" ? 0.25 : 0.55), when)
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, when + (type === "rim" ? 0.04 : 0.18))
+      whiteNoise.connect(filter)
+      filter.connect(noiseGain)
+      noiseGain.connect(targetBus)
+      whiteNoise.start(when)
+      whiteNoise.stop(when + (type === "rim" ? 0.05 : 0.2))
+      whiteNoise.onended = () => {
+        try {
+          whiteNoise.disconnect()
+          filter.disconnect()
+          noiseGain.disconnect()
+        } catch {}
+      }
+    } else {
+      const dur = type === "openhat" ? 0.32 : 0.05
+      const bufferSize = Math.floor(ctx.sampleRate * dur)
+      const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate)
+      const output = noiseBuffer.getChannelData(0)
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1
+      }
+      const whiteNoise = ctx.createBufferSource()
+      whiteNoise.buffer = noiseBuffer
+      const filter = ctx.createBiquadFilter()
+      filter.type = "bandpass"
+      filter.frequency.value = 9200
+      filter.Q.value = 2.5
+      const gain = ctx.createGain()
+      gain.gain.setValueAtTime(vel * (type === "openhat" ? 0.45 : 0.32), when)
+      gain.gain.exponentialRampToValueAtTime(0.001, when + dur)
+      whiteNoise.connect(filter)
+      filter.connect(gain)
+      gain.connect(targetBus)
+      whiteNoise.start(when)
+      whiteNoise.stop(when + dur + 0.02)
+      whiteNoise.onended = () => {
+        try {
+          whiteNoise.disconnect()
+          filter.disconnect()
+          gain.disconnect()
+        } catch {}
+      }
+    }
+  }
+
   /** A metronome click. accent = downbeat. Routed dry so clicks stay tight without room reverb. */
   private click(when: number, accent: boolean) {
     if (!this.ctx || !this.master) return

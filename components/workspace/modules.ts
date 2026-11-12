@@ -78,7 +78,7 @@ export const MODULES: ModuleDef[] = [
     name: "Band Mode",
     description: "Full AI arrangements per instrument",
     icon: Users,
-    available: false,
+    available: true,
     phase: 5,
   },
 ]

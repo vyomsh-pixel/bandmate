@@ -33,6 +33,10 @@ const MedleyBuilderView = lazy(() =>
   import("@/components/medley-builder/medley-builder-view").then((m) => ({ default: m.MedleyBuilderView })),
 )
 
+const BandModeView = lazy(() =>
+  import("@/components/band-mode/band-mode-view").then((m) => ({ default: m.BandModeView })),
+)
+
 /** Pick the tonic spelling (from the mode's option list) for a pitch class. */
 export function tonicForPc(pc: number, mode: "major" | "minor"): string {
   const list = mode === "major" ? MAJOR_TONICS : MINOR_TONICS
@@ -213,6 +217,16 @@ export function Workspace() {
                   }}
                 />
               </Suspense>
+            ) : activeModule === "band-mode" ? (
+              <Suspense
+                fallback={
+                  <div className="flex h-full items-center justify-center font-mono text-xs text-muted-foreground">
+                    Loading Band Mode Console…
+                  </div>
+                }
+              >
+                <BandModeView song={lib.currentSong} onUpdateSong={lib.updateSong} />
+              </Suspense>
             ) : (
               <ModulePlaceholder module={current} />
             )
@@ -242,15 +256,6 @@ export function Workspace() {
               className="hover:text-amber-400 underline underline-offset-2 cursor-pointer"
             >
               Terms
-            </button>
-            <button
-              type="button"
-              onClick={lockStudioSession}
-              className="inline-flex items-center gap-1 text-zinc-400 hover:text-amber-400 cursor-pointer font-bold"
-              title="Lock Studio & return to Pre-Entry Gate"
-            >
-              <Lock className="size-2.5" />
-              <span>Lock Studio</span>
             </button>
           </div>
         </footer>

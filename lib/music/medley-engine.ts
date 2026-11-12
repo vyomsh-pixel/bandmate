@@ -72,7 +72,7 @@ export function generateMedleyTransition(
   }))
 
   // Auto-voice the transition chords with SATB polyphony
-  const voicedChords = autoVoiceProgression(rawChords, "close")
+  const voicedChords = autoVoiceProgression(rawChords, { voicingStyle: "close" })
 
   return {
     fromSong: songA,

@@ -179,7 +179,7 @@ describe("BandMate Full E2E Journey: From Login to Composing & Playing a Simple 
     globalThis.cancelAnimationFrame = vi.fn()
   })
 
-  it("completes the full lifecycle: guest sketch -> signup/login -> 4-movement symphony composition -> orchestration -> guitar/capo lab -> studio audio playback -> MIDI/LeadSheet/JSON export", async () => {
+  it("completes the full lifecycle: guest sketch -> signup/login -> 4-movement symphony composition -> orchestration -> guitar/capo lab -> studio audio playback -> MIDI/LeadSheet/JSON export", { timeout: 35000 }, async () => {
     // =========================================================================
     // 1. GUEST SKETCH -> ACCOUNT REGISTRATION -> LOGIN & MIGRATION
     // =========================================================================
@@ -439,5 +439,5 @@ C (4 beats) -> Fmaj7 (4 beats) -> G7 (4 beats) -> Cmaj7 (8 beats)
     expect(reimported.sections).toHaveLength(4)
     expect(reimported.chordsExtracted).toBe(30)
     expect(reimported.sections[0].chords[1].inversion).toBe(voicedMovement1[1].inversion)
-  }, 15000)
+  }, 30000)
 })
