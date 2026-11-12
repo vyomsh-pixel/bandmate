@@ -30,6 +30,8 @@ interface PianoKeyboardProps {
   accidental?: Accidental
   /** Optional 2-Handed Mode: doubles bass/root in lower left-hand register (C2/C3). */
   twoHanded?: boolean
+  /** Map of MIDI number to SATB voice role for color-coded voice matching */
+  satbVoiceMap?: Record<number, "soprano" | "alto" | "tenor" | "bass">
 }
 
 const WHITE_PCS = [0, 2, 4, 5, 7, 9, 11]
@@ -43,6 +45,7 @@ export function PianoKeyboard({
   bassMidi = null,
   accidental = "sharp",
   twoHanded = false,
+  satbVoiceMap,
 }: PianoKeyboardProps) {
   // Compute left-hand lower register notes when twoHanded mode is active
   const { activeSet, lhBassMidi, lhRootMidi } = useMemo(() => {
@@ -177,6 +180,17 @@ export function PianoKeyboard({
               const isLhRoot = !isLhBass && lhRootMidi === key.midi
               const isBass = bassMidi === key.midi
               const isRoot = !isBass && rootMidi === key.midi
+              const satbVoice = satbVoiceMap?.[key.midi]
+
+              const voiceBg = satbVoice === "soprano"
+                ? "bg-sky-400 text-black font-extrabold shadow-[0_0_15px_rgba(56,189,248,0.85)_inset]"
+                : satbVoice === "alto"
+                  ? "bg-violet-400 text-black font-extrabold shadow-[0_0_15px_rgba(167,139,250,0.85)_inset]"
+                  : satbVoice === "tenor"
+                    ? "bg-emerald-400 text-black font-extrabold shadow-[0_0_15px_rgba(52,211,153,0.85)_inset]"
+                    : satbVoice === "bass"
+                      ? "bg-amber-400 text-black font-extrabold shadow-[0_0_15px_rgba(251,191,36,0.85)_inset]"
+                      : null
 
               return (
                 <button
@@ -220,19 +234,25 @@ export function PianoKeyboard({
                   className={cn(
                     "relative flex-1 rounded-b-md border border-black/30 border-t-0 transition-all duration-75 shadow-xs touch-manipulation min-w-0",
                     "flex flex-col justify-end items-center pb-1.5 cursor-pointer",
-                    isLhBass || isLhRoot
-                      ? "bg-cyan-400 text-black font-extrabold shadow-[0_0_15px_rgba(34,211,238,0.8)_inset]"
-                      : isBass
-                        ? "bg-emerald-400 text-black font-extrabold shadow-[0_0_15px_rgba(52,211,153,0.8)_inset]"
-                        : isRoot
-                          ? "bg-amber-400 text-black font-extrabold shadow-[0_0_15px_rgba(251,191,36,0.8)_inset]"
-                          : isActive
-                            ? "bg-amber-300 text-black font-bold shadow-[0_0_10px_rgba(252,211,77,0.5)_inset]"
-                            : "bg-stone-200 hover:bg-stone-100 active:bg-stone-300 text-stone-700",
+                    voiceBg
+                      ? voiceBg
+                      : isLhBass || isLhRoot
+                        ? "bg-cyan-400 text-black font-extrabold shadow-[0_0_15px_rgba(34,211,238,0.8)_inset]"
+                        : isBass
+                          ? "bg-emerald-400 text-black font-extrabold shadow-[0_0_15px_rgba(52,211,153,0.8)_inset]"
+                          : isRoot
+                            ? "bg-amber-400 text-black font-extrabold shadow-[0_0_15px_rgba(251,191,36,0.8)_inset]"
+                            : isActive
+                              ? "bg-amber-300 text-black font-bold shadow-[0_0_10px_rgba(252,211,77,0.5)_inset]"
+                              : "bg-stone-200 hover:bg-stone-100 active:bg-stone-300 text-stone-700",
                   )}
                 >
                   <div className="flex flex-col items-center gap-0.5 pointer-events-none z-0 min-w-0 px-0.5">
-                    {isLhBass ? (
+                    {satbVoice ? (
+                      <span className="text-[7px] font-mono font-black tracking-tighter text-black bg-white/70 px-1 py-0.5 rounded-xs uppercase shadow-xs whitespace-nowrap">
+                        {satbVoice}
+                      </span>
+                    ) : isLhBass ? (
                       <span className="text-[7px] font-mono font-black tracking-tighter text-black bg-cyan-300 px-1 py-0.5 rounded-xs uppercase shadow-xs whitespace-nowrap">
                         LH BASS
                       </span>
@@ -271,8 +291,19 @@ export function PianoKeyboard({
               const isLhRoot = !isLhBass && lhRootMidi === key.midi
               const isBass = bassMidi === key.midi
               const isRoot = !isBass && rootMidi === key.midi
+              const satbVoice = satbVoiceMap?.[key.midi]
               const leftPct = ((key.leftIndex + 1) / whiteKeys.length) * 100
               const widthPct = (1 / whiteKeys.length) * 100
+
+              const voiceBg = satbVoice === "soprano"
+                ? "bg-sky-400 text-black font-extrabold shadow-[0_0_15px_rgba(56,189,248,0.9)]"
+                : satbVoice === "alto"
+                  ? "bg-violet-400 text-black font-extrabold shadow-[0_0_15px_rgba(167,139,250,0.9)]"
+                  : satbVoice === "tenor"
+                    ? "bg-emerald-400 text-black font-extrabold shadow-[0_0_15px_rgba(52,211,153,0.9)]"
+                    : satbVoice === "bass"
+                      ? "bg-amber-400 text-black font-extrabold shadow-[0_0_15px_rgba(251,191,36,0.9)]"
+                      : null
 
               return (
                 <button
@@ -315,15 +346,17 @@ export function PianoKeyboard({
                   aria-label={`Play ${pcToName(midiToPc(key.midi), accidental)}`}
                   className={cn(
                     "pointer-events-auto absolute top-0 h-[60%] rounded-b-md border border-black/90 transition-all duration-75 z-10 shadow-md cursor-pointer touch-manipulation",
-                    isLhBass || isLhRoot
-                      ? "bg-cyan-400 text-black font-extrabold shadow-[0_0_15px_rgba(34,211,238,0.9)]"
-                      : isBass
-                        ? "bg-emerald-400 text-black font-extrabold shadow-[0_0_15px_rgba(52,211,153,0.9)]"
-                        : isRoot
-                          ? "bg-amber-400 text-black font-extrabold shadow-[0_0_15px_rgba(251,191,36,0.9)]"
-                          : isActive
-                            ? "bg-amber-300 text-black font-bold shadow-[0_0_10px_rgba(252,211,77,0.7)]"
-                            : "bg-zinc-900 hover:bg-zinc-800 active:bg-zinc-950 text-zinc-100",
+                    voiceBg
+                      ? voiceBg
+                      : isLhBass || isLhRoot
+                        ? "bg-cyan-400 text-black font-extrabold shadow-[0_0_15px_rgba(34,211,238,0.9)]"
+                        : isBass
+                          ? "bg-emerald-400 text-black font-extrabold shadow-[0_0_15px_rgba(52,211,153,0.9)]"
+                          : isRoot
+                            ? "bg-amber-400 text-black font-extrabold shadow-[0_0_15px_rgba(251,191,36,0.9)]"
+                            : isActive
+                              ? "bg-amber-300 text-black font-bold shadow-[0_0_10px_rgba(252,211,77,0.7)]"
+                              : "bg-zinc-900 hover:bg-zinc-800 active:bg-zinc-950 text-zinc-100",
                   )}
                   style={{
                     left: `calc(${leftPct}% - ${widthPct * 0.35}%)`,

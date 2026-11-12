@@ -22,7 +22,7 @@ import { playableVoicing, getVoicingMidis } from "@/lib/music/chords"
 const RehearsalMode = lazy(() =>
   import("./rehearsal-mode").then((m) => ({ default: m.RehearsalMode })),
 )
-import { suggestSmoothInversion, type VoicingStyle } from "@/lib/music/voice-leading"
+import { suggestSmoothInversion, assignSATBVoices, type VoicingStyle } from "@/lib/music/voice-leading"
 import { keyAccidental } from "@/lib/music/scales"
 import { midiToPc } from "@/lib/music/notes"
 import { getAudioEngine, type TransportConfig, type RhythmPattern } from "@/lib/audio/audio-engine"
@@ -193,6 +193,17 @@ export function SongLab({
   const rootMidi = parsedDisplayed?.valid
     ? activeMidis.find((m) => midiToPc(m) === parsedDisplayed.rootPc) ?? null
     : null
+
+  // Map each active MIDI note to its SATB voice role for unified color-coding across piano & ribbon
+  const satbVoiceMap = useMemo(() => {
+    if (keyboardNotes.length === 0) return undefined
+    const satb = assignSATBVoices(keyboardNotes)
+    const map: Record<number, "soprano" | "alto" | "tenor" | "bass"> = {}
+    satb.forEach((v) => {
+      map[v.note.midi] = v.voice
+    })
+    return map
+  }, [keyboardNotes])
 
   // ---- Audio helpers ---------------------------------------------------------
   const buildConfig = useCallback((): TransportConfig => {
@@ -814,6 +825,7 @@ export function SongLab({
                   bassMidi={bassMidi}
                   accidental={accidental}
                   twoHanded={twoHanded}
+                  satbVoiceMap={satbVoiceMap}
                 />
               </div>
             )}
