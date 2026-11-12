@@ -54,7 +54,7 @@ export const MODULES: ModuleDef[] = [
     name: "Setlists",
     description: "Organize songs for a show",
     icon: ListMusic,
-    available: false,
+    available: true,
     phase: 4,
   },
   {

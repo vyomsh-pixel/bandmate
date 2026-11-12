@@ -20,6 +20,10 @@ const InstrumentLab = lazy(() =>
   import("@/components/instrument-lab/instrument-lab").then((m) => ({ default: m.InstrumentLab })),
 )
 
+const SetlistsView = lazy(() =>
+  import("@/components/setlists/setlists-view").then((m) => ({ default: m.SetlistsView })),
+)
+
 /** Pick the tonic spelling (from the mode's option list) for a pitch class. */
 export function tonicForPc(pc: number, mode: "major" | "minor"): string {
   const list = mode === "major" ? MAJOR_TONICS : MINOR_TONICS
@@ -137,6 +141,24 @@ export function Workspace() {
                 }
               >
                 <InstrumentLab song={lib.currentSong} onUpdate={lib.updateSong} />
+              </Suspense>
+            ) : activeModule === "setlists" ? (
+              <Suspense
+                fallback={
+                  <div className="flex h-full items-center justify-center font-mono text-xs text-muted-foreground">
+                    Loading Setlists…
+                  </div>
+                }
+              >
+                <SetlistsView
+                  songs={lib.songs}
+                  userId={user?.uid ?? "guest-user"}
+                  onSelectSong={lib.selectSong}
+                  onOpenSongLab={(id) => {
+                    lib.selectSong(id)
+                    setActiveModule("song-lab")
+                  }}
+                />
               </Suspense>
             ) : (
               <ModulePlaceholder module={current} />

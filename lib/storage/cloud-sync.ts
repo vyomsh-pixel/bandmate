@@ -5,7 +5,7 @@
  * with automatic migration of guest songs into a user's local store upon sign-in.
  */
 
-import type { Song } from "../music/types"
+import type { Song, Setlist } from "../music/types"
 import { clearSoundfontCache } from "../audio/soundfont-engine"
 
 function isBrowser(): boolean {
@@ -16,8 +16,36 @@ export function getUserSongsKey(uid: string): string {
   return `bandmate:songs:${uid}:v1`
 }
 
+export function getUserSetlistsKey(uid: string): string {
+  return `bandmate:setlists:${uid}:v1`
+}
+
 export function getUserCurrentSongKey(uid: string): string {
   return `bandmate:currentSongId:${uid}:v1`
+}
+
+/** Load all saved setlists for a user. */
+export function loadUserSetlists(uid: string): Setlist[] {
+  if (!isBrowser()) return []
+  try {
+    const raw = window.localStorage.getItem(getUserSetlistsKey(uid))
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as Setlist[]
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+/** Save setlists for a user. */
+export function saveUserSetlists(uid: string, setlists: Setlist[]): boolean {
+  if (!isBrowser()) return false
+  try {
+    window.localStorage.setItem(getUserSetlistsKey(uid), JSON.stringify(setlists))
+    return true
+  } catch {
+    return false
+  }
 }
 
 /** Load all saved songs for a specific user ID (or guest). */

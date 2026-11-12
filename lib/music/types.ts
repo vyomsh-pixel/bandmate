@@ -132,3 +132,30 @@ export interface Song {
   createdAt: number
   updatedAt: number
 }
+
+/** A curated collection of songs arranged for rehearsal or live performance. */
+export interface Setlist {
+  id: string
+  name: string
+  description?: string
+  songIds: string[]
+  createdAt: number
+  updatedAt: number
+}
+
+/** Calculate estimated runtime of a song in seconds based on bpm, beatsPerBar, and chord lengths. */
+export function calculateSongDurationSeconds(song: Song): number {
+  const totalBeats = song.sections.reduce(
+    (acc, sec) => acc + sec.chords.reduce((cAcc, chord) => cAcc + (chord.beats || 4), 0),
+    0,
+  )
+  const bpm = Math.max(30, song.bpm || 120)
+  return Math.round((totalBeats / bpm) * 60)
+}
+
+/** Format duration into MM:SS. */
+export function formatDuration(seconds: number): string {
+  const mins = Math.floor(seconds / 60)
+  const secs = seconds % 60
+  return `${mins}:${secs.toString().padStart(2, "0")}`
+}
