@@ -253,13 +253,13 @@ export function StudioGate({ children }: { children: React.ReactNode }) {
 
   const bothConsentsChecked = consentStorage && consentCreativeAid
 
-  // Check persisted consent and lock status on mount
+  // Auto-initialize studio for frictionless creative entry unless explicitly locked
   useEffect(() => {
     if (typeof window === "undefined") return
     try {
-      const hasConsent = Boolean(window.localStorage.getItem(CONSENT_STORAGE_KEY))
       const isLocked = window.localStorage.getItem(STUDIO_LOCKED_KEY) === "true"
-      if (hasConsent && !isLocked) {
+      if (!isLocked) {
+        recordStudioConsent()
         setConsentStorage(true)
         setConsentCreativeAid(true)
         setIsUnlocked(true)
