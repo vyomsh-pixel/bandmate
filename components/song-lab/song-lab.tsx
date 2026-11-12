@@ -822,47 +822,101 @@ export function SongLab({
           </div>
 
           {/* Virtual Piano Dock (Desktop Collapsible) */}
-          {/* Virtual Piano Drawer (Desktop Bottom Collapsible) */}
+          {/* Unified Instrument Deck (Virtual Piano & Guitar Fretboard) */}
           <div className="hidden lg:block shrink-0 border-t border-border/80 bg-card/60 backdrop-blur-md transition-all duration-200">
-            <div className="flex items-center justify-between px-3 py-1 bg-secondary/80 border-b border-border/40">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowKeyboard((v) => !v)
-                  onTogglePiano?.()
-                }}
-                className="flex items-center gap-1.5 font-mono text-xs font-bold text-muted-foreground hover:text-foreground cursor-pointer"
-              >
-                <Piano className="size-3.5 text-primary" />
-                <span>Virtual Piano</span>
-                <span className="text-[10px] text-amber-400 font-normal">({showKeyboard ? "Expanded" : "Collapsed"})</span>
-              </button>
+            <div className="flex items-center justify-between px-3 py-1.5 bg-secondary/80 border-b border-border/40">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowKeyboard((v) => !v)
+                    onTogglePiano?.()
+                  }}
+                  className="flex items-center gap-1.5 font-mono text-xs font-bold text-muted-foreground hover:text-foreground cursor-pointer"
+                >
+                  <Piano className="size-3.5 text-primary" />
+                  <span>Instrument Visualizer</span>
+                  <span className="text-[10px] text-amber-400 font-normal">({showKeyboard ? "Open" : "Collapsed"})</span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setTwoHanded((v) => !v)}
-                className={cn(
-                  "flex items-center gap-1.5 rounded-lg border px-2.5 py-0.5 font-mono text-[11px] font-bold transition-all cursor-pointer",
-                  twoHanded
-                    ? "border-cyan-400/80 bg-cyan-400/15 text-cyan-300 shadow-xs"
-                    : "border-border/60 bg-background/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-                title="Toggle 2-Handed Mode (adds Left Hand lower register notes C2/C3)"
-              >
-                <Layers className="size-3" />
-                <span>2-Handed Mode ({twoHanded ? "ON" : "OFF"})</span>
-              </button>
+                {/* Sub-toggle: Piano vs Guitar */}
+                <div className="flex items-center rounded-lg bg-zinc-950 p-0.5 border border-zinc-800">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBottomDeckView("piano")
+                      if (!showKeyboard) {
+                        setShowKeyboard(true)
+                        onTogglePiano?.()
+                      }
+                    }}
+                    className={cn(
+                      "px-2 py-0.5 font-mono text-[10px] font-bold rounded cursor-pointer transition-all",
+                      bottomDeckView === "piano"
+                        ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-xs"
+                        : "text-zinc-400 hover:text-zinc-200"
+                    )}
+                  >
+                    88-Key Piano
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBottomDeckView("guitar")
+                      if (!showKeyboard) {
+                        setShowKeyboard(true)
+                        onTogglePiano?.()
+                      }
+                    }}
+                    className={cn(
+                      "px-2 py-0.5 font-mono text-[10px] font-bold rounded cursor-pointer transition-all",
+                      bottomDeckView === "guitar"
+                        ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-xs"
+                        : "text-zinc-400 hover:text-zinc-200"
+                    )}
+                  >
+                    Guitar Fretboard
+                  </button>
+                </div>
+              </div>
+
+              {bottomDeckView === "piano" ? (
+                <button
+                  type="button"
+                  onClick={() => setTwoHanded((v) => !v)}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-lg border px-2.5 py-0.5 font-mono text-[11px] font-bold transition-all cursor-pointer",
+                    twoHanded
+                      ? "border-cyan-400/80 bg-cyan-400/15 text-cyan-300 shadow-xs"
+                      : "border-border/60 bg-background/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                  title="Toggle 2-Handed Mode (adds Left Hand lower register notes C2/C3)"
+                >
+                  <Layers className="size-3" />
+                  <span>2-Handed Mode ({twoHanded ? "ON" : "OFF"})</span>
+                </button>
+              ) : (
+                <span className="text-[10px] font-mono text-zinc-400">
+                  Interactive CAGED chord shapes &amp; Capo simulator
+                </span>
+              )}
             </div>
             {showKeyboard && (
               <div className="p-2">
-                <PianoKeyboard
-                  activeMidis={activeMidis}
-                  rootMidi={rootMidi}
-                  bassMidi={bassMidi}
-                  accidental={accidental}
-                  twoHanded={twoHanded}
-                  satbVoiceMap={satbVoiceMap}
-                />
+                {bottomDeckView === "piano" ? (
+                  <PianoKeyboard
+                    activeMidis={activeMidis}
+                    rootMidi={rootMidi}
+                    bassMidi={bassMidi}
+                    accidental={accidental}
+                    twoHanded={twoHanded}
+                    satbVoiceMap={satbVoiceMap}
+                  />
+                ) : (
+                  <GuitarFretboard
+                    chord={isPlaying && parsedDisplayed ? parsedDisplayed : parsedSelected}
+                  />
+                )}
               </div>
             )}
           </div>
@@ -899,29 +953,60 @@ export function SongLab({
                 </h3>
                 <p className="text-[10px] text-zinc-400">Hear voicings and touch keys directly</p>
               </div>
+              <div className="flex items-center rounded-lg bg-zinc-950 p-0.5 border border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setBottomDeckView("piano")}
+                  className={cn(
+                    "px-2 py-0.5 font-mono text-[10px] font-bold rounded cursor-pointer",
+                    bottomDeckView === "piano" ? "bg-amber-500/20 text-amber-300 border border-amber-500/40" : "text-zinc-400"
+                  )}
+                >
+                  Piano
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBottomDeckView("guitar")}
+                  className={cn(
+                    "px-2 py-0.5 font-mono text-[10px] font-bold rounded cursor-pointer",
+                    bottomDeckView === "guitar" ? "bg-amber-500/20 text-amber-300 border border-amber-500/40" : "text-zinc-400"
+                  )}
+                >
+                  Guitar
+                </button>
+              </div>
             </div>
-            <button
-              type="button"
-              onClick={() => setTwoHanded((v) => !v)}
-              className={cn(
-                "flex items-center gap-1 rounded-full border px-2.5 py-1 font-mono text-[10px] font-bold transition-all cursor-pointer",
-                twoHanded
-                  ? "border-cyan-400/80 bg-cyan-400/15 text-cyan-300"
-                  : "border-border/60 bg-background/50 text-muted-foreground",
-              )}
-            >
-              <Layers className="size-3" />
-              <span>2-Handed ({twoHanded ? "ON" : "OFF"})</span>
-            </button>
+            {bottomDeckView === "piano" && (
+              <button
+                type="button"
+                onClick={() => setTwoHanded((v) => !v)}
+                className={cn(
+                  "flex items-center gap-1 rounded-full border px-2.5 py-1 font-mono text-[10px] font-bold transition-all cursor-pointer",
+                  twoHanded
+                    ? "border-cyan-400/80 bg-cyan-400/15 text-cyan-300"
+                    : "border-border/60 bg-background/50 text-muted-foreground",
+                )}
+              >
+                <Layers className="size-3" />
+                <span>2-Handed ({twoHanded ? "ON" : "OFF"})</span>
+              </button>
+            )}
           </div>
           <div className="flex-1 flex flex-col justify-center py-2">
-            <PianoKeyboard
-              activeMidis={activeMidis}
-              rootMidi={rootMidi}
-              bassMidi={bassMidi}
-              accidental={accidental}
-              twoHanded={twoHanded}
-            />
+            {bottomDeckView === "piano" ? (
+              <PianoKeyboard
+                activeMidis={activeMidis}
+                rootMidi={rootMidi}
+                bassMidi={bassMidi}
+                accidental={accidental}
+                twoHanded={twoHanded}
+                satbVoiceMap={satbVoiceMap}
+              />
+            ) : (
+              <GuitarFretboard
+                chord={isPlaying && parsedDisplayed ? parsedDisplayed : parsedSelected}
+              />
+            )}
           </div>
         </div>
 
