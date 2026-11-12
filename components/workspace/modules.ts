@@ -58,6 +58,14 @@ export const MODULES: ModuleDef[] = [
     phase: 4,
   },
   {
+    id: "export-studio",
+    name: "Export Studio",
+    description: "MIDI, Lead Sheets, ChordPro & JSON",
+    icon: Sparkles,
+    available: true,
+    phase: 5,
+  },
+  {
     id: "medley-builder",
     name: "AI Medley Builder",
     description: "Smart transitions between songs",

@@ -24,6 +24,10 @@ const SetlistsView = lazy(() =>
   import("@/components/setlists/setlists-view").then((m) => ({ default: m.SetlistsView })),
 )
 
+const ExportStudioView = lazy(() =>
+  import("@/components/export-studio/export-studio-view").then((m) => ({ default: m.ExportStudioView })),
+)
+
 /** Pick the tonic spelling (from the mode's option list) for a pitch class. */
 export function tonicForPc(pc: number, mode: "major" | "minor"): string {
   const list = mode === "major" ? MAJOR_TONICS : MINOR_TONICS
@@ -158,6 +162,20 @@ export function Workspace() {
                     lib.selectSong(id)
                     setActiveModule("song-lab")
                   }}
+                />
+              </Suspense>
+            ) : activeModule === "export-studio" ? (
+              <Suspense
+                fallback={
+                  <div className="flex h-full items-center justify-center font-mono text-xs text-muted-foreground">
+                    Loading Export Studio…
+                  </div>
+                }
+              >
+                <ExportStudioView
+                  songs={lib.songs}
+                  currentSong={lib.currentSong}
+                  onSelectSong={lib.selectSong}
                 />
               </Suspense>
             ) : (

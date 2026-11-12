@@ -98,3 +98,34 @@ export function downloadProjectJson(song: Song) {
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
 }
+
+export function generateChordProText(song: Song): string {
+  let text = `{title: ${song.title}}\n`
+  text += `{key: ${song.keyTonic} ${song.keyMode}}\n`
+  text += `{tempo: ${song.bpm}}\n`
+  text += `{time: ${song.beatsPerBar}/4}\n\n`
+
+  for (const section of song.sections) {
+    text += `{comment: ${section.name}}\n`
+    if (section.chords.length === 0) continue
+
+    const symbols = section.chords.map((c) => `[${c.symbol}]`).join(" ")
+    text += `${symbols}\n\n`
+  }
+
+  return text
+}
+
+export function downloadChordPro(song: Song) {
+  const textContent = generateChordProText(song)
+  const blob = new Blob([textContent], { type: "text/plain;charset=utf-8" })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  const fileName = `${song.title.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "song"}.cho`
+  a.href = url
+  a.download = fileName
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
