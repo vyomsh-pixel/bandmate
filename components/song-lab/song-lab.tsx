@@ -275,40 +275,6 @@ export function SongLab({
     getAudioEngine().setMasterVolume(volume)
   }, [volume])
 
-  // Global Keyboard Shortcuts (Space for Play/Stop, Left/Right to navigate chords, M for metronome, L for loop)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement)?.tagName
-      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable) {
-        return
-      }
-
-      if (e.code === "Space") {
-        e.preventDefault()
-        togglePlay()
-      } else if (e.key === "ArrowLeft") {
-        e.preventDefault()
-        const curIdx = allChords.findIndex((c) => c.id === selectedId)
-        if (curIdx > 0) {
-          setSelectedId(allChords[curIdx - 1].id)
-        }
-      } else if (e.key === "ArrowRight") {
-        e.preventDefault()
-        const curIdx = allChords.findIndex((c) => c.id === selectedId)
-        if (curIdx >= 0 && curIdx < allChords.length - 1) {
-          setSelectedId(allChords[curIdx + 1].id)
-        }
-      } else if (e.key === "m" || e.key === "M") {
-        setMetronome((v) => !v)
-      } else if (e.key === "l" || e.key === "L") {
-        setLoop((v) => !v)
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [togglePlay, allChords, selectedId])
-
   // Stop audio when leaving the song / unmounting.
   useEffect(() => {
     return () => {
