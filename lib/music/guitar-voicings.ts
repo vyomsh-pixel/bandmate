@@ -61,16 +61,22 @@ const SHAPES: Record<ChordQuality, ShapeTemplate[]> = {
     { rootString: 0, offsets: [0, 2, 0, 1, 0, 0], label: "E7-Shape (Barre)" },
     { rootString: 1, offsets: ["X", 0, 2, 0, 2, 0], label: "A7-Shape (Barre)" },
     { rootString: 2, offsets: ["X", "X", 0, 2, 1, 2], label: "D7-Shape" },
+    { rootString: 0, offsets: [0, "X", 0, 1, "X", "X"], label: "E-Shell (Root-b7-3)" },
+    { rootString: 1, offsets: ["X", 0, -1, 0, "X", "X"], label: "A-Shell (Root-3-b7)" },
   ],
   maj7: [
     { rootString: 0, offsets: [0, "X", 1, 1, 0, "X"], label: "Emaj7-Shape" },
     { rootString: 1, offsets: ["X", 0, 2, 1, 2, 0], label: "Amaj7-Shape" },
     { rootString: 2, offsets: ["X", "X", 0, 2, 2, 2], label: "Dmaj7-Shape" },
+    { rootString: 0, offsets: [0, "X", 1, 1, "X", "X"], label: "E-Shell (Root-7-3)" },
+    { rootString: 1, offsets: ["X", 0, -1, 1, "X", "X"], label: "A-Shell (Root-3-7)" },
   ],
   m7: [
     { rootString: 0, offsets: [0, 2, 0, 0, 0, 0], label: "Em7-Shape (Barre)" },
     { rootString: 1, offsets: ["X", 0, 2, 0, 1, 0], label: "Am7-Shape (Barre)" },
     { rootString: 2, offsets: ["X", "X", 0, 2, 1, 1], label: "Dm7-Shape" },
+    { rootString: 0, offsets: [0, "X", 0, 0, "X", "X"], label: "Em-Shell (Root-b7-b3)" },
+    { rootString: 1, offsets: ["X", 0, -2, 0, "X", "X"], label: "Am-Shell (Root-b3-b7)" },
   ],
   m7b5: [
     { rootString: 0, offsets: [0, 1, 0, 0, "X", "X"], label: "Em7b5-Shape" },
