@@ -105,6 +105,10 @@ export interface ChordEntry {
   beats: number
   /** Inversion index (0 = root position, 1 = 1st inversion, etc.). */
   inversion?: number
+  /** Octave offset for smooth voice-leading (e.g. -1, 0, 1). Default 0. */
+  octaveOffset?: number
+  /** Voicing style: standard close, drop-2, open, or shell. */
+  voicingStyle?: "standard" | "open" | "drop2" | "shell"
 }
 
 /** A named section of the song, grouping multiple chords. */
