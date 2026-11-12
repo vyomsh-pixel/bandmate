@@ -5,6 +5,7 @@ import { X, Play, Square, Volume2, Volume1, VolumeX, Moon, Sun } from "lucide-re
 import { Slider } from "@/components/ui/slider"
 import { cn } from "@/lib/utils"
 import type { Song } from "@/lib/music/types"
+import { VoiceRibbon } from "./voice-ribbon"
 
 interface RehearsalModeProps {
   song: Song
@@ -127,7 +128,7 @@ export function RehearsalMode({
 
       {/* Main Content */}
       <div ref={containerRef} className="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-16">
-        <div className="mx-auto max-w-5xl flex flex-col gap-8 sm:gap-12 pb-64">
+        <div className="mx-auto max-w-5xl flex flex-col gap-8 sm:gap-12 pb-32">
           {song.sections.map((section) => (
             <div key={section.id} className="flex flex-col gap-4 sm:gap-6">
                <div className="text-sm sm:text-lg font-bold tracking-widest text-primary/80 uppercase">
@@ -168,6 +169,26 @@ export function RehearsalMode({
           ))}
         </div>
       </div>
+
+      {/* Stage Voice-Flow Ribbon Dock */}
+      {allChords.length > 1 && (
+        <div
+          className={cn(
+            "shrink-0 border-t px-3 sm:px-6 py-1.5 backdrop-blur-md transition-colors shadow-2xl",
+            oledMode ? "bg-black/95 border-zinc-800" : "bg-card/95 border-border"
+          )}
+        >
+          <div className="mx-auto max-w-5xl">
+            <VoiceRibbon
+              chords={allChords}
+              selectedIndex={activeIndex ?? 0}
+              activeIndex={isPlaying ? activeIndex : null}
+              height={64}
+              onSelectIndex={() => {}}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

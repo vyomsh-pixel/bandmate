@@ -13,6 +13,7 @@ interface VoiceRibbonProps {
   voicingStyle?: VoicingStyle
   accidental?: Accidental
   onSelectIndex: (index: number) => void
+  height?: number
   className?: string
 }
 
@@ -46,6 +47,7 @@ export function VoiceRibbon({
   voicingStyle = "close",
   accidental = "sharp",
   onSelectIndex,
+  height = 110,
   className,
 }: VoiceRibbonProps) {
   // Compute polyphonic voice trajectories across all chords
@@ -104,7 +106,6 @@ export function VoiceRibbon({
   if (chords.length < 2) return null
 
   const width = Math.max(600, chords.length * 110)
-  const height = 110
   const paddingX = 45
   const paddingY = 16
   const usableWidth = width - paddingX * 2
