@@ -38,4 +38,13 @@ describe("AI Chord Suggester Engine", () => {
     expect(dom7?.symbol).toBe("E7")
     expect(dom7?.roman).toBe("V7")
   })
+
+  it("calculates voice leading smoothness scores for chord suggestions", () => {
+    const suggestions = suggestNextChords(["C", "G"], keyC)
+    for (const s of suggestions) {
+      expect(typeof s.smoothnessScore).toBe("number")
+      expect(s.smoothnessScore).toBeGreaterThanOrEqual(0)
+      expect(s.smoothnessScore).toBeLessThanOrEqual(100)
+    }
+  })
 })

@@ -11,6 +11,7 @@
 import { parseChord } from "./chord-parser"
 import { getHarmonicFunction, getRomanNumeral } from "./analysis"
 import { diatonicChords } from "./scales"
+import { voiceChordInStyle, analyzeVoiceLeadingStep } from "./voice-leading"
 import type { Key } from "./types"
 
 export interface ChordSuggestion {
@@ -19,6 +20,7 @@ export interface ChordSuggestion {
   label: string
   category: "resolution" | "movement" | "color"
   reason: string
+  smoothnessScore?: number
 }
 
 export function suggestNextChords(currentChords: string[], key: Key): ChordSuggestion[] {
@@ -61,9 +63,11 @@ export function suggestNextChords(currentChords: string[], key: Key): ChordSugge
   const relMinSymbol = diatonic[5]?.symbol || "Am"
   const superTonicSymbol = diatonic[1]?.symbol || "Dm"
 
+  let candidates: ChordSuggestion[] = []
+
   if (lastHarm.role === "dominant") {
     // Dominant -> Resolution to Tonic or Deceptive Cadence to vi
-    return [
+    candidates = [
       {
         symbol: tonicSymbol,
         roman: key.mode === "major" ? "I" : "i",
@@ -86,11 +90,9 @@ export function suggestNextChords(currentChords: string[], key: Key): ChordSugge
         reason: "Sustains momentum before resolving to the root.",
       },
     ]
-  }
-
-  if (lastHarm.role === "subdominant") {
+  } else if (lastHarm.role === "subdominant") {
     // Subdominant -> Dominant or Tonic
-    return [
+    candidates = [
       {
         symbol: domSymbol,
         roman: key.mode === "major" ? "V" : "v",
@@ -113,30 +115,45 @@ export function suggestNextChords(currentChords: string[], key: Key): ChordSugge
         reason: "Gentle, reverent resolution straight from IV back to I.",
       },
     ]
+  } else {
+    // Last chord is Tonic or Borrowed -> Move to Subdominant, ii, or V
+    candidates = [
+      {
+        symbol: subdomSymbol,
+        roman: key.mode === "major" ? "IV" : "iv",
+        label: "Subdominant Lift",
+        category: "movement",
+        reason: "Classic pop/rock progression starter that expands the melody.",
+      },
+      {
+        symbol: superTonicSymbol,
+        roman: key.mode === "major" ? "ii" : "ii°",
+        label: "Supertonic (ii)",
+        category: "color",
+        reason: "Establishes a smooth ii-V-I jazz or ballad setup.",
+      },
+      {
+        symbol: domSymbol,
+        roman: key.mode === "major" ? "V" : "v",
+        label: "Dominant Pull",
+        category: "resolution",
+        reason: "Drives energy upward towards the next measure.",
+      },
+    ]
   }
 
-  // Last chord is Tonic or Borrowed -> Move to Subdominant, ii, or V
-  return [
-    {
-      symbol: subdomSymbol,
-      roman: key.mode === "major" ? "IV" : "iv",
-      label: "Subdominant Lift",
-      category: "movement",
-      reason: "Classic pop/rock progression starter that expands the melody.",
-    },
-    {
-      symbol: superTonicSymbol,
-      roman: key.mode === "major" ? "ii" : "ii°",
-      label: "Supertonic (ii)",
-      category: "color",
-      reason: "Establishes a smooth ii-V-I jazz or ballad setup.",
-    },
-    {
-      symbol: domSymbol,
-      roman: key.mode === "major" ? "V" : "v",
-      label: "Dominant Pull",
-      category: "resolution",
-      reason: "Drives energy upward towards the next measure.",
-    },
-  ]
+  // Calculate voice leading smoothness score for each suggestion from the current last chord
+  const fromNotes = voiceChordInStyle(parseChord(lastSymbol), "close")
+  return candidates.map((cand) => {
+    try {
+      const toNotes = voiceChordInStyle(parseChord(cand.symbol), "close")
+      const step = analyzeVoiceLeadingStep(fromNotes, toNotes, lastSymbol, cand.symbol)
+      return {
+        ...cand,
+        smoothnessScore: step.smoothnessScore,
+      }
+    } catch {
+      return cand
+    }
+  })
 }

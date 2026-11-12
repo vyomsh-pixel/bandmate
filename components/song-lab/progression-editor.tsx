@@ -706,9 +706,26 @@ export function ProgressionEditor({
                       <span className="font-mono text-base font-bold text-foreground group-hover:text-amber-300">
                         {s.symbol} <span className="text-xs text-amber-400/80 font-normal">({s.roman})</span>
                       </span>
-                      <span className="text-[9.5px] font-mono font-bold uppercase px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
-                        {s.label}
-                      </span>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {s.smoothnessScore !== undefined && (
+                          <span
+                            className={cn(
+                              "text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border",
+                              s.smoothnessScore >= 75
+                                ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                                : s.smoothnessScore >= 50
+                                  ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                                  : "bg-zinc-800 text-zinc-400 border-zinc-700"
+                            )}
+                            title={`Voice-leading transition smoothness: ${s.smoothnessScore}%`}
+                          >
+                            {s.smoothnessScore}% smooth
+                          </span>
+                        )}
+                        <span className="text-[9.5px] font-mono font-bold uppercase px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                          {s.label}
+                        </span>
+                      </div>
                     </div>
                     <span className="text-xs text-muted-foreground font-medium line-clamp-2 leading-relaxed">{s.reason}</span>
                   </button>
