@@ -15,13 +15,14 @@ import { ProgressionEditor } from "./progression-editor"
 import { ChordDetail } from "./chord-detail"
 import { PianoKeyboard } from "./piano-keyboard"
 import { TransportBar } from "./transport-bar"
+import { VoiceRibbon } from "./voice-ribbon"
 import { parseChord } from "@/lib/music/chord-parser"
 import { playableVoicing, getVoicingMidis } from "@/lib/music/chords"
 
 const RehearsalMode = lazy(() =>
   import("./rehearsal-mode").then((m) => ({ default: m.RehearsalMode })),
 )
-import { suggestSmoothInversion } from "@/lib/music/voice-leading"
+import { suggestSmoothInversion, type VoicingStyle } from "@/lib/music/voice-leading"
 import { keyAccidental } from "@/lib/music/scales"
 import { midiToPc } from "@/lib/music/notes"
 import { getAudioEngine, type TransportConfig, type RhythmPattern } from "@/lib/audio/audio-engine"
@@ -732,6 +733,20 @@ export function SongLab({
               onInstrumentChange={handleInstrumentChange}
               onRhythmChange={setRhythm}
             />
+
+            {/* Interactive Voice Ribbon Trajectory */}
+            {allChords.length >= 2 && (
+              <div className="mt-2">
+                <VoiceRibbon
+                  chords={allChords}
+                  selectedIndex={Math.max(0, allChords.findIndex((c) => c.id === selectedId))}
+                  accidental={accidental}
+                  onSelectIndex={(idx) => {
+                    if (allChords[idx]) setSelectedId(allChords[idx].id)
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           {/* Hero Progression Editor (Spacious, Zero Clipping) */}

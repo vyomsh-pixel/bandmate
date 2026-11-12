@@ -344,16 +344,16 @@ export function ProgressionEditor({
                         }}
                         onClick={() => onSelect(entry.id)}
                         className={cn(
-                          "group relative flex flex-col justify-between rounded-xl sm:rounded-2xl border transition-all duration-150 cursor-pointer select-none",
-                          "w-full p-2.5 sm:p-3.5 min-h-[85px] sm:min-h-[140px]",
-                          "bg-secondary/90 backdrop-blur-md shadow-sm",
+                          "group relative flex flex-col justify-between rounded-2xl border transition-all duration-150 cursor-pointer select-none",
+                          "w-full p-3 sm:p-4 min-h-[95px] sm:min-h-[145px]",
+                          "hardware-pad bg-gradient-to-b from-zinc-800/90 via-zinc-875/90 to-zinc-950/95 backdrop-blur-md shadow-md",
                           roleGlow,
                           isBeingDragged && "opacity-40 scale-95 border-dashed",
                           isDragTarget && "ring-2 ring-amber-400 border-amber-400 scale-105",
                           selected
-                            ? "border-amber-400 bg-amber-500/10 ring-2 ring-amber-400/60 shadow-md shadow-amber-500/20 -translate-y-0.5"
-                            : "hover:-translate-y-0.5",
-                          active && "border-emerald-400 bg-emerald-500/15 ring-2 ring-emerald-400/60 shadow-[0_0_18px_rgba(52,211,153,0.4)] scale-[1.02]",
+                            ? "border-amber-400 bg-amber-500/15 ring-2 ring-amber-400/80 shadow-[0_0_20px_rgba(251,191,36,0.35)] -translate-y-1"
+                            : "hover:-translate-y-0.5 hover:border-zinc-600",
+                          active && "border-emerald-400 bg-emerald-500/20 ring-2 ring-emerald-400/80 shadow-[0_0_24px_rgba(52,211,153,0.5)] scale-[1.02]",
                         )}
                       >
                         {/* Top Header: Index, Harmonic Role, Beats & Actions */}

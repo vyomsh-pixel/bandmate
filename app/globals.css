@@ -55,50 +55,49 @@
 }
 
 /*
- * BandMate Studio Theme — Warm physical studio aesthetic
- * Warm deep charcoal surfaces, high-contrast off-white typography, single warm amber accent,
- * and semantic harmonic function color coding (Tonic, Subdominant, Dominant, Chromatic).
+ * BandMate Studio Theme — Quirky Tactile 21st.dev / Retro Synth Aesthetic
+ * Deep matte slate chassis, warm amber vacuum-fluorescent glow, tactile hardware styling.
  */
 :root {
   color-scheme: dark;
-  --background: oklch(0.10 0.008 50);
+  --background: oklch(0.12 0.010 60);
   --foreground: oklch(0.98 0.005 65);
-  --card: oklch(0.14 0.010 50);
+  --card: oklch(0.15 0.012 60);
   --card-foreground: oklch(0.98 0.005 65);
-  --popover: oklch(0.15 0.010 50);
+  --popover: oklch(0.14 0.012 60);
   --popover-foreground: oklch(0.98 0.005 65);
-  --primary: oklch(0.85 0.17 65);
+  --primary: oklch(0.85 0.18 65);
   --primary-foreground: oklch(0.10 0.02 65);
-  --secondary: oklch(0.20 0.012 50);
+  --secondary: oklch(0.22 0.015 60);
   --secondary-foreground: oklch(0.98 0.005 65);
-  --muted: oklch(0.18 0.010 50);
+  --muted: oklch(0.19 0.012 60);
   --muted-foreground: oklch(0.72 0.015 65);
-  --accent: oklch(0.85 0.17 65);
+  --accent: oklch(0.85 0.18 65);
   --accent-foreground: oklch(0.10 0.02 65);
   --destructive: oklch(0.65 0.22 25);
-  --border: oklch(0.35 0.035 65 / 30%);
+  --border: oklch(0.35 0.035 65 / 35%);
   --input: oklch(0.35 0.035 65 / 35%);
-  --ring: oklch(0.85 0.17 65);
-  --radius: 0.5rem;
+  --ring: oklch(0.85 0.18 65);
+  --radius: 0.6rem;
 
-  --sidebar: oklch(0.12 0.008 50);
+  --sidebar: oklch(0.13 0.010 60);
   --sidebar-foreground: oklch(0.98 0.005 65);
-  --sidebar-primary: oklch(0.85 0.17 65);
+  --sidebar-primary: oklch(0.85 0.18 65);
   --sidebar-primary-foreground: oklch(0.10 0.02 65);
-  --sidebar-accent: oklch(0.18 0.010 50);
+  --sidebar-accent: oklch(0.19 0.012 60);
   --sidebar-accent-foreground: oklch(0.98 0.005 65);
   --sidebar-border: oklch(0.35 0.035 65 / 30%);
-  --sidebar-ring: oklch(0.85 0.17 65);
+  --sidebar-ring: oklch(0.85 0.18 65);
 
-  /* Cyber-Acoustic Harmonic Tokens (All >7:1 contrast on dark ground) */
-  --func-tonic: oklch(0.85 0.17 65);
+  /* Semantic Harmonic Function Tokens */
+  --func-tonic: oklch(0.85 0.18 65);
   --func-subdominant: oklch(0.80 0.16 45);
   --func-dominant: oklch(0.78 0.20 25);
   --func-chromatic: oklch(0.82 0.14 200);
 
   /* Section accent colors */
   --section-intro: oklch(0.82 0.14 200);
-  --section-verse: oklch(0.85 0.17 65);
+  --section-verse: oklch(0.85 0.18 65);
   --section-chorus: oklch(0.78 0.20 25);
   --section-bridge: oklch(0.80 0.16 45);
   --section-solo: oklch(0.82 0.18 310);
@@ -112,6 +111,30 @@
   body {
     @apply bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary tracking-tight font-sans;
   }
+}
+
+/* Tactile 21st.dev Hardware Styling */
+.hardware-chassis {
+  background: radial-gradient(circle at 50% 0%, rgba(251, 191, 36, 0.05) 0%, transparent 60%),
+              linear-gradient(180deg, #18191f 0%, #0d0e12 100%);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.hardware-pad {
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.15), 0 3px 6px rgba(0, 0, 0, 0.5);
+  transition: all 0.12s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.hardware-pad:active {
+  transform: translateY(2px) scale(0.97);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+.vfd-display {
+  background: #090a0d;
+  color: #fbbf24;
+  text-shadow: 0 0 8px rgba(251, 191, 36, 0.6);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.9), 0 0 1px rgba(251, 191, 36, 0.2);
 }
 
 /* Custom Pro Audio Scrollbars */

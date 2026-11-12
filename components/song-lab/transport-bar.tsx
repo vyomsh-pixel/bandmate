@@ -1,16 +1,38 @@
 "use client"
 
 /**
- * BandMate — Transport bar.
+ * BandMate — Tactile 21st.dev / Retro Synth Transport Console.
  *
- * Play / stop the progression, toggle loop + metronome, set BPM and master
- * volume, and show a live beat indicator. Drives the shared audio engine.
+ * Drives the audio engine with physical-style controls:
+ * - Chunky MPC-style Play/Stop button with neon status ring
+ * - Retro VFD illuminated beat LEDs & tape counter
+ * - HardwareKnob rotary controls for master volume and tempo
+ * - Quick tap-tempo engine and soundfont selector
  */
 
-import { useEffect, useState, useCallback, useRef } from "react"
-import { Play, Square, Repeat, Volume2, Volume1, VolumeX, Timer, Presentation, Plus, Minus, Sparkles, Activity, Sliders, Piano, Guitar, Zap, Loader2, Music } from "lucide-react"
+import { useState, useCallback, useRef } from "react"
+import {
+  Play,
+  Square,
+  Repeat,
+  Volume2,
+  Volume1,
+  VolumeX,
+  Timer,
+  Presentation,
+  Plus,
+  Minus,
+  Sparkles,
+  Activity,
+  Sliders,
+  Piano,
+  Guitar,
+  Zap,
+  Loader2,
+  Music,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Slider } from "@/components/ui/slider"
+import { HardwareKnob } from "@/components/ui/hardware-knob"
 import {
   Select,
   SelectContent,
@@ -71,100 +93,6 @@ interface TransportBarProps {
   onRhythmChange?: (pattern: RhythmPattern) => void
 }
 
-function BpmInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  const [local, setLocal] = useState(value.toString())
-  const tapTimesRef = useRef<number[]>([])
-
-  useEffect(() => {
-    setLocal(value.toString())
-  }, [value])
-
-  const commit = (val: number) => {
-    const clamped = Math.max(30, Math.min(300, val))
-    onChange(clamped)
-    setLocal(clamped.toString())
-  }
-
-  const handleTap = () => {
-    const now = performance.now()
-    const times = tapTimesRef.current
-    if (times.length > 0 && now - times[times.length - 1] > 2500) {
-      tapTimesRef.current = [now]
-      return
-    }
-    times.push(now)
-    if (times.length > 4) times.shift()
-
-    if (times.length >= 2) {
-      const intervals = []
-      for (let i = 1; i < times.length; i++) {
-        intervals.push(times[i] - times[i - 1])
-      }
-      const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length
-      const calculatedBpm = Math.round(60000 / avgInterval)
-      commit(calculatedBpm)
-    }
-  }
-
-  return (
-    <div className="flex items-center gap-1 rounded-lg border border-amber-500/30 bg-secondary/80 p-1">
-      <span className="px-2 font-mono text-[11px] font-bold uppercase tracking-wider text-amber-400">
-        BPM
-      </span>
-      <button
-        type="button"
-        onClick={() => commit(value - 5)}
-        className="flex size-7 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer"
-        aria-label="Decrease tempo by 5 BPM"
-      >
-        <Minus className="size-3" />
-      </button>
-      <input
-        type="text"
-        inputMode="numeric"
-        value={local}
-        onChange={(e) => setLocal(e.target.value)}
-        onBlur={() => {
-          const parsed = parseInt(local, 10)
-          if (!isNaN(parsed)) commit(parsed)
-          else setLocal(value.toString())
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.currentTarget.blur()
-          } else if (e.key === "ArrowUp") {
-            e.preventDefault()
-            commit(value + (e.shiftKey ? 5 : 1))
-          } else if (e.key === "ArrowDown") {
-            e.preventDefault()
-            commit(value - (e.shiftKey ? 5 : 1))
-          }
-        }}
-        className="h-7 w-12 rounded bg-background/80 border border-border/80 text-center font-mono text-xs font-extrabold text-amber-300 tabular-nums focus:outline-hidden focus:ring-1 focus:ring-amber-400"
-        aria-label="Tempo in beats per minute"
-      />
-      <button
-        type="button"
-        onClick={() => commit(value + 5)}
-        className="flex size-7 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer"
-        aria-label="Increase tempo by 5 BPM"
-      >
-        <Plus className="size-3" />
-      </button>
-
-      {/* Tap Tempo Button */}
-      <button
-        type="button"
-        onClick={handleTap}
-        className="h-7 px-2 rounded border border-amber-500/40 bg-amber-500/10 font-mono text-[10px] font-bold text-amber-300 hover:bg-amber-500/20 active:scale-95 transition-all cursor-pointer select-none"
-        title="Click rhythmically to set BPM"
-      >
-        TAP
-      </button>
-    </div>
-  )
-}
-
 export function TransportBar({
   isPlaying,
   bpm,
@@ -186,6 +114,7 @@ export function TransportBar({
   onRhythmChange,
 }: TransportBarProps) {
   const [prevVolume, setPrevVolume] = useState(0.85)
+  const tapTimesRef = useRef<number[]>([])
 
   const handleToggleMute = useCallback(() => {
     if (volume > 0) {
@@ -196,299 +125,188 @@ export function TransportBar({
     }
   }, [volume, prevVolume, onVolumeChange])
 
+  const handleTap = () => {
+    const now = performance.now()
+    const times = tapTimesRef.current
+    if (times.length > 0 && now - times[times.length - 1] > 2500) {
+      tapTimesRef.current = [now]
+      return
+    }
+    times.push(now)
+    if (times.length > 4) times.shift()
+
+    if (times.length >= 2) {
+      const intervals = []
+      for (let i = 1; i < times.length; i++) {
+        intervals.push(times[i] - times[i - 1])
+      }
+      const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length
+      const calculatedBpm = Math.max(40, Math.min(240, Math.round(60000 / avgInterval)))
+      onBpmChange(calculatedBpm)
+    }
+  }
+
   const VolumeIcon = volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2
   const currentInst = AVAILABLE_INSTRUMENTS.find((i) => i.id === instrument) ?? AVAILABLE_INSTRUMENTS[0]
   const currentRhythm = RHYTHM_PATTERNS.find((p) => p.id === rhythm) ?? RHYTHM_PATTERNS[0]
 
   return (
-    <div className="w-full">
-      {/* ========================================================================= */}
-      {/* MOBILE-ONLY SLIM TRANSPORT BAR (< md) — ZERO CLUTTER, 42PX SLIM           */}
-      {/* ========================================================================= */}
-      <div className="flex md:hidden items-center justify-between gap-1.5 w-full bg-card/70 border border-border/80 rounded-xl p-1 shadow-xs backdrop-blur-md">
-        {/* Play/Stop button */}
+    <div className="w-full select-none">
+      {/* Mobile Bar */}
+      <div className="flex md:hidden items-center justify-between gap-1.5 w-full bg-zinc-950/80 border border-zinc-800 rounded-xl p-1.5 shadow-md">
         <Button
           onClick={onTogglePlay}
           size="sm"
           className={cn(
-            "size-8 rounded-lg p-0 shadow-xs transition-all cursor-pointer shrink-0",
+            "size-9 rounded-lg p-0 shadow-md transition-all cursor-pointer shrink-0 font-bold",
             isPlaying
-              ? "bg-rose-600 text-white animate-pulse shadow-rose-950/40"
-              : "bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black shadow-md shadow-emerald-950/30",
+              ? "bg-rose-600 text-white animate-pulse shadow-[0_0_12px_rgba(244,63,94,0.5)]"
+              : "bg-amber-400 hover:bg-amber-300 text-zinc-950 shadow-[0_0_12px_rgba(251,191,36,0.3)]",
           )}
           aria-label={isPlaying ? "Stop playback" : "Start playback"}
         >
           {isPlaying ? <Square className="size-3.5 fill-current" /> : <Play className="size-3.5 fill-current ml-0.5" />}
         </Button>
 
-        {/* 4 Beat Dots */}
-        <div
-          className="flex h-8 items-center gap-1 px-1.5 rounded-lg bg-background/50 border border-border/60 shrink-0"
-          role="status"
-          aria-label={isPlaying ? `Beat ${(currentBeat ?? 0) + 1} of ${beatsPerBar}` : "Stopped"}
-        >
+        {/* LED Beat dots */}
+        <div className="flex h-8 items-center gap-1.5 px-2 rounded-lg bg-black/60 border border-zinc-800 shrink-0">
           {Array.from({ length: beatsPerBar }).map((_, i) => {
-            const isCountIn = currentBeat !== null && currentBeat < 0
-            const activeCountInBlock = isCountIn ? beatsPerBar + currentBeat : null
-            const isActive = currentBeat === i || activeCountInBlock === i
-            const isDownbeat = i === 0
-
+            const isActive = currentBeat === i
             return (
               <div
                 key={i}
                 className={cn(
-                  "size-2 rounded-full transition-all duration-75",
+                  "size-2.5 rounded-full transition-all duration-75",
                   isActive
-                    ? isDownbeat
-                      ? "bg-primary scale-125 shadow-[0_0_8px_var(--color-primary)]"
-                      : "bg-amber-400 scale-110 shadow-[0_0_6px_rgba(251,191,36,0.8)]"
-                    : isDownbeat
-                      ? "bg-muted-foreground/50"
-                      : "bg-muted-foreground/25",
+                    ? i === 0
+                      ? "bg-amber-400 scale-125 shadow-[0_0_8px_#fbbf24]"
+                      : "bg-amber-500 scale-110 shadow-[0_0_6px_#f59e0b]"
+                    : "bg-zinc-800"
                 )}
               />
             )
           })}
         </div>
 
-        {/* Compact BPM Stepper */}
-        <div className="flex items-center rounded-lg bg-background/50 border border-border/60 px-1 py-0.5 shrink-0">
-          <button
-            type="button"
-            onClick={() => onBpmChange(Math.max(40, bpm - 5))}
-            className="size-6 flex items-center justify-center rounded text-muted-foreground hover:text-foreground text-xs font-bold active:scale-90 cursor-pointer"
-            aria-label="Decrease BPM"
-          >
-            -
-          </button>
-          <span className="font-mono text-xs font-black px-1 min-w-[28px] text-center tabular-nums text-foreground">
-            {bpm}
-          </span>
-          <button
-            type="button"
-            onClick={() => onBpmChange(Math.min(240, bpm + 5))}
-            className="size-6 flex items-center justify-center rounded text-muted-foreground hover:text-foreground text-xs font-bold active:scale-90 cursor-pointer"
-            aria-label="Increase BPM"
-          >
-            +
-          </button>
+        {/* Compact Tempo Display */}
+        <div className="flex items-center gap-1 rounded-lg bg-black/60 border border-zinc-800 px-2 py-1 font-mono text-xs font-bold text-amber-400">
+          <span>{bpm}</span>
+          <span className="text-[9px] text-zinc-500 font-normal">BPM</span>
         </div>
 
-        {/* Compact Instrument Dropdown */}
+        {/* Instrument selector */}
         <Select value={instrument} onValueChange={(val) => onInstrumentChange?.(val as InstrumentId)}>
-          <SelectTrigger className="h-8 flex-1 min-w-0 max-w-[125px] px-2 gap-1.5 text-xs font-bold bg-background/50 border-border/60 rounded-lg cursor-pointer">
-            {isInstrumentLoading ? <Loader2 className="size-3.5 animate-spin text-amber-400 shrink-0" /> : renderInstIcon(currentInst.icon)}
-            <span className="truncate text-[11px] font-medium">
-              {currentInst.name.replace("Concert ", "").replace(" Vintage", "")}
-            </span>
+          <SelectTrigger className="h-8 max-w-[120px] px-2 text-xs font-bold bg-zinc-900 border-zinc-800 rounded-lg text-zinc-200">
+            <span className="truncate text-[11px]">{currentInst.name.split(" ")[0]}</span>
           </SelectTrigger>
-          <SelectContent align="center" className="min-w-[260px] max-h-[380px] z-50">
+          <SelectContent align="center" className="min-w-[240px] max-h-[300px] z-50 bg-zinc-950 border-zinc-800 text-zinc-200">
             {AVAILABLE_INSTRUMENTS.map((inst) => (
-              <SelectItem key={inst.id} value={inst.id} className="cursor-pointer py-2">
-                <div className="flex items-center gap-2">
-                  {renderInstIcon(inst.icon)}
-                  <div className="flex flex-col text-left">
-                    <span className="text-xs font-bold">{inst.name}</span>
-                    <span className="text-[10px] text-muted-foreground">{inst.description}</span>
-                  </div>
-                </div>
+              <SelectItem key={inst.id} value={inst.id} className="cursor-pointer py-1.5">
+                <span className="text-xs font-bold">{inst.name}</span>
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-
-        {/* Quick Audio & Stage Settings Popover (🎛️) */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              className="size-8 flex items-center justify-center rounded-lg border border-border/60 bg-background/50 text-muted-foreground hover:text-foreground hover:border-primary/50 cursor-pointer shrink-0 shadow-xs transition-colors"
-              title="Groove, Metronome, Volume & Stage"
-              aria-label="Audio controls"
-            >
-              <Sliders className="size-3.5" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-64 p-3 space-y-3 z-50">
-            {/* Master Volume */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
-                  Master Volume
-                </span>
-                <span className="font-mono text-xs font-bold text-primary">{Math.round(volume * 100)}%</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleToggleMute}
-                  className={cn("p-1 rounded cursor-pointer", volume === 0 ? "text-destructive" : "text-muted-foreground")}
-                  title={volume === 0 ? "Unmute" : "Mute"}
-                >
-                  <VolumeIcon className="size-4" />
-                </button>
-                <Slider
-                  value={[volume]}
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  onValueChange={(v) => onVolumeChange?.(Array.isArray(v) ? v[0] : v)}
-                  className="flex-1 cursor-pointer"
-                />
-              </div>
-            </div>
-
-            {/* Quick Actions Grid: Loop, Click, Stage */}
-            <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-border/60">
-              <button
-                type="button"
-                onClick={onToggleLoop}
-                className={cn(
-                  "flex flex-col items-center gap-1 p-2 rounded-lg border text-center cursor-pointer transition-all",
-                  loop ? "bg-primary/20 border-primary text-primary font-bold shadow-xs" : "border-border/60 text-muted-foreground hover:bg-muted",
-                )}
-              >
-                <Repeat className="size-3.5" />
-                <span className="text-[9px] font-mono">Loop</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={onToggleMetronome}
-                className={cn(
-                  "flex flex-col items-center gap-1 p-2 rounded-lg border text-center cursor-pointer transition-all",
-                  metronome ? "bg-primary/20 border-primary text-primary font-bold shadow-xs" : "border-border/60 text-muted-foreground hover:bg-muted",
-                )}
-              >
-                <Timer className="size-3.5" />
-                <span className="text-[9px] font-mono">Click</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={onToggleRehearsal}
-                className="flex flex-col items-center gap-1 p-2 rounded-lg border border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted text-center cursor-pointer transition-all"
-              >
-                <Presentation className="size-3.5" />
-                <span className="text-[9px] font-mono">Stage</span>
-              </button>
-            </div>
-
-            {/* Rhythm Pattern Selector */}
-            <div className="pt-2 border-t border-border/60">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground mb-1.5 block">
-                Playback Style
-              </span>
-              <div className="grid grid-cols-2 gap-1 font-mono text-[10px]">
-                {RHYTHM_PATTERNS.map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => onRhythmChange?.(p.id as any)}
-                    className={cn(
-                      "flex items-center gap-1.5 p-1.5 rounded-lg border text-left cursor-pointer transition-all",
-                      rhythm === p.id ? "bg-primary/20 border-primary text-primary font-bold" : "border-border/60 text-muted-foreground hover:bg-muted",
-                    )}
-                  >
-                    {renderRhythmIcon(p.iconKey)}
-                    <span className="truncate">{p.name.split(" ")[0]}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
 
-      {/* ========================================================================= */}
-      {/* DESKTOP-ONLY TRANSPORT BAR (>= md) — 4 ISLAND PRO AUDIO STRIP             */}
-      {/* ========================================================================= */}
-      <div className="hidden md:flex items-center justify-between gap-2 w-full overflow-x-auto no-scrollbar">
-        {/* Island 1: Transport Core (Play/Stop, Beat Lights, Loop) */}
-        <div className="flex items-center gap-1.5 rounded-xl border border-border/80 bg-card/70 p-1 shadow-xs backdrop-blur-md shrink-0">
+      {/* Desktop Hardware Console */}
+      <div className="hidden md:flex items-center justify-between gap-3 w-full bg-gradient-to-b from-zinc-900 via-zinc-925 to-zinc-950 border border-zinc-800/90 rounded-2xl p-2 shadow-lg backdrop-blur-md">
+        {/* Module 1: Transport Trigger & Beat LEDs */}
+        <div className="flex items-center gap-3 bg-zinc-950/80 border border-zinc-800/80 rounded-xl px-3 py-1.5 shadow-inner shrink-0">
           <Button
             onClick={onTogglePlay}
             size="sm"
             className={cn(
-              "size-10 rounded-full p-0 shadow-lg transition-all duration-150 cursor-pointer shrink-0",
+              "size-11 rounded-xl p-0 shadow-md transition-all duration-150 cursor-pointer shrink-0 font-black",
               isPlaying
-                ? "bg-rose-600 text-white hover:bg-rose-500 shadow-rose-950/40 animate-pulse"
-                : "bg-amber-400 hover:bg-amber-300 text-black font-extrabold shadow-amber-500/20 hover:scale-105 active:scale-95",
+                ? "bg-rose-600 text-white hover:bg-rose-500 shadow-[0_0_16px_rgba(244,63,94,0.6)] animate-pulse"
+                : "bg-amber-400 hover:bg-amber-300 text-zinc-950 shadow-[0_0_14px_rgba(251,191,36,0.4)] hover:scale-105 active:scale-95",
             )}
             aria-label={isPlaying ? "Stop playback (Space)" : "Start playback (Space)"}
             title={isPlaying ? "Stop (Space)" : "Play (Space)"}
           >
-            {isPlaying ? (
-              <Square className="size-4 fill-current" />
-            ) : (
-              <Play className="size-4 fill-current ml-0.5" />
-            )}
+            {isPlaying ? <Square className="size-4 fill-current" /> : <Play className="size-5 fill-current ml-0.5" />}
           </Button>
 
-          {/* LED Beat Bars */}
+          {/* VFD Illuminated Beat Indicators */}
           <div
-            className="flex h-8 w-14 sm:w-24 items-center gap-0.5 sm:gap-1 rounded-lg border border-border/60 bg-background/50 p-1 sm:p-1.5 shadow-inner"
+            className="flex h-9 w-28 items-center gap-1.5 rounded-lg border border-zinc-800 bg-[#090a0d] px-2 shadow-inner"
             role="status"
             aria-label={isPlaying ? `Beat ${(currentBeat ?? 0) + 1} of ${beatsPerBar}` : "Playback stopped"}
           >
             {Array.from({ length: beatsPerBar }).map((_, i) => {
-              const isCountIn = currentBeat !== null && currentBeat < 0
-              const activeCountInBlock = isCountIn ? beatsPerBar + currentBeat : null
-              const isActive = currentBeat === i || activeCountInBlock === i
+              const isActive = currentBeat === i
               const isDownbeat = i === 0
 
               return (
                 <div
                   key={i}
                   className={cn(
-                    "h-full flex-1 rounded-xs transition-all duration-75 relative overflow-hidden",
+                    "h-5 flex-1 rounded-sm transition-all duration-75 relative overflow-hidden flex items-center justify-center font-mono text-[9px] font-black",
                     isActive
-                      ? isCountIn
-                        ? "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]"
-                        : isDownbeat
-                          ? "bg-primary shadow-[0_0_12px_var(--color-primary)] ring-1 ring-white/50"
-                          : "bg-primary/90 shadow-[0_0_8px_var(--color-primary)]"
+                      ? isDownbeat
+                        ? "bg-amber-400 text-zinc-950 shadow-[0_0_12px_#fbbf24] scale-105"
+                        : "bg-amber-500 text-zinc-950 shadow-[0_0_8px_#f59e0b]"
                       : isDownbeat
-                        ? "bg-muted-foreground/30"
-                        : "bg-muted/50",
+                        ? "bg-zinc-800/80 text-zinc-600 border border-zinc-700/40"
+                        : "bg-zinc-900 text-zinc-700 border border-zinc-800/50"
                   )}
                 >
-                  {isActive && (
-                    <div className="absolute inset-0 bg-white/30 animate-pulse" />
-                  )}
+                  {i + 1}
                 </div>
               )
             })}
           </div>
 
-          {/* Loop Toggle */}
+          {/* Loop Button */}
           <Button
             variant={loop ? "default" : "ghost"}
             size="sm"
             onClick={onToggleLoop}
             className={cn(
-              "h-8 rounded-lg px-2 sm:px-2.5 font-bold text-xs transition-all cursor-pointer",
-              !loop && "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+              "h-9 rounded-lg px-2.5 font-mono text-xs font-bold transition-all cursor-pointer border",
+              loop
+                ? "bg-amber-500/20 border-amber-500/60 text-amber-300 shadow-[0_0_10px_rgba(251,191,36,0.3)]"
+                : "border-zinc-800 text-zinc-400 hover:bg-zinc-900 hover:text-white"
             )}
             aria-pressed={loop}
             title="Toggle Loop Playback (L)"
           >
-            <Repeat className="size-3.5" />
-            <span className="hidden xl:inline text-[11px]">Loop</span>
+            <Repeat className="size-3.5 mr-1" />
+            <span>LOOP</span>
           </Button>
         </div>
 
-        {/* Island 2: Tempo Section */}
-        <div className="flex items-center rounded-xl border border-border/80 bg-card/70 p-1 shadow-xs backdrop-blur-md shrink-0">
-          <BpmInput value={bpm} onChange={onBpmChange} />
+        {/* Module 2: Tactile Rotary BPM & Tap Console */}
+        <div className="flex items-center gap-3 bg-zinc-950/80 border border-zinc-800/80 rounded-xl px-3 py-1 shadow-inner shrink-0">
+          <HardwareKnob
+            value={bpm}
+            min={40}
+            max={240}
+            step={1}
+            label="TEMPO"
+            unit=" BPM"
+            onChange={onBpmChange}
+            size="md"
+            color="amber"
+          />
+
+          <button
+            type="button"
+            onClick={handleTap}
+            className="flex flex-col items-center justify-center size-9 rounded-xl border border-amber-500/40 bg-gradient-to-b from-zinc-800 to-zinc-900 font-mono text-[9px] font-black text-amber-400 hover:bg-amber-500/20 active:scale-90 transition-all cursor-pointer shadow-xs select-none"
+            title="Tap tempo rhythmically"
+          >
+            TAP
+          </button>
         </div>
 
-        {/* Island 3: Real Acoustic Instrument & Rhythm Pattern */}
-        <div className="flex items-center gap-1.5 rounded-xl border border-border/80 bg-card/70 p-1 shadow-xs backdrop-blur-md shrink-0">
-          {/* Instrument Dropdown */}
+        {/* Module 3: Instrument & Rhythm Engine */}
+        <div className="flex items-center gap-2 bg-zinc-950/80 border border-zinc-800/80 rounded-xl px-2.5 py-1.5 shadow-inner shrink-0">
+          {/* Instrument Selector */}
           <Select value={instrument} onValueChange={(val) => onInstrumentChange?.(val as InstrumentId)}>
             <SelectTrigger
-              className="h-8 w-auto max-w-[125px] sm:max-w-none px-2 sm:px-2.5 gap-1.5 font-bold text-xs bg-background/50 border-border/80 rounded-lg cursor-pointer hover:border-primary/50 transition-colors"
+              className="h-9 min-w-[160px] px-3 gap-2 font-mono text-xs font-bold bg-zinc-900 border-zinc-800 rounded-xl text-zinc-200 cursor-pointer hover:border-amber-500/50 transition-colors"
               aria-label="Select instrument sound"
             >
               {isInstrumentLoading ? (
@@ -496,22 +314,16 @@ export function TransportBar({
               ) : (
                 renderInstIcon(currentInst.icon)
               )}
-              <span className="hidden sm:inline">{currentInst.name}</span>
-              <span className="sm:hidden text-[11px] truncate">{currentInst.name.split(" ")[0]}</span>
+              <span className="truncate">{currentInst.name}</span>
             </SelectTrigger>
-            <SelectContent align="center" className="min-w-[270px] max-h-[380px] z-50">
+            <SelectContent align="center" className="min-w-[260px] max-h-[360px] z-50 bg-zinc-950 border-zinc-800 text-zinc-200">
               {AVAILABLE_INSTRUMENTS.map((inst) => (
                 <SelectItem key={inst.id} value={inst.id} className="cursor-pointer py-2">
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-2">
                     {renderInstIcon(inst.icon)}
                     <div className="flex flex-col text-left">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-foreground">{inst.name}</span>
-                        <span className="text-[9px] font-mono text-muted-foreground uppercase px-1 py-0.5 rounded bg-muted/60">
-                          {inst.category}
-                        </span>
-                      </div>
-                      <span className="text-[10px] text-muted-foreground">{inst.description}</span>
+                      <span className="text-xs font-bold text-white">{inst.name}</span>
+                      <span className="text-[10px] text-zinc-400">{inst.description}</span>
                     </div>
                   </div>
                 </SelectItem>
@@ -519,25 +331,21 @@ export function TransportBar({
             </SelectContent>
           </Select>
 
-          {/* Playback Rhythm Pattern */}
+          {/* Rhythm Style Selector */}
           <Select value={rhythm} onValueChange={(val) => onRhythmChange?.(val as RhythmPattern)}>
             <SelectTrigger
-              className="h-8 w-auto px-2 sm:px-2.5 gap-1.5 font-bold text-xs bg-background/50 border-border/80 rounded-lg cursor-pointer hover:border-primary/50 transition-colors"
+              className="h-9 px-2.5 gap-2 font-mono text-xs font-bold bg-zinc-900 border-zinc-800 rounded-xl text-zinc-200 cursor-pointer hover:border-amber-500/50 transition-colors"
               aria-label="Select playback rhythm style"
-              title="Playback Rhythm Style (OneMotion Pulse, Sustain, etc.)"
             >
               {renderRhythmIcon(currentRhythm.iconKey)}
-              <span className="hidden md:inline">{currentRhythm.name}</span>
+              <span>{currentRhythm.name.split(" ")[0]}</span>
             </SelectTrigger>
-            <SelectContent align="center" className="min-w-[210px] z-50">
+            <SelectContent align="center" className="min-w-[200px] z-50 bg-zinc-950 border-zinc-800 text-zinc-200">
               {RHYTHM_PATTERNS.map((p) => (
-                <SelectItem key={p.id} value={p.id} className="cursor-pointer py-2">
+                <SelectItem key={p.id} value={p.id} className="cursor-pointer py-1.5">
                   <div className="flex items-center gap-2">
                     {renderRhythmIcon(p.iconKey)}
-                    <div className="flex flex-col text-left">
-                      <span className="text-xs font-bold text-foreground">{p.name}</span>
-                      <span className="text-[10px] text-muted-foreground">{p.description}</span>
-                    </div>
+                    <span className="text-xs font-bold">{p.name}</span>
                   </div>
                 </SelectItem>
               ))}
@@ -545,87 +353,63 @@ export function TransportBar({
           </Select>
         </div>
 
-        {/* Island 4: Utilities (Metronome, Rehearsal, Volume) */}
-        <div className="flex items-center gap-1.5 rounded-xl border border-border/80 bg-card/70 p-1 shadow-xs backdrop-blur-md shrink-0">
-          {/* Metronome Click */}
+        {/* Module 4: Hardware Master Volume Knob & Stage Mode */}
+        <div className="flex items-center gap-3 bg-zinc-950/80 border border-zinc-800/80 rounded-xl px-3 py-1 shadow-inner shrink-0">
+          {/* Metronome */}
           <Button
             variant={metronome ? "default" : "ghost"}
             size="sm"
             onClick={onToggleMetronome}
             className={cn(
-              "h-8 rounded-lg px-2.5 text-xs font-bold shadow-xs transition-all cursor-pointer",
-              !metronome && "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+              "h-8 rounded-lg px-2 text-xs font-mono font-bold transition-all cursor-pointer border",
+              metronome
+                ? "bg-amber-500/20 border-amber-500/60 text-amber-300 shadow-[0_0_8px_rgba(251,191,36,0.3)]"
+                : "border-zinc-800 text-zinc-400 hover:bg-zinc-900 hover:text-white"
             )}
             aria-pressed={metronome}
             title="Toggle Metronome Click (M)"
           >
             <Timer className="size-3.5" />
-            <span className="hidden md:inline text-[11px]">Click</span>
           </Button>
 
-          {/* Fullscreen Rehearsal Mode */}
+          {/* Fullscreen Rehearsal */}
           <Button
             variant="ghost"
             size="sm"
             onClick={onToggleRehearsal}
-            className="h-8 rounded-lg px-2.5 text-xs font-bold text-muted-foreground hover:bg-muted/60 hover:text-foreground cursor-pointer"
-            title="Open Fullscreen Rehearsal Mode"
+            className="h-8 rounded-lg px-2 text-xs font-mono font-bold text-zinc-400 border border-zinc-800 hover:bg-zinc-900 hover:text-white cursor-pointer"
+            title="Open Fullscreen Stage Mode"
           >
             <Presentation className="size-3.5" />
-            <span className="hidden md:inline text-[11px]">Rehearse</span>
           </Button>
 
-          <div className="h-5 w-px bg-border/80" />
+          {/* Master Volume Rotary Knob */}
+          <HardwareKnob
+            value={Math.round(volume * 100)}
+            min={0}
+            max={100}
+            step={1}
+            label="MASTER"
+            unit="%"
+            onChange={(val) => onVolumeChange?.(val / 100)}
+            size="md"
+            color="amber"
+          />
 
-          {/* Master Volume Controller */}
-          <div className="flex items-center gap-1.5 sm:gap-2 px-1 sm:px-2 py-0.5">
-            <button
-              type="button"
-              onClick={handleToggleMute}
-              className={cn(
-                "rounded-md p-1.5 transition-colors cursor-pointer",
-                volume === 0
-                  ? "text-destructive bg-destructive/10 hover:bg-destructive/20"
-                  : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-              )}
-              title={volume === 0 ? "Unmute sound" : "Mute sound (0%)"}
-              aria-label={volume === 0 ? "Unmute sound" : "Mute sound"}
-            >
-              <VolumeIcon className="size-3.5 shrink-0" aria-hidden="true" />
-            </button>
-
-            <Slider
-              value={[volume]}
-              min={0}
-              max={1}
-              step={0.01}
-              onValueChange={(v) => onVolumeChange?.(Array.isArray(v) ? v[0] : v)}
-              className="w-16 sm:w-20 md:w-24 cursor-pointer"
-              aria-label={`Master volume ${(volume * 100).toFixed(0)}%`}
-            />
-
-            {/* Live Volume Percentage Pill & Preset Cycler */}
-            <button
-              type="button"
-              onClick={() => {
-                if (volume >= 0.95) onVolumeChange?.(0.55)
-                else if (volume >= 0.8) onVolumeChange?.(1.0)
-                else if (volume >= 0.4) onVolumeChange?.(0)
-                else onVolumeChange?.(0.85)
-              }}
-              className={cn(
-                "font-mono text-[10px] font-bold px-1.5 py-0.5 rounded-md border min-w-[34px] text-center transition-all hover:scale-105 active:scale-95 cursor-pointer select-none",
-                volume === 0
-                  ? "border-destructive/40 bg-destructive/10 text-destructive font-black"
-                  : volume >= 0.85
-                    ? "border-primary/40 bg-primary/10 text-primary font-black"
-                    : "border-border/80 bg-background/60 text-muted-foreground hover:text-foreground"
-              )}
-              title="Click to cycle presets: 85% (Base) -> 100% (Loud) -> 55% (Emotional) -> 0% (Silent)"
-            >
-              {volume === 0 ? "0%" : `${Math.round(volume * 100)}%`}
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleToggleMute}
+            className={cn(
+              "rounded-lg p-1.5 transition-colors cursor-pointer border",
+              volume === 0
+                ? "text-rose-400 border-rose-500/40 bg-rose-950/30 shadow-[0_0_8px_rgba(244,63,94,0.3)]"
+                : "text-zinc-400 border-zinc-800 hover:bg-zinc-900 hover:text-white"
+            )}
+            title={volume === 0 ? "Unmute" : "Mute"}
+            aria-label={volume === 0 ? "Unmute sound" : "Mute sound"}
+          >
+            <VolumeIcon className="size-3.5" />
+          </button>
         </div>
       </div>
     </div>
