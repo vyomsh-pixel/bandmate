@@ -8,10 +8,9 @@ const geistSans = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
 const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono' })
 
 export const metadata: Metadata = {
-  title: 'BandMate — Song Lab',
+  title: 'BandMate — Tactile Song Lab & Voice-Leading Studio',
   description:
-    'BandMate Song Lab: build chord progressions, transpose keys instantly, visualize chords on the keyboard with inversions, and play along with a built-in metronome.',
-  generator: 'v0.app',
+    'BandMate: compose chord progressions with SATB voice-leading, interactive 88-key piano, guitar fretboard with solo scale overlays, and retro tactile hardware transport controls.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
