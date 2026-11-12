@@ -27,6 +27,7 @@ export const GUITAR_TUNINGS = [
 export function GuitarFretboard({ chord, capoFret = 0, onCapoChange }: GuitarFretboardProps) {
   const [tuningId, setTuningId] = useState("standard")
   const [syncedCapo, setSyncedCapo] = useState(capoFret)
+  const [scaleOverlay, setScaleOverlay] = useState<"none" | "pentatonic" | "chord-tones">("none")
 
   // Sync capoFret with the prop from InstrumentLab (single source of truth)
   useEffect(() => {
@@ -48,6 +49,17 @@ export function GuitarFretboard({ chord, capoFret = 0, onCapoChange }: GuitarFre
     if (!chord || !chord.valid) return []
     return generateGuitarVoicings(chord)
   }, [chord])
+
+  const scalePitchClasses = useMemo(() => {
+    if (!chord || !chord.valid || scaleOverlay === "none") return new Set<number>()
+    const root = chord.rootPc
+    if (scaleOverlay === "chord-tones") {
+      return new Set(chord.intervals.map((i) => (root + i) % 12))
+    }
+    const isMinor = chord.quality.startsWith("min") || chord.quality === "m7" || chord.quality === "m9"
+    const pentatonicOffsets = isMinor ? [0, 3, 5, 7, 10] : [0, 2, 4, 7, 9]
+    return new Set(pentatonicOffsets.map((o) => (root + o) % 12))
+  }, [chord, scaleOverlay])
 
   const [shapeIndex, setShapeIndex] = useState(0)
   // "compact" fits 100% on phone screen with zero scrollbar; "neck" shows the extended 15-fret neck
@@ -170,6 +182,19 @@ export function GuitarFretboard({ chord, capoFret = 0, onCapoChange }: GuitarFre
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Scale Overlay Selector */}
+          <select
+            value={scaleOverlay}
+            onChange={(e) => setScaleOverlay(e.target.value as any)}
+            className="h-7 rounded-md border border-border bg-background/80 px-2 font-mono text-[10px] font-bold text-cyan-300 cursor-pointer outline-hidden"
+            aria-label="Scale Overlay"
+            title="Overlay solo scale or chord tones across the fretboard"
+          >
+            <option value="none" className="bg-popover text-foreground">Scale: Off</option>
+            <option value="pentatonic" className="bg-popover text-foreground">Pentatonic</option>
+            <option value="chord-tones" className="bg-popover text-foreground">Chord Tones</option>
+          </select>
+
           {/* View Mode Toggle: Compact (Zero-scroll) vs Full Neck */}
           <button
             type="button"
@@ -248,8 +273,11 @@ export function GuitarFretboard({ chord, capoFret = 0, onCapoChange }: GuitarFre
                 {Array.from({ length: renderFretsCount }).map((_, fretOffset) => {
                   const absoluteFret = startFret + fretOffset
                   const isActive = fretValue === absoluteFret
-                  const isRoot = isActive && (string.midi + absoluteFret) % 12 === chord.rootPc
-                  const noteName = pcToName((string.midi + activeCapo + absoluteFret) % 12, "sharp")
+                  const notePc = (string.midi + activeCapo + absoluteFret) % 12
+                  const isRoot = isActive && notePc === chord.rootPc
+                  const isScaleNote = !isActive && scalePitchClasses.has(notePc)
+                  const isScaleRoot = isScaleNote && notePc === chord.rootPc
+                  const noteName = pcToName(notePc, "sharp")
 
                   return (
                     <button
@@ -257,7 +285,7 @@ export function GuitarFretboard({ chord, capoFret = 0, onCapoChange }: GuitarFre
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation()
-                        if (isActive) {
+                        if (isActive || isScaleNote) {
                           handlePluckString(string.midi, absoluteFret)
                         } else {
                           handleStrumVoicing()
@@ -266,7 +294,9 @@ export function GuitarFretboard({ chord, capoFret = 0, onCapoChange }: GuitarFre
                       title={
                         isActive
                           ? `Pluck ${noteName} (fret ${absoluteFret})`
-                          : `Strum ${chord.symbol} (${noteName} · fret ${absoluteFret})`
+                          : isScaleNote
+                            ? `Pluck scale note ${noteName} (fret ${absoluteFret})`
+                            : `Strum ${chord.symbol} (${noteName} · fret ${absoluteFret})`
                       }
                       className={cn(
                         "flex-1 border-r border-r-zinc-700 flex items-center justify-center relative min-w-0 cursor-pointer hover:bg-zinc-900/70 transition-colors",
@@ -299,6 +329,20 @@ export function GuitarFretboard({ chord, capoFret = 0, onCapoChange }: GuitarFre
                           )}
                         >
                           {pcToName((string.midi + absoluteFret) % 12, "sharp")}
+                        </div>
+                      )}
+
+                      {/* Solo Scale Note Marker */}
+                      {isScaleNote && (
+                        <div
+                          className={cn(
+                            "relative z-10 flex size-4 sm:size-4.5 items-center justify-center rounded-full text-[8px] sm:text-[9px] font-extrabold shadow-xs transition-all hover:scale-110",
+                            isScaleRoot
+                              ? "bg-amber-400/80 text-black ring-1 ring-amber-300 shadow-amber-400/20"
+                              : "bg-cyan-500/40 text-cyan-100 border border-cyan-400/50 backdrop-blur-xs",
+                          )}
+                        >
+                          {noteName}
                         </div>
                       )}
                     </button>
