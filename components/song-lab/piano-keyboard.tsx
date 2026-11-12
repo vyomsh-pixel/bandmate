@@ -90,25 +90,47 @@ export function PianoKeyboard({
     engine.ensureContext().then(() => engine.playNote(midi, { duration: 0.7 }))
   }, [])
 
-  // Auto-scroll to the active notes if they are out of view, or middle C on mount
+  // Auto-scroll to center on active notes or middle C on mount
   useEffect(() => {
     if (scrollRef.current) {
-       const targetMidi = activeMidis.length > 0 ? activeMidis[0] : 60
-       const index = whiteKeys.findIndex((k) => k.midi >= targetMidi)
-       if (index !== -1) {
-          const ratio = index / whiteKeys.length
-          const scrollWidth = scrollRef.current.scrollWidth
-          const clientWidth = scrollRef.current.clientWidth
-          const keyPos = scrollWidth * ratio
-          const currentScroll = scrollRef.current.scrollLeft
-          // Only scroll if out of view (with a 48px margin), avoiding jitter during playback
-          if (keyPos < currentScroll + 48 || keyPos > currentScroll + clientWidth - 48) {
-             const targetScroll = keyPos - (clientWidth / 2)
-             scrollRef.current.scrollTo({ left: Math.max(0, targetScroll), behavior: "smooth" })
-          }
-       }
+      const midis = activeMidis.length > 0 ? activeMidis : [60]
+      const minM = Math.min(...midis)
+      const maxM = Math.max(...midis)
+      const centerMidi = (minM + maxM) / 2
+
+      const index = whiteKeys.findIndex((k) => k.midi >= centerMidi)
+      if (index !== -1) {
+        const ratio = index / whiteKeys.length
+        const scrollWidth = scrollRef.current.scrollWidth
+        const clientWidth = scrollRef.current.clientWidth
+        const keyPos = scrollWidth * ratio
+        const currentScroll = scrollRef.current.scrollLeft
+
+        // Keep active cluster centered if out of comfortable view
+        const targetScroll = keyPos - clientWidth / 2
+        if (keyPos < currentScroll + 60 || keyPos > currentScroll + clientWidth - 60) {
+          scrollRef.current.scrollTo({ left: Math.max(0, targetScroll), behavior: "smooth" })
+        }
+      }
     }
   }, [activeMidis, whiteKeys])
+
+  // Center immediately on initial mount
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (scrollRef.current) {
+        const midis = activeMidis.length > 0 ? activeMidis : [60]
+        const centerMidi = (Math.min(...midis) + Math.max(...midis)) / 2
+        const index = whiteKeys.findIndex((k) => k.midi >= centerMidi)
+        if (index !== -1) {
+          const ratio = index / whiteKeys.length
+          const targetScroll = scrollRef.current.scrollWidth * ratio - scrollRef.current.clientWidth / 2
+          scrollRef.current.scrollTo({ left: Math.max(0, targetScroll), behavior: "instant" as ScrollBehavior })
+        }
+      }
+    }, 50)
+    return () => clearTimeout(timer)
+  }, [])
 
   const scrollByAmount = (dir: 1 | -1) => {
      if (scrollRef.current) {

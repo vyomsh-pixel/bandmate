@@ -9,7 +9,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState, lazy, Suspense } from "react"
-import { Plus, X, ChevronLeft, ChevronRight, ChevronDown, Minus, Sparkles, Copy, Volume2 } from "lucide-react"
+import { Plus, X, ChevronLeft, ChevronRight, ChevronDown, Minus, Sparkles, Copy, Volume2, Undo2, Redo2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -114,6 +114,10 @@ interface ProgressionEditorProps {
   onAddSection?: (name: string) => void
   onImportSong?: (songData: ParsedSongResult) => void
   twoHanded?: boolean
+  undo?: () => void
+  redo?: () => void
+  canUndo?: boolean
+  canRedo?: boolean
 }
 
 export function ProgressionEditor({
@@ -134,6 +138,10 @@ export function ProgressionEditor({
   onAddSection,
   onImportSong,
   twoHanded = false,
+  undo,
+  redo,
+  canUndo = false,
+  canRedo = false,
 }: ProgressionEditorProps) {
   const key = makeKey(keyTonic, keyMode)
   const diatonic = diatonicChords(key)
@@ -229,6 +237,32 @@ export function ProgressionEditor({
                   <span className="text-[10px] text-muted-foreground font-bold tabular-nums">({section.chords.length})</span>
                 </button>
                 <div className="h-px flex-1 bg-border/60" />
+
+                {/* Undo / Redo Actions */}
+                {undo && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={undo}
+                      disabled={!canUndo}
+                      className="flex size-7 items-center justify-center rounded-lg border border-border bg-secondary/80 text-muted-foreground transition-all hover:bg-secondary hover:text-foreground disabled:opacity-25 cursor-pointer shadow-xs"
+                      title="Undo last change (Z / Ctrl+Z)"
+                      aria-label="Undo"
+                    >
+                      <Undo2 className="size-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={redo}
+                      disabled={!canRedo}
+                      className="flex size-7 items-center justify-center rounded-lg border border-border bg-secondary/80 text-muted-foreground transition-all hover:bg-secondary hover:text-foreground disabled:opacity-25 cursor-pointer shadow-xs"
+                      title="Redo last change (Y / Ctrl+Y)"
+                      aria-label="Redo"
+                    >
+                      <Redo2 className="size-3.5" />
+                    </button>
+                  </div>
+                )}
 
                 {/* Add Chord to Section Button */}
                 <button
@@ -344,8 +378,8 @@ export function ProgressionEditor({
                         }}
                         onClick={() => onSelect(entry.id)}
                         className={cn(
-                          "group relative flex flex-col justify-between rounded-2xl border transition-all duration-150 cursor-pointer select-none",
-                          "w-full p-3 sm:p-4 min-h-[95px] sm:min-h-[145px]",
+                          "group relative flex flex-col justify-between rounded-xl sm:rounded-2xl border transition-all duration-150 cursor-pointer select-none",
+                          "w-full p-2.5 sm:p-3 min-h-[90px] sm:min-h-[120px]",
                           "hardware-pad bg-gradient-to-b from-zinc-800/90 via-zinc-875/90 to-zinc-950/95 backdrop-blur-md shadow-md",
                           roleGlow,
                           isBeingDragged && "opacity-40 scale-95 border-dashed",
@@ -461,7 +495,7 @@ export function ProgressionEditor({
                         </div>
 
                         {/* Large Hero Chord Symbol */}
-                        <div className="my-1 sm:my-2">
+                        <div className="my-0.5 sm:my-1.5">
                           <input
                             value={entry.symbol}
                             onChange={(e) => onUpdate(entry.id, { symbol: e.target.value })}
@@ -469,7 +503,7 @@ export function ProgressionEditor({
                             aria-label={`Chord ${globalIdx + 1} symbol`}
                             spellCheck={false}
                             className={cn(
-                              "w-full bg-transparent font-mono text-base sm:text-2xl md:text-3xl font-extrabold tracking-tight outline-hidden transition-colors truncate",
+                              "w-full bg-transparent font-mono text-base sm:text-xl md:text-2xl font-extrabold tracking-tight outline-hidden transition-colors truncate leading-tight",
                               invalid
                                 ? "text-destructive"
                                 : active
@@ -477,7 +511,7 @@ export function ProgressionEditor({
                                   : "text-foreground",
                             )}
                           />
-                          <div className="flex items-center justify-between gap-1 text-[9px] sm:text-xs font-semibold mt-0.5">
+                          <div className="flex items-center justify-between gap-1 text-[9px] sm:text-[11px] font-semibold mt-0.5">
                             <span className="truncate flex-1 min-w-0 text-muted-foreground">
                               {parsed.valid ? getShortQuality(parsed.qualityLabel) : invalid ? "Unknown" : "Triad"}
                             </span>
@@ -488,7 +522,7 @@ export function ProgressionEditor({
                         </div>
 
                         {/* Beats Stepper (Desktop Only) */}
-                        <div className="hidden sm:flex items-center justify-between rounded-xl bg-background/80 px-2 py-1 border border-border shadow-inner">
+                        <div className="hidden sm:flex items-center justify-between rounded-lg bg-background/80 px-2 py-0.5 border border-border shadow-inner">
                           <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground font-mono">
                             Beats
                           </span>
@@ -500,9 +534,9 @@ export function ProgressionEditor({
                                 e.stopPropagation()
                                 onUpdate(entry.id, { beats: Math.max(1, entry.beats - 1) })
                               }}
-                              className="flex size-6 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground touch-manipulation cursor-pointer"
+                              className="flex size-5 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground touch-manipulation cursor-pointer"
                             >
-                              <Minus className="size-3" />
+                              <Minus className="size-2.5" />
                             </button>
                             <span className="w-4 text-center font-mono text-xs font-bold tabular-nums text-foreground">
                               {entry.beats}
@@ -514,9 +548,9 @@ export function ProgressionEditor({
                                 e.stopPropagation()
                                 onUpdate(entry.id, { beats: Math.min(16, entry.beats + 1) })
                               }}
-                              className="flex size-6 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground touch-manipulation cursor-pointer"
+                              className="flex size-5 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground touch-manipulation cursor-pointer"
                             >
-                              <Plus className="size-3" />
+                              <Plus className="size-2.5" />
                             </button>
                           </div>
                         </div>

@@ -32,8 +32,9 @@ import { AVAILABLE_INSTRUMENTS, type InstrumentId } from "@/lib/audio/soundfont-
 import { createId } from "@/lib/storage/local-store"
 import type { ChordEntry, Section, Song, Note } from "@/lib/music/types"
 import { Button } from "@/components/ui/button"
-import { X, Piano, Layers, Music4, Search, ListMusic, Plus } from "lucide-react"
+import { X, Piano, Layers, Music4, Search, ListMusic, Plus, Keyboard, Activity, ChevronUp, ChevronDown, HelpCircle } from "lucide-react"
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts"
+import { ShortcutsModal } from "./shortcuts-modal"
 import { cn } from "@/lib/utils"
 
 import type { ParsedSongResult } from "@/lib/music/song-parser"
@@ -101,6 +102,8 @@ export function SongLab({
   const [twoHanded, setTwoHanded] = useState(false)
   const [showKeyboard, setShowKeyboard] = useState(showPiano)
   const [bottomDeckView, setBottomDeckView] = useState<"piano" | "guitar" | "voice-leading">("piano")
+  const [showVoiceRibbon, setShowVoiceRibbon] = useState(true)
+  const [showShortcuts, setShowShortcuts] = useState(false)
 
   useEffect(() => {
     setShowKeyboard(showPiano)
@@ -551,6 +554,9 @@ export function SongLab({
       setShowKeyboard((v) => !v)
       onTogglePiano?.()
     },
+    "?": () => {
+      setShowShortcuts((v) => !v)
+    },
   })
 
   const handleAddSection = useCallback(
@@ -688,73 +694,22 @@ export function SongLab({
             </div>
           </div>
 
-          {/* Bottom Card: History & Shortcuts */}
-          <div className="pt-2.5 border-t border-border/60">
-            {/* Undo / Redo Row */}
-            <div className="mb-2 flex items-center justify-between gap-1.5">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={undo}
-                disabled={!canUndo}
-                className="h-6.5 flex-1 text-[11px] font-mono font-bold disabled:opacity-30 rounded-lg cursor-pointer"
-              >
-                Undo
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={redo}
-                disabled={!canRedo}
-                className="h-6.5 flex-1 text-[11px] font-mono font-bold disabled:opacity-30 rounded-lg cursor-pointer"
-              >
-                Redo
-              </Button>
-            </div>
-
-            <div className="rounded-xl border border-border/50 bg-background/40 p-2 shadow-xs">
-              <div className="mb-1 font-mono text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
-                Shortcuts
+          {/* Bottom Rail: Shortcuts Guide Modal Trigger */}
+          <div className="pt-2 border-t border-border/60">
+            <button
+              type="button"
+              onClick={() => setShowShortcuts(true)}
+              className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg border border-border/70 bg-background/50 hover:bg-muted font-mono text-[11px] font-bold text-muted-foreground hover:text-foreground transition-all cursor-pointer shadow-xs select-none"
+              title="Keyboard shortcuts guide (?)"
+            >
+              <div className="flex items-center gap-1.5">
+                <Keyboard className="size-3.5 text-amber-400" />
+                <span>Shortcuts</span>
               </div>
-              <div className="space-y-0.5 text-[10px] text-muted-foreground">
-                <div className="flex items-center justify-between">
-                  <span>Play / Pause</span>
-                  <kbd className="rounded bg-muted px-1 py-0.5 font-mono text-[9px] font-bold text-foreground">
-                    Space
-                  </kbd>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Loop On/Off</span>
-                  <kbd className="rounded bg-muted px-1 py-0.5 font-mono text-[9px] font-bold text-foreground">
-                    L
-                  </kbd>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Metronome</span>
-                  <kbd className="rounded bg-muted px-1 py-0.5 font-mono text-[9px] font-bold text-foreground">
-                    M
-                  </kbd>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Repeat Chord</span>
-                  <kbd className="rounded bg-muted px-1 py-0.5 font-mono text-[9px] font-bold text-foreground">
-                    D / R
-                  </kbd>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Inspector</span>
-                  <kbd className="rounded bg-muted px-1 py-0.5 font-mono text-[9px] font-bold text-foreground">
-                    I
-                  </kbd>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Select Next</span>
-                  <kbd className="rounded bg-muted px-1 py-0.5 font-mono text-[9px] font-bold text-foreground">
-                    ← →
-                  </kbd>
-                </div>
-              </div>
-            </div>
+              <kbd className="font-mono text-[9px] font-bold text-zinc-400 bg-muted px-1.5 py-0.5 rounded border border-border/80">
+                ?
+              </kbd>
+            </button>
           </div>
         </div>
 
@@ -798,16 +753,45 @@ export function SongLab({
 
             {/* Interactive Voice Ribbon Trajectory */}
             {allChords.length >= 2 && (
-              <div className="mt-2">
-                <VoiceRibbon
-                  chords={allChords}
-                  selectedIndex={Math.max(0, allChords.findIndex((c) => c.id === selectedId))}
-                  activeIndex={isPlaying ? activeIndex : null}
-                  accidental={accidental}
-                  onSelectIndex={(idx) => {
-                    if (allChords[idx]) setSelectedId(allChords[idx].id)
-                  }}
-                />
+              <div className="mt-2 rounded-xl border border-border/70 bg-zinc-950/70 overflow-hidden shadow-xs">
+                <div className="flex items-center justify-between px-3 py-1 bg-zinc-900/80 border-b border-border/40 select-none">
+                  <button
+                    type="button"
+                    onClick={() => setShowVoiceRibbon((v) => !v)}
+                    className="flex items-center gap-1.5 font-mono text-[10px] font-bold text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+                  >
+                    <Activity className="size-3 text-amber-400" />
+                    <span>VOICE-FLOW TRAJECTORY</span>
+                    <span className="text-[9px] text-zinc-500 font-normal">
+                      ({showVoiceRibbon ? "Expanded" : "Collapsed"})
+                    </span>
+                  </button>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] font-mono text-zinc-400 hidden sm:inline">
+                      ● Soprano ● Alto ● Tenor ● Bass
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowVoiceRibbon((v) => !v)}
+                      className="p-0.5 rounded text-zinc-400 hover:text-zinc-200 cursor-pointer"
+                      title={showVoiceRibbon ? "Collapse Trajectory Ribbon" : "Expand Trajectory Ribbon"}
+                    >
+                      {showVoiceRibbon ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
+                    </button>
+                  </div>
+                </div>
+                {showVoiceRibbon && (
+                  <VoiceRibbon
+                    chords={allChords}
+                    selectedIndex={Math.max(0, allChords.findIndex((c) => c.id === selectedId))}
+                    activeIndex={isPlaying ? activeIndex : null}
+                    accidental={accidental}
+                    height={80}
+                    onSelectIndex={(idx) => {
+                      if (allChords[idx]) setSelectedId(allChords[idx].id)
+                    }}
+                  />
+                )}
               </div>
             )}
           </div>
@@ -834,6 +818,10 @@ export function SongLab({
               onAddSection={handleAddSection}
               onImportSong={onImportSong}
               twoHanded={twoHanded}
+              undo={undo}
+              redo={redo}
+              canUndo={canUndo}
+              canRedo={canRedo}
             />
           </div>
 
@@ -914,30 +902,43 @@ export function SongLab({
                 </div>
               </div>
 
-              {bottomDeckView === "piano" ? (
+              <div className="flex items-center gap-2">
+                {bottomDeckView === "piano" ? (
+                  <button
+                    type="button"
+                    onClick={() => setTwoHanded((v) => !v)}
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-lg border px-2.5 py-0.5 font-mono text-[11px] font-bold transition-all cursor-pointer",
+                      twoHanded
+                        ? "border-cyan-400/80 bg-cyan-400/15 text-cyan-300 shadow-xs"
+                        : "border-border/60 bg-background/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    )}
+                    title="Toggle 2-Handed Mode (adds Left Hand chord transposed 1 octave lower)"
+                  >
+                    <Layers className="size-3" />
+                    <span>2-Handed ({twoHanded ? "ON" : "OFF"})</span>
+                  </button>
+                ) : bottomDeckView === "guitar" ? (
+                  <span className="text-[10px] font-mono text-zinc-400 hidden sm:inline">
+                    Interactive CAGED chord shapes &amp; Capo simulator
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-mono text-zinc-400 hidden sm:inline">
+                    SATB Step Motion &amp; Smoothness Engine
+                  </span>
+                )}
+
                 <button
                   type="button"
-                  onClick={() => setTwoHanded((v) => !v)}
-                  className={cn(
-                    "flex items-center gap-1.5 rounded-lg border px-2.5 py-0.5 font-mono text-[11px] font-bold transition-all cursor-pointer",
-                    twoHanded
-                      ? "border-cyan-400/80 bg-cyan-400/15 text-cyan-300 shadow-xs"
-                      : "border-border/60 bg-background/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-                  )}
-                  title="Toggle 2-Handed Mode (adds Left Hand lower register notes C2/C3)"
+                  onClick={() => setShowShortcuts(true)}
+                  className="hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-lg border border-border/70 bg-background/50 font-mono text-[10px] font-bold text-muted-foreground hover:text-foreground cursor-pointer shadow-xs"
+                  title="Keyboard shortcuts guide (?)"
                 >
-                  <Layers className="size-3" />
-                  <span>2-Handed Mode ({twoHanded ? "ON" : "OFF"})</span>
+                  <Keyboard className="size-3 text-amber-400" />
+                  <span>Shortcuts</span>
+                  <kbd className="text-[9px] bg-muted px-1 rounded">?</kbd>
                 </button>
-              ) : bottomDeckView === "guitar" ? (
-                <span className="text-[10px] font-mono text-zinc-400">
-                  Interactive CAGED chord shapes &amp; Capo simulator
-                </span>
-              ) : (
-                <span className="text-[10px] font-mono text-zinc-400">
-                  SATB Step Motion &amp; Smoothness Engine
-                </span>
-              )}
+              </div>
             </div>
             {showKeyboard && (
               <div className="p-2">
@@ -1199,6 +1200,9 @@ export function SongLab({
           />
         </Suspense>
       )}
+
+      {/* Keyboard Shortcuts Modal */}
+      <ShortcutsModal open={showShortcuts} onOpenChange={setShowShortcuts} />
     </div>
   )
 }
