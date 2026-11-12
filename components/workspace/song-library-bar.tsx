@@ -23,7 +23,6 @@ import { cn } from "@/lib/utils"
 import { TrebleClefIcon } from "@/components/ui/treble-clef-icon"
 import { downloadMidi } from "@/lib/export/midi-export"
 import { downloadLeadSheetText, downloadProjectJson } from "@/lib/export/lead-sheet"
-import { UserProfileButton } from "@/components/auth/user-profile-button"
 import { MODULES } from "./modules"
 
 const SongImportModal = lazy(() =>
@@ -153,9 +152,8 @@ export function SongLibraryBar({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Right: Key Pill + User Profile + Settings Menu */}
+        {/* Right: Key Pill + Settings Menu */}
         <div className="flex items-center gap-1.5 shrink-0">
-          <UserProfileButton savedSongsCount={songs.length} />
           {currentSong && onKeyChange && onModeChange && onTranspose && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -432,38 +430,42 @@ export function SongLibraryBar({
                 )
               })}
 
-              <div className="my-1.5 h-px bg-border/60" />
+              {upcomingModules.length > 0 && (
+                <>
+                  <div className="my-1.5 h-px bg-border/60" />
 
-              <div className="flex items-center justify-between px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
-                <span className="flex items-center gap-1.5">
-                  <Sparkles className="size-3 text-primary" />
-                  Roadmap
-                </span>
-                <span className="text-[9px] opacity-70">Coming Soon</span>
-              </div>
-
-              {upcomingModules.map((mod) => {
-                const Icon = mod.icon
-                return (
-                  <div
-                    key={mod.id}
-                    className="flex items-start gap-2.5 p-2 rounded-xl opacity-60 hover:opacity-80 transition-opacity"
-                  >
-                    <div className="p-1.5 rounded-lg bg-muted text-muted-foreground shrink-0 mt-0.5">
-                      <Icon className="size-4" />
-                    </div>
-                    <div className="flex flex-col flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-foreground">{mod.name}</span>
-                        <span className="text-[9px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded-xs">
-                          Phase {mod.phase}
-                        </span>
-                      </div>
-                      <span className="text-[10px] text-muted-foreground line-clamp-1">{mod.description}</span>
-                    </div>
+                  <div className="flex items-center justify-between px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
+                    <span className="flex items-center gap-1.5">
+                      <Sparkles className="size-3 text-primary" />
+                      Roadmap
+                    </span>
+                    <span className="text-[9px] opacity-70">Coming Soon</span>
                   </div>
-                )
-              })}
+
+                  {upcomingModules.map((mod) => {
+                    const Icon = mod.icon
+                    return (
+                      <div
+                        key={mod.id}
+                        className="flex items-start gap-2.5 p-2 rounded-xl opacity-60 hover:opacity-80 transition-opacity"
+                      >
+                        <div className="p-1.5 rounded-lg bg-muted text-muted-foreground shrink-0 mt-0.5">
+                          <Icon className="size-4" />
+                        </div>
+                        <div className="flex flex-col flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold text-foreground">{mod.name}</span>
+                            <span className="text-[9px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded-xs">
+                              Phase {mod.phase}
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-muted-foreground line-clamp-1">{mod.description}</span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -604,9 +606,8 @@ export function SongLibraryBar({
           </div>
         )}
 
-        {/* Desktop Right: User Profile + AI Import + Export + Piano + Inspector + Autosaved */}
+        {/* Desktop Right: AI Import + Export + Piano + Inspector + Autosaved */}
         <div className="flex items-center gap-1.5 shrink-0">
-          <UserProfileButton savedSongsCount={songs.length} />
           {onImportSong && (
             <Suspense fallback={null}>
               <SongImportModal onImport={onImportSong} />
